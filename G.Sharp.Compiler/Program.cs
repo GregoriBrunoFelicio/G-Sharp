@@ -17,4 +17,5 @@ var tokens = lexer.Tokenize();
 var parser = new Parser(tokens);
 var statements = parser.Parse();
 
-Compiler.CompileAndRun(statements);
+var compiler = new Compiler();
+compiler.CompileAndRun(statements);

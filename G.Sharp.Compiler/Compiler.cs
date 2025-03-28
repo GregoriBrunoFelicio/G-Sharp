@@ -5,66 +5,29 @@ using Type = System.Type;
 
 namespace G.Sharp.Compiler;
 
-public static class Compiler
+public class Compiler
 {
-    public static void CompileAndRun(List<Statement> statements)
+    private readonly Dictionary<string, LocalBuilder> _locals = new();
+
+    public void CompileAndRun(List<Statement> statements)
     {
         var (methodBuilder, typeBuilder) = CreateBuilders();
         var il = methodBuilder.GetILGenerator();
-        var locals = new Dictionary<string, LocalBuilder>();
 
-        foreach (var stmt in statements)
+        foreach (var statement in statements)
         {
-            switch (stmt)
+            switch (statement)
             {
                 case LetStatement letStmt:
-                {
-                    LocalBuilder local;
-                    switch (letStmt.VariableValue)
-                    {
-                        case NumberValue nv:
-                            local = il.DeclareLocal(typeof(int));
-                            il.Emit(OpCodes.Ldc_I4, nv.Value);
-                            break;
-
-                        case StringValue sv:
-                            local = il.DeclareLocal(typeof(string));
-                            il.Emit(OpCodes.Ldstr, sv.Value);
-                            break;
-                        case BooleanValue bv:
-                            local = il.DeclareLocal(typeof(bool));
-                            il.Emit(bv.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-                            break;
-
-                        default:
-                            throw new Exception($"Unsupported value type: {letStmt.VariableValue.GetType().Name}");
-                    }
-
-                    il.Emit(OpCodes.Stloc, local);
-                    locals[letStmt.VariableName] = local;
+                    EmitLetStatement(il, letStmt);
                     break;
-                }
 
                 case PrintStatement printStmt:
-                {
-                    if (!locals.TryGetValue(printStmt.VariableName, out var variable))
-                        throw new Exception($"Undefined variable '{printStmt.VariableName}'");
-
-                    il.Emit(OpCodes.Ldloc, variable);
-
-                    var method = typeof(Console).GetMethod(
-                        "WriteLine",
-                        BindingFlags.Public | BindingFlags.Static,
-                        null,
-                        [variable.LocalType],
-                        null);
-
-                    if (method == null)
-                        throw new Exception($"No suitable Console.Write method for type {variable.LocalType}");
-
-                    il.Emit(OpCodes.Call, method);
+                    EmitPrintStatement(il, printStmt);
                     break;
-                }
+
+                default:
+                    throw new NotSupportedException($"Unsupported statement type: {statement.GetType().Name}");
             }
         }
 
@@ -73,6 +36,51 @@ public static class Compiler
         var programType = typeBuilder.CreateType();
         var main = programType.GetMethod("Main");
         main.Invoke(null, null);
+    }
+
+    private void EmitLetStatement(ILGenerator il, LetStatement stmt)
+    {
+        var local = stmt.VariableValue switch
+        {
+            NumberValue numberIntValue => DeclareAndLoadValue(il, typeof(int),
+                () => il.Emit(OpCodes.Ldc_I4, numberIntValue.Value)),
+            StringValue stringValue => DeclareAndLoadValue(il, typeof(string),
+                () => il.Emit(OpCodes.Ldstr, stringValue.Value)),
+            BooleanValue booleanValue => DeclareAndLoadValue(il, typeof(bool),
+                () => il.Emit(booleanValue.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0)),
+            _ => throw new NotSupportedException($"Unsupported value type: {stmt.VariableValue.GetType().Name}")
+        };
+
+        il.Emit(OpCodes.Stloc, local);
+        _locals[stmt.VariableName] = local;
+    }
+
+    private void EmitPrintStatement(ILGenerator il, PrintStatement stmt)
+    {
+        if (!_locals.TryGetValue(stmt.VariableName, out var variable))
+            throw new InvalidOperationException($"Variable '{stmt.VariableName}' is not defined.");
+
+        il.Emit(OpCodes.Ldloc, variable);
+
+        var method = typeof(Console).GetMethod(
+            "WriteLine",
+            BindingFlags.Public | BindingFlags.Static,
+            null,
+            [variable.LocalType],
+            null);
+
+        if (method == null)
+            throw new MissingMethodException(
+                $"No suitable Console.WriteLine method found for type '{variable.LocalType.Name}'.");
+
+        il.Emit(OpCodes.Call, method);
+    }
+
+    private static LocalBuilder DeclareAndLoadValue(ILGenerator il, Type type, Action emitLoad)
+    {
+        var local = il.DeclareLocal(type);
+        emitLoad();
+        return local;
     }
 
     private static (MethodBuilder, TypeBuilder) CreateBuilders()

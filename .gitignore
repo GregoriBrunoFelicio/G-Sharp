@@ -1,0 +1,42 @@
+# Compiled binaries and intermediate files
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# IDEs
+.vscode/
+.idea/
+*.sln.iml
+.vs/
+
+# Build logs
+*.log
+[Ll]ogs/
+
+# Rider & ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+# Test results
+TestResult.xml
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Publish folders
+publish/
+out/

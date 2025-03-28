@@ -120,7 +120,7 @@ If you have questions, suggestions, or just want to talk about language design a
 
 ---
 
-## 📄 License
+## 📄 MIT License
 
-MIT License. See [LICENSE](LICENSE) for more details.
-```
+This project is licensed under the [MIT License](LICENSE).
+

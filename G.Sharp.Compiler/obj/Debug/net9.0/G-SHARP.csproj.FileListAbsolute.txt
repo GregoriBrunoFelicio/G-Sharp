@@ -1,0 +1,15 @@
+/home/greg/RiderProjects/G-SHARP/G-SHARP/bin/Debug/net9.0/G-SHARP
+/home/greg/RiderProjects/G-SHARP/G-SHARP/bin/Debug/net9.0/G-SHARP.deps.json
+/home/greg/RiderProjects/G-SHARP/G-SHARP/bin/Debug/net9.0/G-SHARP.runtimeconfig.json
+/home/greg/RiderProjects/G-SHARP/G-SHARP/bin/Debug/net9.0/G-SHARP.dll
+/home/greg/RiderProjects/G-SHARP/G-SHARP/bin/Debug/net9.0/G-SHARP.pdb
+/home/greg/RiderProjects/G-SHARP/G-SHARP/obj/Debug/net9.0/G-SHARP.GeneratedMSBuildEditorConfig.editorconfig
+/home/greg/RiderProjects/G-SHARP/G-SHARP/obj/Debug/net9.0/G-SHARP.AssemblyInfoInputs.cache
+/home/greg/RiderProjects/G-SHARP/G-SHARP/obj/Debug/net9.0/G-SHARP.AssemblyInfo.cs
+/home/greg/RiderProjects/G-SHARP/G-SHARP/obj/Debug/net9.0/G-SHARP.csproj.CoreCompileInputs.cache
+/home/greg/RiderProjects/G-SHARP/G-SHARP/obj/Debug/net9.0/G-SHARP.dll
+/home/greg/RiderProjects/G-SHARP/G-SHARP/obj/Debug/net9.0/refint/G-SHARP.dll
+/home/greg/RiderProjects/G-SHARP/G-SHARP/obj/Debug/net9.0/G-SHARP.pdb
+/home/greg/RiderProjects/G-SHARP/G-SHARP/obj/Debug/net9.0/G-SHARP.genruntimeconfig.cache
+/home/greg/RiderProjects/G-SHARP/G-SHARP/obj/Debug/net9.0/ref/G-SHARP.dll
+/home/greg/RiderProjects/G-SHARP/G-SHARP/obj/Debug/net9.0/G-SHARP.sourcelink.json

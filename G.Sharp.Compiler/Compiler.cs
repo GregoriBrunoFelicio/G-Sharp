@@ -34,7 +34,7 @@ public class Compiler
         il.Emit(OpCodes.Ret);
 
         var programType = typeBuilder.CreateType();
-        var main = programType.GetMethod("Main",  BindingFlags.Public | BindingFlags.Static);
+        var main = programType.GetMethod("Main", BindingFlags.Public | BindingFlags.Static);
         if (main == null)
             throw new Exception("Method 'Main' was not found.");
         main.Invoke(null, null);
@@ -44,16 +44,12 @@ public class Compiler
     {
         var local = stmt.VariableValue switch
         {
-            NumberValue numberIntValue => DeclareAndLoadValue(il, typeof(int),
-                () => il.Emit(OpCodes.Ldc_I4, numberIntValue.Value)),
-            StringValue stringValue => DeclareAndLoadValue(il, typeof(string),
-                () => il.Emit(OpCodes.Ldstr, stringValue.Value)),
-            BooleanValue booleanValue => DeclareAndLoadValue(il, typeof(bool),
-                () => il.Emit(booleanValue.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0)),
+            NumberValue number => EmitInt(il, number.Value),
+            StringValue str => EmitString(il, str.Value),
+            BooleanValue boolean => EmitBool(il, boolean.Value),
             _ => throw new NotSupportedException($"Unsupported value type: {stmt.VariableValue.GetType().Name}")
         };
 
-        il.Emit(OpCodes.Stloc, local);
         _locals[stmt.VariableName] = local;
     }
 
@@ -78,10 +74,27 @@ public class Compiler
         il.Emit(OpCodes.Call, method);
     }
 
-    private static LocalBuilder DeclareAndLoadValue(ILGenerator il, Type type, Action emitLoad)
+    private static LocalBuilder EmitInt(ILGenerator il, int value)
     {
-        var local = il.DeclareLocal(type);
-        emitLoad();
+        il.Emit(OpCodes.Ldc_I4, value);
+        var local = il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Stloc, local);
+        return local;
+    }
+
+    private static LocalBuilder EmitString(ILGenerator il, string value)
+    {
+        il.Emit(OpCodes.Ldstr, value);
+        var local = il.DeclareLocal(typeof(string));
+        il.Emit(OpCodes.Stloc, local);
+        return local;
+    }
+
+    private static LocalBuilder EmitBool(ILGenerator il, bool value)
+    {
+        il.Emit(value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+        var local = il.DeclareLocal(typeof(bool));
+        il.Emit(OpCodes.Stloc, local);
         return local;
     }
 

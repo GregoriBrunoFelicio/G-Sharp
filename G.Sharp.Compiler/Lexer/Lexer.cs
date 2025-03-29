@@ -15,7 +15,7 @@ public class Lexer
         _code = code;
     }
 
-    public IEnumerable<Token> Tokenize()
+    public List<Token> Tokenize()
     {
         while (!IsAtEnd())
         {

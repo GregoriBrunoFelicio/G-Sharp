@@ -21,7 +21,7 @@ public class ParserTests
             new(TokenType.EndOfFile, "")
         };
 
-        var parser = new Sharp.Compiler.Parser.Parser(tokens);
+        var parser = new Parsers.Parser(tokens);
         var result = parser.Parse();
 
         var let = result.Should()
@@ -52,7 +52,7 @@ public class ParserTests
             new(TokenType.EndOfFile, "")
         };
 
-        var parser = new Sharp.Compiler.Parser.Parser(tokens);
+        var parser = new Parsers.Parser(tokens);
         var result = parser.Parse();
 
         var let = result.Should()
@@ -83,7 +83,7 @@ public class ParserTests
             new(TokenType.EndOfFile, "")
         };
 
-        var parser = new Sharp.Compiler.Parser.Parser(tokens);
+        var parser = new Parsers.Parser(tokens);
         var result = parser.Parse();
 
         var let = result.Should()
@@ -114,7 +114,7 @@ public class ParserTests
             new(TokenType.EndOfFile, "")
         };
 
-        var parser = new Sharp.Compiler.Parser.Parser(tokens);
+        var parser = new Parsers.Parser(tokens);
         var result = parser.Parse();
 
         var let = result.Should()
@@ -141,7 +141,7 @@ public class ParserTests
             new(TokenType.EndOfFile, "")
         };
 
-        var parser = new Sharp.Compiler.Parser.Parser(tokens);
+        var parser = new Parsers.Parser(tokens);
         var result = parser.Parse();
 
         var let = result.Should()
@@ -168,7 +168,7 @@ public class ParserTests
             new(TokenType.EndOfFile, "")
         };
 
-        var parser = new Sharp.Compiler.Parser.Parser(tokens);
+        var parser = new Parsers.Parser(tokens);
         var act = () => parser.Parse();
 
         act.Should().Throw<Exception>().WithMessage("*Expected token Colon*");
@@ -183,7 +183,7 @@ public class ParserTests
             new(TokenType.EndOfFile, "")
         };
 
-        var parser = new Sharp.Compiler.Parser.Parser(tokens);
+        var parser = new Parsers.Parser(tokens);
         var act = () => parser.Parse();
 
         act.Should().Throw<Exception>().WithMessage("*Invalid statement*");

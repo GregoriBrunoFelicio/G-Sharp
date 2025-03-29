@@ -1,6 +1,6 @@
 using FluentAssertions;
 using G.Sharp.Compiler.AST;
-using G.Sharp.Compiler.Parsers.Shared;
+using G.Sharp.Compiler.Parsers;
 using Type = G.Sharp.Compiler.AST.Type;
 
 namespace G.Sharp.Compiler.Tests.Parser;

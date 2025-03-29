@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using G.Sharp.Compiler.AST;
 using Type = G.Sharp.Compiler.AST.Type;
 
-namespace G.Sharp.Compiler.Parsers.Shared;
+namespace G.Sharp.Compiler.Parsers;
 
 public static partial class Validations
 {

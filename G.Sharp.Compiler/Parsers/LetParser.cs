@@ -1,26 +1,25 @@
 using G.Sharp.Compiler.AST;
 using G.Sharp.Compiler.Lexer;
-using G.Sharp.Compiler.Parsers.Shared;
-using static G.Sharp.Compiler.Parsers.Shared.Validations;
+using static G.Sharp.Compiler.Parsers.Validations;
 using Type = G.Sharp.Compiler.AST.Type;
 
 namespace G.Sharp.Compiler.Parsers;
 
-public class LetParser(ParserHelper parserHelper) : StatementParserBase(parserHelper), IStatementParser
+public class LetParser(Parser parser)
 {
     private readonly HashSet<string> _variablesDeclared = [];
 
     public Statement Parse()
     {
-        var variableName = Consume(TokenType.Identifier).Value;
+        var variableName = parser.Consume(TokenType.Identifier).Value;
 
         ValidateVariableName(variableName);
 
-        Consume(TokenType.Colon);
+        parser.Consume(TokenType.Colon);
 
         var varType = GetVariableType();
 
-        Consume(TokenType.Equals);
+        parser.Consume(TokenType.Equals);
 
         var value = GetValue(varType);
 
@@ -29,7 +28,7 @@ public class LetParser(ParserHelper parserHelper) : StatementParserBase(parserHe
             throw new Exception($"Type mismatch: expected {varType}, but got {value.Type}");
         }
 
-        Consume(TokenType.Semicolon);
+        parser.Consume(TokenType.Semicolon);
 
         _variablesDeclared.Add(variableName);
 
@@ -38,17 +37,17 @@ public class LetParser(ParserHelper parserHelper) : StatementParserBase(parserHe
 
     private Type GetVariableType()
     {
-        if (Match(TokenType.Number))
+        if (parser.Match(TokenType.Number))
         {
             return Type.Number;
         }
 
-        if (Match(TokenType.String))
+        if (parser.Match(TokenType.String))
         {
             return Type.String;
         }
 
-        if (Match(TokenType.Boolean))
+        if (parser.Match(TokenType.Boolean))
         {
             return Type.Boolean;
         }
@@ -59,16 +58,16 @@ public class LetParser(ParserHelper parserHelper) : StatementParserBase(parserHe
     private VariableValue GetValue(Type type) =>
         type switch
         {
-            Type.Number => new NumberValue(int.Parse(Consume(TokenType.NumberLiteral).Value)),
-            Type.String => new StringValue(Consume(TokenType.StringLiteral).Value),
+            Type.Number => new NumberValue(int.Parse(parser.Consume(TokenType.NumberLiteral).Value)),
+            Type.String => new StringValue(parser.Consume(TokenType.StringLiteral).Value),
             Type.Boolean => new BooleanValue(ConsumeBool()),
             _ => throw new Exception("Unsupported type")
         };
 
     private bool ConsumeBool()
     {
-        if (Match(TokenType.BooleanTrueLiteral)) return true;
-        if (Match(TokenType.BooleanFalseLiteral)) return false;
+        if (parser.Match(TokenType.BooleanTrueLiteral)) return true;
+        if (parser.Match(TokenType.BooleanFalseLiteral)) return false;
         throw new Exception("Expected boolean literal");
     }
 

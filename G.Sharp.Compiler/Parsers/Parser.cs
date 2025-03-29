@@ -1,13 +1,12 @@
 using G.Sharp.Compiler.AST;
 using G.Sharp.Compiler.Lexer;
-using G.Sharp.Compiler.Parsers.Shared;
 
 namespace G.Sharp.Compiler.Parsers;
 
 public class Parser(List<Token> tokens)
 {
-    private readonly ParserHelper _helper = new(tokens);
-
+    private int _current;
+    
     public List<Statement> Parse()
     {
         var statements = new List<Statement>();
@@ -17,21 +16,57 @@ public class Parser(List<Token> tokens)
             var statement = ParseNextStatement();
             statements.Add(statement);
         }
-        
+
         return statements;
     }
-    
+
     private bool IsNotEndOfFile() =>
-        _helper.Current < tokens.Count && tokens[_helper.Current].Type != TokenType.EndOfFile;
+        _current < tokens.Count
+        && tokens[_current].Type
+        != TokenType.EndOfFile;
 
     private Statement ParseNextStatement()
     {
-        if (_helper.Match(TokenType.Let))
-            return new LetParser(_helper).Parse();
+        if (Match(TokenType.Let))
+            return new LetParser(this).Parse();
 
-        if (_helper.Match(TokenType.Println))
-            return new PrintParser(_helper).Parse();
+        if (Match(TokenType.Println))
+            return new PrintParser(this).Parse();
 
         throw new Exception("Invalid statement");
     }
+
+
+    /// <summary>
+    /// Token navigation methods
+    /// Core utilities for moving through the token stream, matching and consuming tokens,
+    /// and checking whether the parser has reached the end of the input.
+    /// </summary>
+    public Token Consume(TokenType type)
+    {
+        if (Check(type))
+            return Advance();
+        throw new Exception($"Expected token {type}, got {tokens[_current].Type}");
+    }
+
+    public bool Match(TokenType type)
+    {
+        if (!Check(type)) return false;
+        Advance();
+        return true;
+    }
+
+    private bool Check(TokenType type)
+    {
+        if (IsAtEnd()) return false;
+        return tokens[_current].Type == type;
+    }
+
+    private Token Advance()
+    {
+        if (!IsAtEnd()) _current++;
+        return tokens[_current - 1];
+    }
+
+    private bool IsAtEnd() => _current >= tokens.Count;
 }

@@ -34,7 +34,9 @@ public class Compiler
         il.Emit(OpCodes.Ret);
 
         var programType = typeBuilder.CreateType();
-        var main = programType.GetMethod("Main");
+        var main = programType.GetMethod("Main",  BindingFlags.Public | BindingFlags.Static);
+        if (main == null)
+            throw new Exception("Method 'Main' was not found.");
         main.Invoke(null, null);
     }
 

@@ -1,8 +1,9 @@
 using G.Sharp.Compiler.AST;
 using G.Sharp.Compiler.Lexer;
+using static G.Sharp.Compiler.Parser.Validations;
 using Type = G.Sharp.Compiler.AST.Type;
 
-namespace G.Sharp.Compiler;
+namespace G.Sharp.Compiler.Parser;
 
 public class Parser(IEnumerable<Token> tokens)
 {
@@ -21,6 +22,7 @@ public class Parser(IEnumerable<Token> tokens)
                 statements.Add(letStatement);
                 continue;
             }
+            
             if (Match(TokenType.Println))
             {
                 var printStatement = HandlePrintStatement();
@@ -36,8 +38,13 @@ public class Parser(IEnumerable<Token> tokens)
 
     private LetStatement HandleLetStatement()
     {
-        var name = Consume(TokenType.Identifier).Value;
-
+        var variableName = Consume(TokenType.Identifier).Value;
+        
+        if (IsValidVariableName(variableName))
+        {
+            throw new Exception($"Invalid variable name: {variableName}");
+        }
+        
         Consume(TokenType.Colon);
 
         var varType = GetGSharpType();
@@ -48,7 +55,7 @@ public class Parser(IEnumerable<Token> tokens)
 
         Consume(TokenType.Semicolon);
 
-        return new LetStatement(name, value);
+        return new LetStatement(variableName, value);
     }
 
     private PrintStatement HandlePrintStatement()

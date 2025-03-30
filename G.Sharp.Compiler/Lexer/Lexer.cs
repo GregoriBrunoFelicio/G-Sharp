@@ -28,31 +28,14 @@ public class Lexer
             }
 
             var token = ReadNextToken();
-
-            if (token is not null)
-            {
-                _tokens.Add(token);
-                continue;
-            }
-
-            throw new Exception($"Unexpected character: '{Current}'");
+            _tokens.Add(token);
         }
 
         _tokens.Add(new Token(TokenType.EndOfFile, ""));
         return _tokens;
     }
 
-    public void Advance() => Position++;
-    
-    public bool IsAtEnd() => Position >= Code.Length;
-
-    public void AdvanceWhile(Func<char, bool> condition)
-    {
-        while (!IsAtEnd() && condition(Current))
-            Advance();
-    }
-
-    private Token? ReadNextToken()
+    private Token ReadNextToken()
     {
         if (char.IsLetter(Current))
             return IdentifierLexer.Read(this);
@@ -66,6 +49,16 @@ public class Lexer
         if (SymbolTokenMap.ContainsKey(Current))
             return SymbolLexer.Read(this);
 
-        return null;
+        throw new Exception($"Unexpected character: '{Current}'");
     }
+
+    public void Advance() => Position++;
+
+    public void AdvanceWhile(Func<char, bool> condition)
+    {
+        while (!IsAtEnd() && condition(Current))
+            Advance();
+    }
+
+    public bool IsAtEnd() => Position >= Code.Length;
 }

@@ -12,6 +12,8 @@ public static class SymbolLexer
             throw new Exception($"Unknown symbol: '{current}'");
 
         lexer.Advance();
+        
+        //TODO: ToString? Maybe use another approach to get the string value
         return new Token(type, current.ToString());
     }
 }

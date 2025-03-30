@@ -14,11 +14,10 @@ public static class StringLexer
         if (lexer.IsAtEnd())
             throw new Exception("Unterminated string literal. Expected closing '\"'.");
 
-        var end = lexer.Position;
-        var value = lexer.Code[start..end];
+        var word = lexer.Code[start..lexer.Position];
 
         lexer.Advance();
 
-        return new Token(TokenType.StringLiteral, value);
+        return new Token(TokenType.StringLiteral, word);
     }
 }

@@ -1,4 +1,3 @@
-using static G.Sharp.Compiler.Lexer.Syntax;
 
 namespace G.Sharp.Compiler.Lexer;
 
@@ -16,4 +15,15 @@ public static class IdentifierLexer
 
         return new Token(type, value);
     }
+
+    private static readonly Dictionary<string, TokenType> KeywordTokenMap = new()
+    {
+        ["let"] = TokenType.Let,
+        ["number"] = TokenType.Number,
+        ["string"] = TokenType.String,
+        ["println"] = TokenType.Println,
+        ["bool"] = TokenType.Boolean,
+        ["true"] = TokenType.BooleanTrueLiteral,
+        ["false"] = TokenType.BooleanFalseLiteral,
+    };
 }

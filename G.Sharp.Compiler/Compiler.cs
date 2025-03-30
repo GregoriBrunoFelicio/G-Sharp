@@ -9,6 +9,24 @@ public class Compiler
 {
     private readonly Dictionary<string, LocalBuilder> _locals = new();
 
+    private static (MethodBuilder, TypeBuilder) CreateBuilders()
+    {
+        var assemblyName = new AssemblyName("GSharpRuntimeAssembly");
+        var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
+            assemblyName, AssemblyBuilderAccess.Run);
+
+        var moduleBuilder = assemblyBuilder.DefineDynamicModule("MainModule");
+        var typeBuilder = moduleBuilder.DefineType("Program", TypeAttributes.Public);
+
+        var methodBuilder = typeBuilder.DefineMethod(
+            "Main",
+            MethodAttributes.Public | MethodAttributes.Static,
+            typeof(void),
+            Type.EmptyTypes);
+
+        return (methodBuilder, typeBuilder);
+    }
+
     public void CompileAndRun(List<Statement> statements)
     {
         var (methodBuilder, typeBuilder) = CreateBuilders();
@@ -44,7 +62,10 @@ public class Compiler
     {
         var local = stmt.VariableValue switch
         {
-            NumberValue number => EmitInt(il, number.Value),
+            IntValue numberInt => EmitInt(il, numberInt.Value),
+            FloatValue numberFloat => EmitFloat(il, numberFloat.Value),
+            DoubleValue numberDouble => EmitDouble(il, numberDouble.Value),
+            DecimalValue numberDecimal => EmitDecimal(il, numberDecimal.Value),
             StringValue str => EmitString(il, str.Value),
             BooleanValue boolean => EmitBool(il, boolean.Value),
             _ => throw new NotSupportedException($"Unsupported value type: {stmt.VariableValue.GetType().Name}")
@@ -74,14 +95,6 @@ public class Compiler
         il.Emit(OpCodes.Call, method);
     }
 
-    private static LocalBuilder EmitInt(ILGenerator il, int value)
-    {
-        il.Emit(OpCodes.Ldc_I4, value);
-        var local = il.DeclareLocal(typeof(int));
-        il.Emit(OpCodes.Stloc, local);
-        return local;
-    }
-
     private static LocalBuilder EmitString(ILGenerator il, string value)
     {
         il.Emit(OpCodes.Ldstr, value);
@@ -98,21 +111,55 @@ public class Compiler
         return local;
     }
 
-    private static (MethodBuilder, TypeBuilder) CreateBuilders()
+
+    /// <summary>
+    /// Emits an integer value to the IL generator and stores it in a local variable.
+    /// </summary>
+    private static LocalBuilder EmitInt(ILGenerator il, int value)
     {
-        var assemblyName = new AssemblyName("GSharpRuntimeAssembly");
-        var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
-            assemblyName, AssemblyBuilderAccess.Run);
+        il.Emit(OpCodes.Ldc_I4, value);
+        var local = il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Stloc, local);
+        return local;
+    }
+    
+    private static LocalBuilder EmitFloat(ILGenerator il, float value)
+    {
+        il.Emit(OpCodes.Ldc_R4, value);
+        var local = il.DeclareLocal(typeof(float));
+        il.Emit(OpCodes.Stloc, local);
+        return local;
+    }
 
-        var moduleBuilder = assemblyBuilder.DefineDynamicModule("MainModule");
-        var typeBuilder = moduleBuilder.DefineType("Program", TypeAttributes.Public);
+    private static LocalBuilder EmitDouble(ILGenerator il, double value)
+    {
+        il.Emit(OpCodes.Ldc_R8, value);
+        var local = il.DeclareLocal(typeof(double));
+        il.Emit(OpCodes.Stloc, local);
+        return local;
+    }
 
-        var methodBuilder = typeBuilder.DefineMethod(
-            "Main",
-            MethodAttributes.Public | MethodAttributes.Static,
-            typeof(void),
-            Type.EmptyTypes);
+    private static LocalBuilder EmitDecimal(ILGenerator il, decimal value)
+    {
+        var local = il.DeclareLocal(typeof(decimal));
+        
+        var ctor = typeof(decimal).GetConstructor([typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)]);
 
-        return (methodBuilder, typeBuilder);
+        var bits = decimal.GetBits(value);
+        var lo = bits[0];
+        var mid = bits[1];
+        var hi = bits[2];
+        var sign = (bits[3] & 0x80000000) != 0;
+        var scale = (byte)((bits[3] >> 16) & 0x7F);
+
+        il.Emit(OpCodes.Ldc_I4, lo);
+        il.Emit(OpCodes.Ldc_I4, mid);
+        il.Emit(OpCodes.Ldc_I4, hi);
+        il.Emit(sign ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+        il.Emit(OpCodes.Ldc_I4_S, scale);
+        il.Emit(OpCodes.Newobj, ctor);
+        il.Emit(OpCodes.Stloc, local);
+
+        return local;
     }
 }

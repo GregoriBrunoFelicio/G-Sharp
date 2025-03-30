@@ -58,16 +58,41 @@ public class LetParser(Parser parser)
     private VariableValue GetValue(Type type) =>
         type switch
         {
-            Type.Number => new NumberValue(int.Parse(parser.Consume(TokenType.NumberLiteral).Value)),
             Type.String => new StringValue(parser.Consume(TokenType.StringLiteral).Value),
-            Type.Boolean => new BooleanValue(ConsumeBool()),
+            Type.Number => ParseNumber(),
+            Type.Boolean => ParseBool(),
             _ => throw new Exception("Unsupported type")
         };
 
-    private bool ConsumeBool()
+    private NumberValue ParseNumber()
     {
-        if (parser.Match(TokenType.BooleanTrueLiteral)) return true;
-        if (parser.Match(TokenType.BooleanFalseLiteral)) return false;
+        var token = parser.Consume(TokenType.NumberLiteral).Value;
+
+        if (token.EndsWith('f'))
+        {
+            var floatValue = float.Parse(token[..^1]);
+            return new FloatValue(floatValue);
+        }
+
+        if (token.EndsWith('d'))
+        {
+            var doubleValue = double.Parse(token[..^1]);
+            return new DoubleValue(doubleValue);
+        }
+
+        if (token.EndsWith('m'))
+        {
+            var decimalValue = decimal.Parse(token[..^1]);
+            return new DecimalValue(decimalValue);
+        }
+
+        return new IntValue(int.Parse(token));
+    }
+
+    private BooleanValue ParseBool()
+    {
+        if (parser.Match(TokenType.BooleanTrueLiteral)) return new BooleanValue(true);
+        if (parser.Match(TokenType.BooleanFalseLiteral)) return new BooleanValue(false);
         throw new Exception("Expected boolean literal");
     }
 

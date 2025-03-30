@@ -94,15 +94,18 @@ public class ParseValidationsTests
     [Theory]
     [InlineData(Type.Number, "string")]
     [InlineData(Type.Number, "boolean")]
-    [InlineData(Type.String, "number")]
+    [InlineData(Type.String, "int")]
     [InlineData(Type.String, "boolean")]
-    [InlineData(Type.Boolean, "number")]
+    [InlineData(Type.Boolean, "int")]
     [InlineData(Type.Boolean, "string")]
     public void IsTypeCompatible_Should_Return_False_When_Types_Do_Not_Match(Type expectedType, string valueKind)
     {
         VariableValue value = valueKind switch
         {
-            "number" => new NumberValue(1),
+            "int" => new IntValue(1),
+            "float" => new FloatValue(1.0f),
+            "double" => new DoubleValue(1.0),
+            "decimal" => new DecimalValue(1.0m),
             "string" => new StringValue("mismatch"),
             "boolean" => new BooleanValue(false),
             _ => throw new InvalidOperationException("Unknown value kind")
@@ -113,17 +116,23 @@ public class ParseValidationsTests
     }
     
     [Theory]
-    [InlineData(Type.Number, "number")]
+    [InlineData(Type.Number, "int")]
+    [InlineData(Type.Number, "float")]
+    [InlineData(Type.Number, "double")]
+    [InlineData(Type.Number, "decimal")]
     [InlineData(Type.String, "string")]
     [InlineData(Type.Boolean, "boolean")]
     public void IsTypeCompatible_Should_Return_True_When_Types_Match(Type expectedType, string valueKind)
     {
         VariableValue value = valueKind switch
         {
-            "number" => new NumberValue(42),
+            "int" => new IntValue(1),
+            "float" => new FloatValue(1.0f),
+            "double" => new DoubleValue(1.0),
+            "decimal" => new DecimalValue(1.0m),
             "string" => new StringValue("ok"),
             "boolean" => new BooleanValue(true),
-            _ => throw new InvalidOperationException("Unknown value kind")
+            _ => throw new ArgumentOutOfRangeException(nameof(valueKind), valueKind, null)
         };
 
         var result = Validations.IsTypeCompatible(expectedType, value);

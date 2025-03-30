@@ -8,6 +8,7 @@ public class Lexer
     private readonly string _code;
     private int _position;
     private readonly List<Token> _tokens = [];
+    private readonly HashSet<char> _supportedNumberSuffixes = ['f', 'F', 'd', 'D', 'm', 'M'];
 
     public Lexer(string code)
     {
@@ -46,22 +47,38 @@ public class Lexer
     private bool ReadIdentifierOrKeyword()
     {
         if (!Peek().IsLetter()) return false;
-        
+
         var word = ReadWhile(char.IsLetterOrDigit);
-        
+
         var token = KeywordTokenMap.TryGetValue(word, out var type)
             ? new Token(type, word)
             : new Token(TokenType.Identifier, word);
-        
+
         _tokens.Add(token);
-        
+
         return true;
     }
 
     private bool ReadNumberLiteral()
     {
-        if (!Peek().IsNumber()) return false;
-        var number = ReadWhile(char.IsDigit);
+        if (!char.IsDigit(Peek())) return false;
+
+        var start = _position;
+
+        ReadWhile(char.IsDigit);
+
+        if (!IsAtEnd() && Peek() == '.')
+        {
+            Advance();
+            ReadWhile(char.IsDigit);
+        }
+
+        if (!IsAtEnd() && _supportedNumberSuffixes.Contains(Peek()))
+        {
+            Advance();
+        }
+
+        var number = _code[start.._position];
         _tokens.Add(new Token(TokenType.NumberLiteral, number));
         return true;
     }

@@ -33,8 +33,8 @@ public class ParserTests
             .As<LetStatement>();
 
         let.VariableName.Should().Be("x");
-        let.VariableValue.Should().BeOfType<NumberValue>();
-        let.VariableValue.As<NumberValue>().Value.Should().Be(42);
+        let.VariableValue.Should().BeOfType<IntValue>();
+        let.VariableValue.As<IntValue>().Value.Should().Be(42);
     }
 
     [Fact]

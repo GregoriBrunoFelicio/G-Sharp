@@ -3,16 +3,17 @@ using G.Sharp.Compiler;
 using G.Sharp.Compiler.Lexer;
 using G.Sharp.Compiler.Parsers;
 
-var code = """
-           let name: string = "greg";
-           let age: number = 33;
-           let isTrue: bool = true;
-           println name;
-           println age;
-           println isTrue;
-           """;
+//
+// var code = """
+//            let name: string = "greg";
+//            let age: number = 33;
+//            let isTrue: bool = true;
+//            println name;
+//            println age;
+//            println isTrue;
+//            """;
 
-// var code = "let variable: string = \"10\"; println variable;";
+var code = "let variable: number = 10.3m; println variable;";
 
 var lexer = new Lexer(code);
 var tokens = lexer.Tokenize();
@@ -24,6 +25,6 @@ var compiler = new Compiler();
 // var count = 0;
 // while (count <= 10000)
 // {
-    compiler.CompileAndRun(statements);
+compiler.CompileAndRun(statements);
 //     count++;
 // }

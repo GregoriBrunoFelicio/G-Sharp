@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using G.Sharp.Compiler.AST;
-using Type = G.Sharp.Compiler.AST.Type;
 
 namespace G.Sharp.Compiler.Parsers;
 
@@ -38,6 +37,6 @@ public static partial class Validations
         return reserved.Contains(word);
     }
 
-    public static bool IsTypeCompatible(Type expected, VariableValue actual) =>
+    public static bool IsTypeCompatible(GType expected, VariableValue actual) =>
         expected == actual.Type;
 }

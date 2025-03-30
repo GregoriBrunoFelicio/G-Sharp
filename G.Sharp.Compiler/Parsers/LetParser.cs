@@ -1,7 +1,6 @@
 using G.Sharp.Compiler.AST;
 using G.Sharp.Compiler.Lexer;
 using static G.Sharp.Compiler.Parsers.Validations;
-using Type = G.Sharp.Compiler.AST.Type;
 
 namespace G.Sharp.Compiler.Parsers;
 
@@ -35,32 +34,32 @@ public class LetParser(Parser parser)
         return new LetStatement(variableName, value);
     }
 
-    private Type GetVariableType()
+    private GType GetVariableType()
     {
         if (parser.Match(TokenType.Number))
         {
-            return Type.Number;
+            return GType.Number;
         }
 
         if (parser.Match(TokenType.String))
         {
-            return Type.String;
+            return GType.String;
         }
 
         if (parser.Match(TokenType.Boolean))
         {
-            return Type.Boolean;
+            return GType.Boolean;
         }
 
         throw new Exception("Expected a type not found.");
     }
 
-    private VariableValue GetValue(Type type) =>
+    private VariableValue GetValue(GType type) =>
         type switch
         {
-            Type.String => new StringValue(parser.Consume(TokenType.StringLiteral).Value),
-            Type.Number => ParseNumber(),
-            Type.Boolean => ParseBool(),
+            GType.String => new StringValue(parser.Consume(TokenType.StringLiteral).Value),
+            GType.Number => ParseNumber(),
+            GType.Boolean => ParseBool(),
             _ => throw new Exception("Unsupported type")
         };
 

@@ -1,6 +1,6 @@
 namespace G.Sharp.Compiler.AST;
 
-public enum Type
+public enum GType
 {
     Number,
     String,

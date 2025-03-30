@@ -2,22 +2,22 @@ namespace G.Sharp.Compiler.AST;
 
 public abstract record VariableValue
 {
-    public abstract Type Type { get; }
+    public abstract GType Type { get; }
 }
 
 public record StringValue(string Value) : VariableValue
 {
-    public override Type Type => Type.String;
+    public override GType Type => GType.String;
 }
 
 public record BooleanValue(bool Value) : VariableValue
 {
-    public override Type Type => Type.Boolean;
+    public override GType Type => GType.Boolean;
 }
 
 public abstract record NumberValue : VariableValue
 {
-    public override Type Type => Type.Number;
+    public override GType Type => GType.Number;
 }
 
 public record IntValue(int Value) : NumberValue;

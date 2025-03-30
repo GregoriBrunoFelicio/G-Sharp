@@ -1,7 +1,6 @@
 using FluentAssertions;
 using G.Sharp.Compiler.AST;
 using G.Sharp.Compiler.Parsers;
-using Type = G.Sharp.Compiler.AST.Type;
 
 namespace G.Sharp.Compiler.Tests.Parser;
 
@@ -92,13 +91,13 @@ public class ParseValidationsTests
     }
     
     [Theory]
-    [InlineData(Type.Number, "string")]
-    [InlineData(Type.Number, "boolean")]
-    [InlineData(Type.String, "int")]
-    [InlineData(Type.String, "boolean")]
-    [InlineData(Type.Boolean, "int")]
-    [InlineData(Type.Boolean, "string")]
-    public void IsTypeCompatible_Should_Return_False_When_Types_Do_Not_Match(Type expectedType, string valueKind)
+    [InlineData(GType.Number, "string")]
+    [InlineData(GType.Number, "boolean")]
+    [InlineData(GType.String, "int")]
+    [InlineData(GType.String, "boolean")]
+    [InlineData(GType.Boolean, "int")]
+    [InlineData(GType.Boolean, "string")]
+    public void IsTypeCompatible_Should_Return_False_When_Types_Do_Not_Match(GType expectedType, string valueKind)
     {
         VariableValue value = valueKind switch
         {
@@ -116,13 +115,13 @@ public class ParseValidationsTests
     }
     
     [Theory]
-    [InlineData(Type.Number, "int")]
-    [InlineData(Type.Number, "float")]
-    [InlineData(Type.Number, "double")]
-    [InlineData(Type.Number, "decimal")]
-    [InlineData(Type.String, "string")]
-    [InlineData(Type.Boolean, "boolean")]
-    public void IsTypeCompatible_Should_Return_True_When_Types_Match(Type expectedType, string valueKind)
+    [InlineData(GType.Number, "int")]
+    [InlineData(GType.Number, "float")]
+    [InlineData(GType.Number, "double")]
+    [InlineData(GType.Number, "decimal")]
+    [InlineData(GType.String, "string")]
+    [InlineData(GType.Boolean, "boolean")]
+    public void IsTypeCompatible_Should_Return_True_When_Types_Match(GType expectedType, string valueKind)
     {
         VariableValue value = valueKind switch
         {

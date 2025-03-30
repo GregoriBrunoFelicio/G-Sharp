@@ -8,8 +8,4 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-      <Folder Include="Parsers\Shared\" />
-    </ItemGroup>
-
 </Project>

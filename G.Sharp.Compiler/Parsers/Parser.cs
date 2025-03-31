@@ -6,7 +6,8 @@ namespace G.Sharp.Compiler.Parsers;
 public class Parser(List<Token> tokens)
 {
     private int _current;
-    
+    public readonly Dictionary<string, GType> VariablesDeclared = [];
+
     public List<Statement> Parse()
     {
         var statements = new List<Statement>();
@@ -32,6 +33,9 @@ public class Parser(List<Token> tokens)
 
         if (Match(TokenType.Println))
             return new PrintParser(this).Parse();
+        
+        if (Check(TokenType.Identifier))
+            return new AssignmentParser(this).Parse();
 
         throw new Exception("Invalid statement");
     }

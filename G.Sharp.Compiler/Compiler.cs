@@ -39,6 +39,10 @@ public class Compiler
                 case LetStatement letStmt:
                     EmitLetStatement(il, letStmt);
                     break;
+                
+                case AssignmentStatement assignStmt:
+                    EmitAssignmentStatement(il, assignStmt); 
+                    break;
 
                 case PrintStatement printStmt:
                     EmitPrintStatement(il, printStmt);
@@ -58,9 +62,9 @@ public class Compiler
         main.Invoke(null, null);
     }
 
-    private void EmitLetStatement(ILGenerator il, LetStatement stmt)
+    private void EmitLetStatement(ILGenerator il, LetStatement statement)
     {
-        var local = stmt.VariableValue switch
+        var local = statement.VariableValue switch
         {
             IntValue numberInt => EmitInt(il, numberInt.Value),
             FloatValue numberFloat => EmitFloat(il, numberFloat.Value),
@@ -68,16 +72,16 @@ public class Compiler
             DecimalValue numberDecimal => EmitDecimal(il, numberDecimal.Value),
             StringValue str => EmitString(il, str.Value),
             BooleanValue boolean => EmitBool(il, boolean.Value),
-            _ => throw new NotSupportedException($"Unsupported value type: {stmt.VariableValue.GetType().Name}")
+            _ => throw new NotSupportedException($"Unsupported value type: {statement.VariableValue.GetType().Name}")
         };
 
-        _locals[stmt.VariableName] = local;
+        _locals[statement.VariableName] = local;
     }
 
-    private void EmitPrintStatement(ILGenerator il, PrintStatement stmt)
+    private void EmitPrintStatement(ILGenerator il, PrintStatement statement)
     {
-        if (!_locals.TryGetValue(stmt.VariableName, out var variable))
-            throw new InvalidOperationException($"Variable '{stmt.VariableName}' is not defined.");
+        if (!_locals.TryGetValue(statement.VariableName, out var variable))
+            throw new InvalidOperationException($"Variable '{statement.VariableName}' is not defined.");
 
         il.Emit(OpCodes.Ldloc, variable);
 
@@ -161,5 +165,43 @@ public class Compiler
         il.Emit(OpCodes.Stloc, local);
 
         return local;
+    }
+    
+    private void EmitAssignmentStatement(ILGenerator il, AssignmentStatement statement)
+    {
+        if (!_locals.TryGetValue(statement.VariableName, out var local))
+            throw new InvalidOperationException($"Variable '{statement.VariableName}' is not defined.");
+
+        switch (statement.VariableValue)
+        {
+            case IntValue intVal:
+                il.Emit(OpCodes.Ldc_I4, intVal.Value);
+                break;
+
+            case FloatValue floatVal:
+                il.Emit(OpCodes.Ldc_R4, floatVal.Value);
+                break;
+
+            case DoubleValue doubleVal:
+                il.Emit(OpCodes.Ldc_R8, doubleVal.Value);
+                break;
+
+            case DecimalValue decVal:
+                EmitDecimal(il, decVal.Value);
+                return;
+
+            case StringValue strVal:
+                il.Emit(OpCodes.Ldstr, strVal.Value);
+                break;
+
+            case BooleanValue boolVal:
+                il.Emit(boolVal.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                break;
+
+            default:
+                throw new NotSupportedException($"Unsupported value type: {statement.VariableValue.GetType().Name}");
+        }
+
+        il.Emit(OpCodes.Stloc, local);
     }
 }

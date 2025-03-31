@@ -7,7 +7,7 @@ namespace G.Sharp.Compiler.Tests.Parser;
 public class LetParserTests
 {
     [Fact]
-    public void Should_Parse_Let_Statement_With_Number()
+    public void Parse_Should_Let_Statement_With_Number()
     {
         var tokens = new List<Token>
         {
@@ -38,7 +38,7 @@ public class LetParserTests
     }
 
     [Fact]
-    public void Should_Parse_Let_Statement_With_String()
+    public void Parse_Should_Let_Statement_With_String()
     {
         var tokens = new List<Token>
         {
@@ -69,7 +69,7 @@ public class LetParserTests
     }
 
     [Fact]
-    public void Should_Parse_Let_Statement_With_Bool_True()
+    public void Parse_Should_Let_Statement_With_Bool_True()
     {
         var tokens = new List<Token>
         {
@@ -100,7 +100,7 @@ public class LetParserTests
     }
 
     [Fact]
-    public void Should_Parse_Let_Statement_With_Bool_False()
+    public void Parse_Should_Let_Statement_With_Bool_False()
     {
         var tokens = new List<Token>
         {

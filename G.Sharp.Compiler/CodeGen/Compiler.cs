@@ -3,7 +3,7 @@ using System.Reflection.Emit;
 using G.Sharp.Compiler.AST;
 using Type = System.Type;
 
-namespace G.Sharp.Compiler;
+namespace G.Sharp.Compiler.CodeGen;
 
 public class Compiler
 {

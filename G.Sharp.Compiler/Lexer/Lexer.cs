@@ -37,13 +37,13 @@ public class Lexer
 
     private Token ReadNextToken()
     {
-        if (char.IsLetter(Current))
+        if (Current.IsLetter())
             return IdentifierLexer.Read(this);
 
-        if (char.IsDigit(Current))
+        if (Current.IsNumber())
             return NumberLexer.Read(this);
 
-        if (Current == '"')
+        if (Current.IsOnlyQuotes())
             return StringLexer.Read(this);
 
         if (SymbolTokenMap.ContainsKey(Current))

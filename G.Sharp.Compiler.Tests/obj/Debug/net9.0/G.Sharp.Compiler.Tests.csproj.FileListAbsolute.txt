@@ -104,3 +104,10 @@
 /home/greg/RiderProjects/G-SHARP/G.Sharp.Compiler.Tests/obj/Debug/net9.0/G.Sharp.Compiler.Tests.pdb
 /home/greg/RiderProjects/G-SHARP/G.Sharp.Compiler.Tests/obj/Debug/net9.0/G.Sharp.Compiler.Tests.genruntimeconfig.cache
 /home/greg/RiderProjects/G-SHARP/G.Sharp.Compiler.Tests/obj/Debug/net9.0/ref/G.Sharp.Compiler.Tests.dll
+/home/greg/RiderProjects/G-SHARP/G.Sharp.Compiler.Tests/bin/Debug/net9.0/Castle.Core.dll
+/home/greg/RiderProjects/G-SHARP/G.Sharp.Compiler.Tests/bin/Debug/net9.0/Moq.dll
+/home/greg/RiderProjects/G-SHARP/G.Sharp.Compiler.Tests/bin/Debug/net9.0/System.Diagnostics.EventLog.dll
+/home/greg/RiderProjects/G-SHARP/G.Sharp.Compiler.Tests/bin/Debug/net9.0/runtimes/win/lib/net6.0/System.Diagnostics.EventLog.Messages.dll
+/home/greg/RiderProjects/G-SHARP/G.Sharp.Compiler.Tests/bin/Debug/net9.0/runtimes/win/lib/net6.0/System.Diagnostics.EventLog.dll
+/home/greg/RiderProjects/G-SHARP/G.Sharp.Compiler.Tests/bin/Debug/net9.0/AutoBogus.dll
+/home/greg/RiderProjects/G-SHARP/G.Sharp.Compiler.Tests/bin/Debug/net9.0/Bogus.dll

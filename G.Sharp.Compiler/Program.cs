@@ -23,9 +23,9 @@ var parser = new Parser(tokens);
 var statements = parser.Parse();
 
 var compiler = new Compiler();
-// var count = 0;
-// while (count <= 10000)
-// {
-compiler.CompileAndRun(statements);
-//     count++;
-// }
+var count = 0;
+while (count <= 10000)
+{
+    compiler.CompileAndRun(statements);
+    count++;
+}

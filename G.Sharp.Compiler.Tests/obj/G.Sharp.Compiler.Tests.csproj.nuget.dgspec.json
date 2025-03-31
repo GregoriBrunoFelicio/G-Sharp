@@ -48,6 +48,10 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "AutoBogus": {
+              "target": "Package",
+              "version": "[2.13.1, )"
+            },
             "FluentAssertions": {
               "target": "Package",
               "version": "[8.2.0, )"
@@ -55,6 +59,10 @@
             "Microsoft.NET.Test.Sdk": {
               "target": "Package",
               "version": "[17.12.0, )"
+            },
+            "Moq": {
+              "target": "Package",
+              "version": "[4.20.72, )"
             },
             "coverlet.collector": {
               "target": "Package",

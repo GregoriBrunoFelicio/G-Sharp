@@ -6,6 +6,8 @@ public static class Syntax
     {
         { ':', TokenType.Colon },
         { '=', TokenType.Equals },
-        { ';', TokenType.Semicolon }
+        { ';', TokenType.Semicolon },
+        {'[', TokenType.LeftSquareBracket },
+        {']', TokenType.RightSquareBracket},
     };
 }

@@ -25,5 +25,7 @@ public static class IdentifierLexer
         ["bool"] = TokenType.Boolean,
         ["true"] = TokenType.BooleanTrueLiteral,
         ["false"] = TokenType.BooleanFalseLiteral,
+        ["if"] = TokenType.If,
+        ["else"] = TokenType.Else,
     };
 }

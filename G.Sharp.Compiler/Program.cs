@@ -14,7 +14,12 @@ using G.Sharp.Compiler.Parsers;
 //            println isTrue;
 //            """;
 
-var code = "let variable: number = 10; variable = 20; println variable;";
+// var code = "let variable: number = 10; variable = 20; println variable;";
+
+var code =
+    "let nums: number[] = [1 2 3];";
+    // "let names: string[] = [\"Greg\" \"GPT\"];" +
+    // "let flags: boolean[] = [true false true];";
 
 var lexer = new Lexer(code);
 var tokens = lexer.Tokenize();

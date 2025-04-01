@@ -1,18 +1,16 @@
 using FluentAssertions;
 using G.Sharp.Compiler.AST;
+using G.Sharp.Compiler.Lexer;
 using G.Sharp.Compiler.Parsers;
-using G.Sharp.Compiler.Tests.Parser.Fakers;
 
 namespace G.Sharp.Compiler.Tests.Parser;
 
 public class ValueParserTests
 {
-    private readonly TokenFaker _tokenFaker = new();
-
     [Fact]
     public void Parse_stringLiteral_returns_StringValue()
     {
-        var token = _tokenFaker.StringLiteral("hello");
+        var token = new Token(TokenType.StringLiteral, "hello");
         var parser = new Parsers.Parser([token]);
         var valueParser = new ValueParser(parser);
 
@@ -25,7 +23,7 @@ public class ValueParserTests
     [Fact]
     public void Parse_numberLiteral_withoutSuffix_returns_IntValue()
     {
-        var token = _tokenFaker.NumberLiteral("42");
+        var token = new Token(TokenType.NumberLiteral, "42");
         var parser = new Parsers.Parser([token]);
         var valueParser = new ValueParser(parser);
 
@@ -38,7 +36,7 @@ public class ValueParserTests
     [Fact]
     public void Parse_numberLiteral_withSuffixF_returns_FloatValue()
     {
-        var token = _tokenFaker.NumberLiteral("3.14f");
+        var token = new Token(TokenType.NumberLiteral, "3.14f");
         var parser = new Parsers.Parser([token]);
         var valueParser = new ValueParser(parser);
 
@@ -51,7 +49,7 @@ public class ValueParserTests
     [Fact]
     public void Parse_numberLiteral_withSuffixD_returns_DoubleValue()
     {
-        var token = _tokenFaker.NumberLiteral("2.71d");
+        var token = new Token(TokenType.NumberLiteral, "2.71d");
         var parser = new Parsers.Parser([token]);
         var valueParser = new ValueParser(parser);
 
@@ -64,7 +62,7 @@ public class ValueParserTests
     [Fact]
     public void Parse_numberLiteral_withSuffixM_returns_DecimalValue()
     {
-        var token = _tokenFaker.NumberLiteral("100.5m");
+        var token = new Token(TokenType.NumberLiteral, "100.5m");
         var parser = new Parsers.Parser([token]);
         var valueParser = new ValueParser(parser);
 
@@ -77,7 +75,7 @@ public class ValueParserTests
     [Fact]
     public void Parse_booleanTrueLiteral_returns_TrueBooleanValue()
     {
-        var token = _tokenFaker.BooleanTrueLiteral();
+        var token = new Token(TokenType.BooleanTrueLiteral, "true");
         var parser = new Parsers.Parser([token]);
         var valueParser = new ValueParser(parser);
 
@@ -90,7 +88,7 @@ public class ValueParserTests
     [Fact]
     public void Parse_booleanFalseLiteral_returns_FalseBooleanValue()
     {
-        var token = _tokenFaker.BooleanFalseLiteral();
+        var token = new Token(TokenType.BooleanFalseLiteral, "false");
         var parser = new Parsers.Parser([token]);
         var valueParser = new ValueParser(parser);
 
@@ -103,7 +101,7 @@ public class ValueParserTests
     [Fact]
     public void Parse_booleanLiteral_invalidToken_throwsException()
     {
-        var token = _tokenFaker.StringLiteral("not-a-boolean");
+        var token = new Token(TokenType.StringLiteral, "\"not-a-boolean\"");
         var parser = new Parsers.Parser([token]);
         var valueParser = new ValueParser(parser);
 

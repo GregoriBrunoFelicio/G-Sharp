@@ -7,6 +7,10 @@ public enum TokenType
     Semicolon,
     Println,
     EndOfFile,
+    
+    // Condition
+    If,
+    Else,   
 
     //Let
     Let,
@@ -24,4 +28,7 @@ public enum TokenType
     Boolean,
     BooleanTrueLiteral,
     BooleanFalseLiteral,
+    
+    LeftSquareBracket,   // [
+    RightSquareBracket,  // ]
 }

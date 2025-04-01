@@ -1,116 +1,121 @@
-# G♯ (GSharp)
+# G♯
 
-**G♯** is a programming language that emits **IL (Intermediate Language)** and runs on the .NET runtime.  
-I created this project to better understand how programming languages work internally — from lexing and parsing to IL code generation.  
-Although I'm not a language design expert, I decided to build one from scratch to learn, explore, and share knowledge along the way.  
-As a big fan of C#, I chose to implement everything in C# and gave the syntax a familiar feel.
+One day I simply woke up and thought:
+“I want to create my own programming language.” 😄
 
-> ⚠️ This project is in early development. Contributions and feedback are welcome!
+G♯ is a programming language that emits IL (Intermediate Language) and runs on the .NET runtime.
+It’s a challenging project, but I’m learning a lot from it. I’m not a language design expert (yet), so you’ll likely find many rough edges and mistakes along the way — and that’s totally fine.
 
+This whole thing is meant to be fun, experimental, and educational.
+
+⚠️ This project is in early development. Contributions and feedback are welcome!
 
 ---
 
 ## ✨ Current Features
 
-At the moment, G♯ includes the following features:
-
+### ✅ Implemented
 - 🧠 Lexer and tokenization
 - 🧱 Parser for basic statements
-- ⚙️ IL (Intermediate Language) code generation using `System.Reflection.Emit`
-- 🖨️ `printfln` for printing values with a newline
-- 📦 Basic type support:
-  - `number`
-  - `string` (with double quotes)
+- 🖨️ `println` for printing values
 - 🔤 Variable declarations using `let`
+- 📦 Type support: `number`, `string`, `bool`
 
-### Example (G# syntax)
+### 🚧 In Progress / Not Implemented Yet
+- 🔁 Conditionals (`if`, `else`) with `{}` blocks
+- 🔂 Loops (`for`, `while`) using `{}`
+- 🧩 Functions with parameters and return types
+- 🧱 Object types with constructor-based instantiation
+
+---
+
+## 🧪 Syntax Examples
+
+Defining a good syntax has been one of the biggest challenges in this journey.  
+I now understand why some languages made syntax decisions I once judged harshly 😅.  
+It's not easy — especially when you also have to think about performance, IL generation, and how every small choice might impact memory, the runtime, or even GC pressure. A decision made just to make code look "pretty" can have deep architectural consequences.  
+
+This is the current plan for a first version of the language — a minimal but expressive set of features.  
+✅ means it's already implemented, and 🛠️ means it's planned but not working yet.
+
+### ✅ Variable Declarations (working)
 
 ```gsharp
-let name: string = "Greg"
-let count: number = 5
-
-printfln name
-printfln count
-
+let num: number = 10;
+let name: string = "Gregori";
+let isTrue: bool = false;
+num = 20;
+println name;
 ```
 
 ---
 
-## 📁 Project Structure
+### 🛠️ Arrays (planned)
 
-```
-GSharp/
-├── G.Sharp.Compiler/
-│   ├── AST/
-│   │   ├── Statements.cs
-│   │   ├── Type.cs
-│   │   └── Values.cs
-│   ├── Extensions/
-│   │   └── CharExtensions.cs
-│   ├── Lexer/
-│   │   ├── Lexer.cs
-│   │   ├── Syntax.cs
-│   │   ├── Token.cs
-│   │   └── TokenType.cs
-│   ├── Compiler.cs
-│   ├── Parser.cs
-│   └── Program.cs
-├── G.Sharp.Compiler.Tests/
-│   └── Lexer/
-│       ├── LexerStringTest.cs
-│       └── LexerTests.cs
+```gsharp
+let array: number[] = [1 2 3 4 5 6 7 8 9 10];
+array[10] = 90;
 ```
 
 ---
 
-## 🛠️ Building
+### 🛠️ Conditionals (planned)
 
-This project targets **.NET 9**. To build and run the compiler:
-
-```bash
-dotnet build
-dotnet run --project G.Sharp.Compiler
-```
-
-To run the tests:
-
-```bash
-dotnet test
+```gsharp
+if num >= 20 {
+    println "X";
+} else {
+    println "Y";
+}
 ```
 
 ---
 
-## ✅ Current Support
+### 🛠️ Loops (planned)
 
-- [x] Lexer
-- [x] Tokenization of strings, numbers, and keywords
-- [x] Parser with support for `let` statements
-- [x] String
-- [x] Number
-- [x] Boolean
-- [x] Basic `printfln` output
+```gsharp
+for item in array {
+    println item;
+}
 
----
-
-## 🗂️ TODO
-
-Planned features:
-
-- [ ] Arithmetic operations (`+`, `-`, `*`, `/`)
-- [ ] Conditionals (`if`, `else`)
-- [ ] Loops (`for`, `while`)
-- [ ] Functions and function calls
-- [ ] REPL support ?
+while num < 20 {
+    num++;
+}
+```
 
 ---
 
-## 🧠 Goals
+### 🛠️ Functions (planned)
 
-- Learn how to build a compiler and programming language from scratch
-- Explore .NET internals, including IL generation and runtime behavior
-- Experiment with language design and syntax
+```gsharp
+function Sum(a: number, b: number): number {
+    return a + b;
+}
+
+function Greet(): void {
+    println "Hello!";
+}
+```
 
 ---
+
+### 🛠️ Object with Constructor (planned)
+
+```gsharp
+object Person(name: string, age: number) {
+    function SayHello(): void {
+        println "Hello, my name is " + name;
+    }
+
+    function IsAdult(): bool {
+        return age >= 18;
+    }
+}
+
+let p: Person("Gregori", 20);
+p.SayHello();
+```
+
 
 ## 📬 Contact
 

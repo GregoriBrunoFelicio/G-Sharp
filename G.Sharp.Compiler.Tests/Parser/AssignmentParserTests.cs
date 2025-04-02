@@ -20,7 +20,7 @@ public class AssignmentParserTests
         };
 
         var parser = new Parsers.Parser(tokens);
-        parser.VariablesDeclared.Add("name", GType.String);
+        parser.VariablesDeclared.Add("name", new GType(GPrimitiveType.String));
 
         var result = new AssignmentParser(parser).Parse();
 
@@ -43,7 +43,7 @@ public class AssignmentParserTests
         };
 
         var parser = new Parsers.Parser(tokens);
-        parser.VariablesDeclared.Add("x", GType.Number);
+        parser.VariablesDeclared.Add("x", new GType(GPrimitiveType.Number));
 
         var result = new AssignmentParser(parser).Parse();
 
@@ -66,7 +66,7 @@ public class AssignmentParserTests
         };
 
         var parser = new Parsers.Parser(tokens);
-        parser.VariablesDeclared.Add("flag", GType.Boolean);
+        parser.VariablesDeclared.Add("flag", new GType(GPrimitiveType.Boolean));
 
         var result = new AssignmentParser(parser).Parse();
 
@@ -89,7 +89,7 @@ public class AssignmentParserTests
         };
 
         var parser = new Parsers.Parser(tokens);
-        parser.VariablesDeclared.Add("flag", GType.Boolean);
+        parser.VariablesDeclared.Add("flag", new GType(GPrimitiveType.Boolean));
 
         var result = new AssignmentParser(parser).Parse();
 
@@ -112,7 +112,7 @@ public class AssignmentParserTests
         };
 
         var parser = new Parsers.Parser(tokens);
-        parser.VariablesDeclared.Add("x", GType.Number);
+        parser.VariablesDeclared.Add("x", new GType(GPrimitiveType.Number));
 
         var result = new AssignmentParser(parser).Parse();
 

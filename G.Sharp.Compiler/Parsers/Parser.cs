@@ -59,7 +59,7 @@ public class Parser(List<Token> tokens)
         return true;
     }
 
-    private bool Check(TokenType type)
+    public bool Check(TokenType type)
     {
         if (IsAtEnd()) return false;
         return tokens[_current].Type == type;

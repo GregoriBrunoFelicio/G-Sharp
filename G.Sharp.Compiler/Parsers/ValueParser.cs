@@ -6,13 +6,12 @@ namespace G.Sharp.Compiler.Parsers;
 public class ValueParser(Parser parser)
 {
     public VariableValue Parse(GType type) =>
-        type switch
-        {
-            GType.String => new StringValue(parser.Consume(TokenType.StringLiteral).Value),
-            GType.Number => ParseNumber(),
-            GType.Boolean => ParseBool(),
-            _ => throw new Exception("Unsupported type")
-        };
+        type.IsArray
+            ? ParseArray(type)
+            : GetValue(type);
+
+    private StringValue ParseString() =>
+        new(parser.Consume(TokenType.StringLiteral).Value);
 
     private NumberValue ParseNumber()
     {
@@ -30,5 +29,31 @@ public class ValueParser(Parser parser)
         if (parser.Match(TokenType.BooleanTrueLiteral)) return new BooleanValue(true);
         if (parser.Match(TokenType.BooleanFalseLiteral)) return new BooleanValue(false);
         throw new Exception("Expected boolean literal");
+    }
+
+    private VariableValue GetValue(GType type) =>
+        type.Kind switch
+        {
+            GPrimitiveType.String => ParseString(),
+            GPrimitiveType.Number => ParseNumber(),
+            GPrimitiveType.Boolean => ParseBool(),
+            _ => throw new Exception("Unsupported type")
+        };
+
+    private ArrayValue ParseArray(GType arrayType)
+    {
+        parser.Consume(TokenType.LeftBracket);
+
+        var elements = new List<VariableValue>();
+
+        while (!parser.Check(TokenType.RightBracket))
+        {
+            var element = GetValue(new GType(arrayType.Kind));
+            elements.Add(element);
+        }
+
+        parser.Consume(TokenType.RightBracket);
+
+        return new ArrayValue(elements, new GType(arrayType.Kind));
     }
 }

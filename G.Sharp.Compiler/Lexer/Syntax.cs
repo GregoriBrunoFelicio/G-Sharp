@@ -7,7 +7,7 @@ public static class Syntax
         { ':', TokenType.Colon },
         { '=', TokenType.Equals },
         { ';', TokenType.Semicolon },
-        {'[', TokenType.LeftSquareBracket },
-        {']', TokenType.RightSquareBracket},
+        {'[', TokenType.LeftBracket },
+        {']', TokenType.RightBracket},
     };
 }

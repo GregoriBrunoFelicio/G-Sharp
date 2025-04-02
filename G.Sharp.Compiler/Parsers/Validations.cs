@@ -38,5 +38,5 @@ public static partial class Validations
     }
 
     public static bool IsTypeCompatible(GType expected, VariableValue actual) =>
-        expected == actual.Type;
+        expected.Kind == actual.Type.Kind && expected.IsArray == actual.Type.IsArray;
 }

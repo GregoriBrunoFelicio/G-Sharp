@@ -33,7 +33,7 @@ public class ParseValidationsTests
         var result = Validations.IsValidVariableName(variableName);
         result.Should().BeFalse();
     }
-    
+
     [Theory]
     [InlineData("let")]
     [InlineData("if")]
@@ -89,16 +89,18 @@ public class ParseValidationsTests
         var result = Validations.IsReserved(keyword);
         result.Should().BeFalse();
     }
-    
+
     [Theory]
-    [InlineData(GType.Number, "string")]
-    [InlineData(GType.Number, "boolean")]
-    [InlineData(GType.String, "int")]
-    [InlineData(GType.String, "boolean")]
-    [InlineData(GType.Boolean, "int")]
-    [InlineData(GType.Boolean, "string")]
-    public void IsTypeCompatible_Should_Return_False_When_Types_Do_Not_Match(GType expectedType, string valueKind)
+    [InlineData(GPrimitiveType.Number, "string")]
+    [InlineData(GPrimitiveType.Number, "boolean")]
+    [InlineData(GPrimitiveType.String, "int")]
+    [InlineData(GPrimitiveType.String, "boolean")]
+    [InlineData(GPrimitiveType.Boolean, "int")]
+    [InlineData(GPrimitiveType.Boolean, "string")]
+    public void Should_Return_False_When_Primitive_Types_Do_Not_Match(GPrimitiveType expectedKind, string valueKind)
     {
+        var expectedType = new GType(expectedKind);
+
         VariableValue value = valueKind switch
         {
             "int" => new IntValue(1),
@@ -113,16 +115,18 @@ public class ParseValidationsTests
         var result = Validations.IsTypeCompatible(expectedType, value);
         result.Should().BeFalse();
     }
-    
+
     [Theory]
-    [InlineData(GType.Number, "int")]
-    [InlineData(GType.Number, "float")]
-    [InlineData(GType.Number, "double")]
-    [InlineData(GType.Number, "decimal")]
-    [InlineData(GType.String, "string")]
-    [InlineData(GType.Boolean, "boolean")]
-    public void IsTypeCompatible_Should_Return_True_When_Types_Match(GType expectedType, string valueKind)
+    [InlineData(GPrimitiveType.Number, "int")]
+    [InlineData(GPrimitiveType.Number, "float")]
+    [InlineData(GPrimitiveType.Number, "double")]
+    [InlineData(GPrimitiveType.Number, "decimal")]
+    [InlineData(GPrimitiveType.String, "string")]
+    [InlineData(GPrimitiveType.Boolean, "boolean")]
+    public void Should_Return_True_When_Primitive_Types_Match(GPrimitiveType expectedKind, string valueKind)
     {
+        var expectedType = new GType(expectedKind);
+
         VariableValue value = valueKind switch
         {
             "int" => new IntValue(1),
@@ -136,5 +140,19 @@ public class ParseValidationsTests
 
         var result = Validations.IsTypeCompatible(expectedType, value);
         result.Should().BeTrue();
+    }
+    
+    [Fact]
+    public void IsPrimitiveTypeCompatible_Should_Return_False_When_Value_Is_Array()
+    {
+        var expectedType = new GType(GPrimitiveType.String); 
+        var arrayValue = new ArrayValue(
+            Elements: new List<VariableValue> { new StringValue("greg"), new StringValue("ana") },
+            ElementType: new GType(GPrimitiveType.String)
+        );
+
+        var result = Validations.IsTypeCompatible(expectedType, arrayValue);
+
+        result.Should().BeFalse();
     }
 }

@@ -6,20 +6,13 @@ namespace G.Sharp.Compiler.Parsers;
 
 public class LetParser(Parser parser)
 {
-    public Statement Parse()
+    public LetStatement Parse()
     {
-        var variableName = parser.Consume(TokenType.Identifier).Value;
-
-        ValidateVariableName(variableName);
-
-        parser.Consume(TokenType.Colon);
+        var variableName = GetVariableName();
 
         var varType = GetVariableType();
 
-        parser.Consume(TokenType.Equals);
-
-        var valueParser = new ValueParser(parser);
-        var value = valueParser.Parse(varType);
+        var value = GetVariableValue(varType);
 
         if (!IsTypeCompatible(varType, value))
         {
@@ -32,27 +25,50 @@ public class LetParser(Parser parser)
 
         return new LetStatement(variableName, value);
     }
+    
+    private string GetVariableName()
+    {
+        var name = parser.Consume(TokenType.Identifier).Value;
+        ValidateVariableName(name);
+        parser.Consume(TokenType.Colon);
+
+        return name;
+    }
+    
+    private VariableValue GetVariableValue(GType expectedType)
+    {
+        var valueParser = new ValueParser(parser);
+        parser.Consume(TokenType.Equals);
+        return valueParser.Parse(expectedType);
+    }
 
     private GType GetVariableType()
     {
-        if (parser.Match(TokenType.Number))
-        {
-            return GType.Number;
-        }
-
-        if (parser.Match(TokenType.String))
-        {
-            return GType.String;
-        }
-
-        if (parser.Match(TokenType.Boolean))
-        {
-            return GType.Boolean;
-        }
-
-        throw new Exception("Expected a type not found.");
+        var type = GetPrimitiveType();
+        var isArray = IsArrayType();
+        return new GType(type, isArray);
     }
 
+    private bool IsArrayType()
+    {
+        if (!parser.Match(TokenType.LeftBracket)) return false;
+        parser.Consume(TokenType.RightBracket);
+        return true;
+    }
+
+    private GPrimitiveType GetPrimitiveType()
+    {
+        if (parser.Match(TokenType.Number))
+            return GPrimitiveType.Number;
+
+        if (parser.Match(TokenType.String))
+            return GPrimitiveType.String;
+
+        if (parser.Match(TokenType.Boolean))
+            return GPrimitiveType.Boolean;
+
+        throw new Exception("Expected a valid primitive type.");
+    }
 
     private void ValidateVariableName(string variableName)
     {

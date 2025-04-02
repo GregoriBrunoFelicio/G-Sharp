@@ -5,21 +5,21 @@ using G.Sharp.Compiler.Lexer;
 using G.Sharp.Compiler.Parsers;
 
 
-// var code = """
-//            let name: string = "greg";
-//            let age: number = 33;
-//            let isTrue: bool = true;
-//            println name;
-//            println age;
-//            println isTrue;
-//            """;
+var code = """
+           let name: string = "greg";
+           let age: number = 33;
+           let isTrue: bool = true;
+           println name;
+           println age;
+           println isTrue;
+           """;
 
 // var code = "let variable: number = 10; variable = 20; println variable;";
 
-var code =
-    "let nums: number[] = [1 2 3];";
-    // "let names: string[] = [\"Greg\" \"GPT\"];" +
-    // "let flags: boolean[] = [true false true];";
+// var code =
+//     "let nums: number[] = [1 2 3];";
+//     // "let names: string[] = [\"Greg\" \"GPT\"];" +
+//     // "let flags: boolean[] = [true false true];";
 
 var lexer = new Lexer(code);
 var tokens = lexer.Tokenize();
@@ -29,8 +29,8 @@ var statements = parser.Parse();
 
 var compiler = new Compiler();
 var count = 0;
-while (count <= 10000)
-{
+// while (count <= 10000)
+// {
     compiler.CompileAndRun(statements);
-    count++;
-}
+//     count++;
+// }

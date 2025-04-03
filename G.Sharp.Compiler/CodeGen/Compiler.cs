@@ -62,6 +62,4 @@ public class Compiler
             throw new Exception("Method 'Main' was not found.");
         main.Invoke(null, null);
     }
-
-
 }

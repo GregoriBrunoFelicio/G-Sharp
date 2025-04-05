@@ -38,7 +38,7 @@ It's not easy — especially when you also have to think about performance, IL g
 This is the current plan for a first version of the language — a minimal but expressive set of features.  
 ✅ means it's already implemented, and 🛠️ means it's planned but not working yet.
 
-### ✅ Variable Declarations (working)
+### ✅ Variable Declarations ✅ 
 
 ```gsharp
 let num: number = 10;
@@ -50,7 +50,7 @@ println name;
 
 ---
 
-### 🛠️ Arrays (planned)
+### ✅  Arrays ✅
 
 ```gsharp
 let array: number[] = [1 2 3 4 5 6 7 8 9 10];

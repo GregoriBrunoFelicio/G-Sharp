@@ -49,10 +49,10 @@ public class CompilerTests
         var statements = new List<Statement> { invalidStatement };
         var compiler = new Compiler.CodeGen.Compiler();
 
-        Action act = () => compiler.CompileAndRun(statements);
+        var act = () => compiler.CompileAndRun(statements);
 
         act.Should().Throw<NotSupportedException>()
-            .WithMessage("Unsupported statement type: FakeStatement");
+            .WithMessage("Unsupported statement: FakeStatement");
     }
 
     private record FakeStatement : Statement { }

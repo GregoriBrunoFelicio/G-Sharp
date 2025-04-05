@@ -4,7 +4,7 @@ using G.Sharp.Compiler.AST;
 
 namespace G.Sharp.Compiler.CodeGen;
 
-public static class EmitPrint
+public static class PrintEmitter
 {
     public static void Emit(ILGenerator il, PrintStatement statement, Dictionary<string, LocalBuilder> locals)
     {

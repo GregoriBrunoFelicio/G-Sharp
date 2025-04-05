@@ -3,7 +3,7 @@ using G.Sharp.Compiler.AST;
 
 namespace G.Sharp.Compiler.CodeGen;
 
-public static class EmitArray
+public static class ArrayEmitter
 {
     public static LocalBuilder Emit(ILGenerator il, ArrayValue array)
     {
@@ -20,7 +20,9 @@ public static class EmitArray
 
             EmitElement(il, array.Elements[i]);
 
-            il.Emit(GetStelemOpCode(elementType));
+            var storeOpCode = GetStelemOpCode(elementType);
+            
+            il.Emit(storeOpCode);
         }
 
         il.Emit(OpCodes.Stloc, local);
@@ -38,19 +40,6 @@ public static class EmitArray
         };
     }
 
-    private static OpCode GetStelemOpCode(Type type)
-    {
-        if (type == typeof(int)) return OpCodes.Stelem_I4;
-        if (type == typeof(float)) return OpCodes.Stelem_R4;
-        if (type == typeof(double)) return OpCodes.Stelem_R8;
-        if (type == typeof(string)) return OpCodes.Stelem_Ref;
-        if (type == typeof(bool)) return OpCodes.Stelem_I1;
-        if (type == typeof(decimal))
-            throw new NotSupportedException("Arrays of decimal are not supported"); // TODO: Implement this
-
-        throw new NotSupportedException($"Unsupported array element type: {type}");
-    }
-
     private static void EmitElement(ILGenerator il, VariableValue value)
     {
         switch (value)
@@ -65,7 +54,7 @@ public static class EmitArray
                 il.Emit(OpCodes.Ldc_R8, doubleVal.Value);
                 break;
             case DecimalValue decVal:
-                EmitDecimal.Emit(il, decVal.Value);
+                DecimalEmitter.Emit(il, decVal.Value);
                 break;
             case StringValue strVal:
                 il.Emit(OpCodes.Ldstr, strVal.Value);
@@ -76,5 +65,18 @@ public static class EmitArray
             default:
                 throw new NotSupportedException($"Unsupported array element type: {value.GetType().Name}");
         }
+    }
+
+    private static OpCode GetStelemOpCode(Type type)
+    {
+        if (type == typeof(int)) return OpCodes.Stelem_I4;
+        if (type == typeof(float)) return OpCodes.Stelem_R4;
+        if (type == typeof(double)) return OpCodes.Stelem_R8;
+        if (type == typeof(string)) return OpCodes.Stelem_Ref;
+        if (type == typeof(bool)) return OpCodes.Stelem_I1;
+        if (type == typeof(decimal))
+            throw new NotSupportedException("Arrays of decimal are not supported"); // TODO: Implement this
+
+        throw new NotSupportedException($"Unsupported array element type: {type}");
     }
 }

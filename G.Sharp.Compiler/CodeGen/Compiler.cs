@@ -35,23 +35,7 @@ public class Compiler
 
         foreach (var statement in statements)
         {
-            switch (statement)
-            {
-                case LetStatement letStmt:
-                    EmitLet.Emit(il, letStmt, _locals);
-                    break;
-                
-                case AssignmentStatement assignStmt:
-                    EmitAssignment.Emit(il, assignStmt, _locals); 
-                    break;
-
-                case PrintStatement printStmt:
-                    EmitPrint.Emit(il, printStmt, _locals);
-                    break;
-                
-                default:
-                    throw new NotSupportedException($"Unsupported statement type: {statement.GetType().Name}");
-            }
+            StatementEmitter.Emit(il, statement, _locals);
         }
 
         il.Emit(OpCodes.Ret);

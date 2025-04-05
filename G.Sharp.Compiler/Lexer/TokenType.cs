@@ -29,6 +29,14 @@ public enum TokenType
     BooleanTrueLiteral,
     BooleanFalseLiteral,
     
+    //Loop
+    For,
+    In,
+    
     LeftBracket,   // [
     RightBracket,  // ]
+    
+    LeftBrace,     // {
+    RightBrace,    // }
+    
 }

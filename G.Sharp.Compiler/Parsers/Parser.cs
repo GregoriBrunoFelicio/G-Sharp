@@ -26,14 +26,17 @@ public class Parser(List<Token> tokens)
         && tokens[_current].Type
         != TokenType.EndOfFile;
 
-    private Statement ParseNextStatement()
+    public Statement ParseNextStatement()
     {
         if (Match(TokenType.Let))
             return new LetParser(this).Parse();
 
         if (Match(TokenType.Println))
             return new PrintParser(this).Parse();
-        
+
+        if (Match(TokenType.For))
+            return new ForParser(this).Parse();
+
         if (Check(TokenType.Identifier))
             return new AssignmentParser(this).Parse();
 
@@ -63,6 +66,12 @@ public class Parser(List<Token> tokens)
     {
         if (IsAtEnd()) return false;
         return tokens[_current].Type == type;
+    }
+
+    public Token Previous()
+    {
+        if (_current == 0) throw new Exception("No previous token");
+        return tokens[_current - 1];
     }
 
     private Token Advance()

@@ -2,7 +2,7 @@ using System.Reflection.Emit;
 
 namespace G.Sharp.Compiler.CodeGen;
 
-public static class EmitNumber
+public static class NumberEmitter
 {
     public static LocalBuilder EmitInt(ILGenerator il, int value)
     {

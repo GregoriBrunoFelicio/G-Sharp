@@ -9,5 +9,7 @@ public static class Syntax
         { ';', TokenType.Semicolon },
         {'[', TokenType.LeftBracket },
         {']', TokenType.RightBracket},
+        {'{', TokenType.LeftBrace },
+        {'}', TokenType.RightBrace },
     };
 }

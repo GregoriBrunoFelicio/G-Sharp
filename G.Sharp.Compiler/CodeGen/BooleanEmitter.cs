@@ -2,7 +2,7 @@ using System.Reflection.Emit;
 
 namespace G.Sharp.Compiler.CodeGen;
 
-public static class EmitBoolean
+public static class BooleanEmitter
 {
     public static LocalBuilder Emit(ILGenerator il, bool value)
     {

@@ -2,7 +2,7 @@ using System.Reflection.Emit;
 
 namespace G.Sharp.Compiler.CodeGen;
 
-public static class EmitString
+public static class StringEmitter
 {
     public static LocalBuilder Emit(ILGenerator il, string value)
     {

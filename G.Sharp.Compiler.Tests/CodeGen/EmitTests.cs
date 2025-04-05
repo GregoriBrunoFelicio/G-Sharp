@@ -16,7 +16,7 @@ public class EmitTests
         var method = new DynamicMethod("Test", typeof(void), Type.EmptyTypes);
         var il = method.GetILGenerator();
 
-        var local = EmitNumber.EmitInt(il, value);
+        var local = NumberEmitter.EmitInt(il, value);
 
         local.LocalType.Should().Be(typeof(int));
     }
@@ -30,7 +30,7 @@ public class EmitTests
         var method = new DynamicMethod("Test", typeof(void), Type.EmptyTypes);
         var il = method.GetILGenerator();
 
-        var local = EmitNumber.EmitFloat(il, value);
+        var local = NumberEmitter.EmitFloat(il, value);
 
         local.LocalType.Should().Be(typeof(float));
     }
@@ -44,7 +44,7 @@ public class EmitTests
         var method = new DynamicMethod("Test", typeof(void), Type.EmptyTypes);
         var il = method.GetILGenerator();
 
-        var local = EmitNumber.EmitDouble(il, value);
+        var local = NumberEmitter.EmitDouble(il, value);
 
         local.LocalType.Should().Be(typeof(double));
     }
@@ -59,7 +59,7 @@ public class EmitTests
         var method = new DynamicMethod("Test", typeof(void), Type.EmptyTypes);
         var il = method.GetILGenerator();
 
-        var local = EmitDecimal.Emit(il, value);
+        var local = DecimalEmitter.Emit(il, value);
 
         local.LocalType.Should().Be(typeof(decimal));
     }
@@ -99,7 +99,7 @@ public class EmitTests
         var method = new DynamicMethod("Test", typeof(void), Type.EmptyTypes);
         var il = method.GetILGenerator();
 
-        var local = EmitArray.Emit(il, array);
+        var local = ArrayEmitter.Emit(il, array);
 
         local.LocalType.Should().Be(expectedArrayType);
     }
@@ -108,7 +108,7 @@ public class EmitTests
     [InlineData(1)]
     [InlineData(42)]
     [InlineData(-10)]
-    public void EmitAssignment_Should_Assign_Int_Value_To_Local(int value)
+    public void AssignmentEmitter_Should_Assign_Int_Value_To_Local(int value)
     {
         var statement = new AssignmentStatement("x", new IntValue(value));
         var method = new DynamicMethod("AssignInt", typeof(int), Type.EmptyTypes);
@@ -117,7 +117,7 @@ public class EmitTests
         var local = il.DeclareLocal(typeof(int));
         var locals = new Dictionary<string, LocalBuilder> { ["x"] = local };
 
-        EmitAssignment.Emit(il, statement, locals);
+        AssignmentEmitter.Emit(il, statement, locals);
         il.Emit(OpCodes.Ldloc, local);
         il.Emit(OpCodes.Ret);
 
@@ -128,7 +128,7 @@ public class EmitTests
     [Theory]
     [InlineData("hello")]
     [InlineData("")]
-    public void EmitAssignment_Should_Assign_String_Value_To_Local(string value)
+    public void AssignmentEmitter_Should_Assign_String_Value_To_Local(string value)
     {
         var statement = new AssignmentStatement("x", new StringValue(value));
         var method = new DynamicMethod("AssignString", typeof(string), Type.EmptyTypes);
@@ -137,7 +137,7 @@ public class EmitTests
         var local = il.DeclareLocal(typeof(string));
         var locals = new Dictionary<string, LocalBuilder> { ["x"] = local };
 
-        EmitAssignment.Emit(il, statement, locals);
+        AssignmentEmitter.Emit(il, statement, locals);
         il.Emit(OpCodes.Ldloc, local);
         il.Emit(OpCodes.Ret);
 
@@ -148,7 +148,7 @@ public class EmitTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void EmitAssignment_Should_Assign_Bool_Value_To_Local(bool value)
+    public void AssignmentEmitter_Should_Assign_Bool_Value_To_Local(bool value)
     {
         var statement = new AssignmentStatement("x", new BooleanValue(value));
         var method = new DynamicMethod("AssignBool", typeof(bool), Type.EmptyTypes);
@@ -157,7 +157,7 @@ public class EmitTests
         var local = il.DeclareLocal(typeof(bool));
         var locals = new Dictionary<string, LocalBuilder> { ["x"] = local };
 
-        EmitAssignment.Emit(il, statement, locals);
+        AssignmentEmitter.Emit(il, statement, locals);
         il.Emit(OpCodes.Ldloc, local);
         il.Emit(OpCodes.Ret);
 
@@ -173,7 +173,7 @@ public class EmitTests
         var method = new DynamicMethod("test", typeof(bool), Type.EmptyTypes);
         var il = method.GetILGenerator();
 
-        EmitBoolean.Emit(il, value);
+        BooleanEmitter.Emit(il, value);
         il.Emit(OpCodes.Ldloc_0);
         il.Emit(OpCodes.Ret);
 
@@ -202,7 +202,7 @@ public class EmitTests
         var il = method.GetILGenerator();
         var locals = new Dictionary<string, LocalBuilder>();
 
-        EmitLet.Emit(il, statement, locals);
+        LetEmitter.Emit(il, statement, locals);
 
         locals.Should().ContainKey("x");
         locals["x"].LocalType.Should().Be(expectedType);
@@ -218,7 +218,7 @@ public class EmitTests
         var il = method.GetILGenerator();
         var locals = new Dictionary<string, LocalBuilder>();
 
-        EmitLet.Emit(il, statement, locals);
+        LetEmitter.Emit(il, statement, locals);
 
         locals.Should().ContainKey("msg");
         locals["msg"].LocalType.Should().Be(typeof(string));
@@ -234,7 +234,7 @@ public class EmitTests
         var il = method.GetILGenerator();
         var locals = new Dictionary<string, LocalBuilder>();
 
-        EmitLet.Emit(il, statement, locals);
+        LetEmitter.Emit(il, statement, locals);
 
         locals.Should().ContainKey("flag");
         locals["flag"].LocalType.Should().Be(typeof(bool));
@@ -248,7 +248,7 @@ public class EmitTests
         var il = method.GetILGenerator();
         var locals = new Dictionary<string, LocalBuilder>();
 
-        var act = () => EmitPrint.Emit(il, statement, locals);
+        var act = () => PrintEmitter.Emit(il, statement, locals);
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("Variable 'missing' is not defined.");
@@ -268,7 +268,7 @@ public class EmitTests
         il.Emit(OpCodes.Stloc, local);
 
         var locals = new Dictionary<string, LocalBuilder> { ["x"] = local };
-        EmitPrint.Emit(il, statement, locals);
+        PrintEmitter.Emit(il, statement, locals);
         il.Emit(OpCodes.Ret);
 
         var func = (Action)method.CreateDelegate(typeof(Action));
@@ -292,7 +292,7 @@ public class EmitTests
         il.Emit(OpCodes.Stloc, local);
 
         var locals = new Dictionary<string, LocalBuilder> { ["x"] = local };
-        EmitPrint.Emit(il, statement, locals);
+        PrintEmitter.Emit(il, statement, locals);
         il.Emit(OpCodes.Ret);
 
         var func = (Action)method.CreateDelegate(typeof(Action));
@@ -310,7 +310,7 @@ public class EmitTests
         var il = method.GetILGenerator();
         var locals = new Dictionary<string, LocalBuilder>();
 
-        var act = () => EmitPrint.Emit(il, statement, locals);
+        var act = () => PrintEmitter.Emit(il, statement, locals);
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("Variable 'undefinedVar' is not defined.");

@@ -3,7 +3,7 @@ using G.Sharp.Compiler.AST;
 
 namespace G.Sharp.Compiler.CodeGen;
 
-public static class EmitAssignment
+public static class AssignmentEmitter
 {
     public static void Emit(ILGenerator il, AssignmentStatement statement, Dictionary<string, LocalBuilder> locals)
     {
@@ -25,7 +25,7 @@ public static class EmitAssignment
                 break;
 
             case DecimalValue decVal:
-                EmitDecimal.Emit(il, decVal.Value);
+                DecimalEmitter.Emit(il, decVal.Value);
                 return;
 
             case StringValue strVal:

@@ -42,7 +42,9 @@ public class ValueParser(Parser parser)
 
     private ArrayValue ParseArray(GType arrayType)
     {
-        parser.Consume(TokenType.LeftBracket);
+        // TODO: I really don't like this approach. I need to find a better way to detect when an array is passed directly inside a 'for' loop instead of being assigned to a variable first.
+        if (parser.Check(TokenType.LeftBracket))
+            parser.Consume(TokenType.LeftBracket);
 
         var elements = new List<VariableValue>();
 

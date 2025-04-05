@@ -73,6 +73,12 @@ public class Parser(List<Token> tokens)
         if (_current == 0) throw new Exception("No previous token");
         return tokens[_current - 1];
     }
+    
+    public Token Peek()
+    {
+        if (IsAtEnd()) throw new Exception("Unexpected end of input.");
+        return tokens[_current];
+    }
 
     private Token Advance()
     {

@@ -29,5 +29,6 @@ public static class IdentifierLexer
         ["else"] = TokenType.Else,
         ["for"] = TokenType.For,
         ["in"] = TokenType.In,
+        ["while"] = TokenType.While,
     };
 }

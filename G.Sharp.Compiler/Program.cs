@@ -21,23 +21,25 @@ using G.Sharp.Compiler.Parsers;
 //     // "let names: string[] = [\"Greg\" \"GPT\"];" +
 //     // "let flags: bool[] = [true false true];";
 
-var code = @"
-    let nums: number[] = [1 2 3];
-    let names: string[] = [""Greg"" ""Felicio""];
-    let flags: bool[] = [true false true];
-    for item in nums {
-        println item;
-    }
-    for name in names {
-        println name;
-    }
-    for flag in flags {
-        println flag;
-    }
-    for item in [4 5 6] {
-        println item;
-    }
-";
+// var code = @"
+//     let nums: number[] = [1 2 3];
+//     let names: string[] = [""Greg"" ""Felicio""];
+//     let flags: bool[] = [true false true];
+//     for item in nums {
+//         println item;
+//     }
+//     for name in names {
+//         println name;
+//     }
+//     for flag in flags {
+//         println flag;
+//     }
+//     for item in [4 5 6] {
+//         println item;
+//     }
+// ";
+
+var code = "while true { println 1; }";
 var lexer = new Lexer(code);
 var tokens = lexer.Tokenize();
 

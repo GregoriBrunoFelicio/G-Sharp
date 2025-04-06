@@ -32,6 +32,7 @@ public enum TokenType
     //Loop
     For,
     In,
+    While,
     
     LeftBracket,   // [
     RightBracket,  // ]

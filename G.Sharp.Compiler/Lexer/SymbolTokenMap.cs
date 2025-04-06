@@ -1,8 +1,8 @@
 namespace G.Sharp.Compiler.Lexer;
 
-public static class Syntax
+public static class SymbolTokenMap
 {
-    public static readonly Dictionary<char, TokenType> SymbolTokenMap = new()
+    public static readonly Dictionary<char, TokenType> Symbols = new()
     {
         { ':', TokenType.Colon },
         { '=', TokenType.Equals },

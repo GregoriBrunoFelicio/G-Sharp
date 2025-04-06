@@ -1,5 +1,5 @@
 using G.Sharp.Compiler.Extensions;
-using static G.Sharp.Compiler.Lexer.Syntax;
+using static G.Sharp.Compiler.Lexer.SymbolTokenMap;
 
 namespace G.Sharp.Compiler.Lexer;
 
@@ -46,7 +46,7 @@ public class Lexer
         if (Current.IsOnlyQuotes())
             return StringLexer.Read(this);
 
-        if (SymbolTokenMap.ContainsKey(Current))
+        if (Symbols.ContainsKey(Current))
             return SymbolLexer.Read(this);
 
         throw new Exception($"Unexpected character: '{Current}'");

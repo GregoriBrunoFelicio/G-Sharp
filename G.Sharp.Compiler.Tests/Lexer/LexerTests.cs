@@ -73,6 +73,4 @@ public class LexerTests
             .Throw<NullReferenceException>()
             .WithMessage("Code cannot be null or empty.");
     }
-    
-    
 }

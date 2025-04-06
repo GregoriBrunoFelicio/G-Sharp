@@ -32,6 +32,11 @@ public static partial class Validations
             "number",
             "boolean",
             "bool",
+            "in",
+            "int",
+            "float",
+            "char",
+            "void",
         };
 
         return reserved.Contains(word);

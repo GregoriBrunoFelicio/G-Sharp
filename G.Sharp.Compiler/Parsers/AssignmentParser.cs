@@ -6,7 +6,7 @@ namespace G.Sharp.Compiler.Parsers;
 
 public class AssignmentParser(Parser parser)
 {
-    public Statement Parse()
+    public AssignmentStatement Parse()
     {
         var variableName = parser.Consume(TokenType.Identifier).Value;
 

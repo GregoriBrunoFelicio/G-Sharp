@@ -74,7 +74,7 @@ public class Parser(List<Token> tokens)
         return tokens[_current - 1];
     }
     
-    public Token Peek()
+    public Token Current()
     {
         if (IsAtEnd()) throw new Exception("Unexpected end of input.");
         return tokens[_current];

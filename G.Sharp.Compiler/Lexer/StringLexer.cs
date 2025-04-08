@@ -1,3 +1,5 @@
+using G.Sharp.Compiler.Extensions;
+
 namespace G.Sharp.Compiler.Lexer;
 
 public static class StringLexer
@@ -7,9 +9,8 @@ public static class StringLexer
         lexer.Advance();
 
         var start = lexer.Position;
-
-        while (!lexer.IsAtEnd() && lexer.Current != '"')
-            lexer.Advance();
+        
+        lexer.AdvanceWhile(c => c != '"');   
 
         if (lexer.IsAtEnd())
             throw new Exception("Unterminated string literal. Expected closing '\"'.");

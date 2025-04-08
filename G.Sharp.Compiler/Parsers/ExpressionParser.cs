@@ -34,7 +34,7 @@ public class ExpressionParser(Parser parser)
         if (parser.Check(TokenType.RightBracket))
             throw new Exception("Empty arrays are not supported.");
 
-        var token = parser.Peek();
+        var token = parser.Current();
 
         var kind = token.Type switch
         {

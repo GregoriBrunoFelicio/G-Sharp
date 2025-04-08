@@ -11,9 +11,9 @@ public static class IdentifierLexer
 
         var value = lexer.Code[start..lexer.Position];
 
-        var type = KeywordTokenMap.GetValueOrDefault(value, TokenType.Identifier);
+        var tokenType = KeywordTokenMap.GetValueOrDefault(value, TokenType.Identifier);
 
-        return new Token(type, value);
+        return new Token(tokenType, value);
     }
 
     private static readonly Dictionary<string, TokenType> KeywordTokenMap = new()

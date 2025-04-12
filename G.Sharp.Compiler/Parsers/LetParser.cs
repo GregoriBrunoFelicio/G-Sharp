@@ -20,31 +20,42 @@ public class LetParser(Parser parser)
             throw new Exception($"Type mismatch: expected {varType}, but got {value.Type}");
         }
 
-        parser.Consume(TokenType.Semicolon);
+        parser.Semicolon();
 
         parser.VariablesDeclared.Add(variableName, varType);
 
         return new LetStatement(variableName, value);
     }
-    
+
     private string GetVariableName()
     {
-        var name = parser.Consume(TokenType.Identifier).Value;
+        var name = parser.Identifier().Value;
         ValidateVariableName(name);
-        parser.Consume(TokenType.Colon);
-
         return name;
     }
-    
-    private VariableValue GetVariableValue(GType expectedType)
+
+    private void ValidateVariableName(string variableName)
     {
+        if (parser.VariablesDeclared.ContainsKey(variableName))
+            throw new Exception($"Variable {variableName} already declared.");
+
+        if (!IsValidVariableName(variableName))
+            throw new Exception($"Invalid variable name: {variableName}");
+
+        if (IsReserved(variableName))
+            throw new Exception($"'{variableName}' is a reserved keyword.");
+    }
+
+    private VariableValue GetVariableValue(GType type)
+    {
+        parser.Equals();
         var valueParser = new ValueParser(parser);
-        parser.Consume(TokenType.Equals);
-        return valueParser.Parse(expectedType);
+        return valueParser.Parse(type);
     }
 
     private GType GetVariableType()
     {
+        parser.Colon();
         var type = GetPrimitiveType();
         var isArray = IsArrayType();
         return new GType(type, isArray);
@@ -69,17 +80,5 @@ public class LetParser(Parser parser)
             return GPrimitiveType.Boolean;
 
         throw new Exception("Expected a valid primitive type.");
-    }
-
-    private void ValidateVariableName(string variableName)
-    {
-        if (parser.VariablesDeclared.ContainsKey(variableName))
-            throw new Exception($"Variable {variableName} already declared.");
-
-        if (!IsValidVariableName(variableName))
-            throw new Exception($"Invalid variable name: {variableName}");
-
-        if (IsReserved(variableName))
-            throw new Exception($"'{variableName}' is a reserved keyword.");
     }
 }

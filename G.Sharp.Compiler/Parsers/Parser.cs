@@ -73,7 +73,7 @@ public class Parser(List<Token> tokens)
         if (_current == 0) throw new Exception("No previous token");
         return tokens[_current - 1];
     }
-    
+
     public Token Current()
     {
         if (IsAtEnd()) throw new Exception("Unexpected end of input.");
@@ -87,4 +87,11 @@ public class Parser(List<Token> tokens)
     }
 
     private bool IsAtEnd() => _current >= tokens.Count;
+    
+    public Token Identifier() => Consume(TokenType.Identifier);
+    public void Colon() => Consume(TokenType.Colon);
+    public void Equals() => Consume(TokenType.Equals);
+    public void Semicolon() => Consume(TokenType.Semicolon);
+    
+
 }

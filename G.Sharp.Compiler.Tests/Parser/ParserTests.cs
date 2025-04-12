@@ -106,7 +106,6 @@ public class ParserTests
             new(TokenType.Semicolon, ";"),
 
             new(TokenType.EndOfFile, ""),
-            new(TokenType.EndOfFile, "")
         };
 
         var parser = new Parsers.Parser(tokens);

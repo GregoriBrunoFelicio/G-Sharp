@@ -41,7 +41,7 @@ public static partial class Validations
 
         return reserved.Contains(word);
     }
-
+    
     private static readonly HashSet<GPrimitiveType> NumericTypes =
     [
         GPrimitiveType.Int,
@@ -50,11 +50,17 @@ public static partial class Validations
         GPrimitiveType.Decimal
     ];
 
-    // I really need to change it, don't make sense this check
-    public static bool IsTypeCompatible(GType expected, GType actual) =>
-        expected.Kind switch
-        {
-            GPrimitiveType.Number => NumericTypes.Contains(actual.Kind) && expected.IsArray == actual.IsArray,
-            _ => expected.Kind == actual.Kind && expected.IsArray == actual.IsArray
-        };
+    public static bool IsTypeCompatible(GType expected, GType actual)
+    {
+        if (expected.IsArray != actual.IsArray)
+            return false;
+
+        var sameKind = expected.Kind == actual.Kind;
+
+        var isNumberSuperType =
+            expected.Kind == GPrimitiveType.Number &&
+            NumericTypes.Contains(actual.Kind);
+
+        return sameKind || isNumberSuperType;
+    }
 }

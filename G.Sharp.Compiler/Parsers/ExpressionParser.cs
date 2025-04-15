@@ -57,7 +57,7 @@ public class ExpressionParser(Parser parser)
             'f' => GPrimitiveType.Float,
             'd' => GPrimitiveType.Double,
             'm' => GPrimitiveType.Decimal,
-            _ => GPrimitiveType.Int
+            _ => GPrimitiveType.Number
         };
     }
 }

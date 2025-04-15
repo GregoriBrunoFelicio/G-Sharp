@@ -40,7 +40,7 @@ public class ValueParser(Parser parser)
             GPrimitiveType.Number => ParseNumber(),
             GPrimitiveType.String => ParseString(),
             GPrimitiveType.Boolean => ParseBool(),
-            _ => throw new Exception($"Unsupported type: {type.Kind}")
+            _ => throw new Exception("Unsupported type")
         };
 
     private ArrayValue ParseArray(GType arrayType)
@@ -53,7 +53,9 @@ public class ValueParser(Parser parser)
 
         while (!parser.Check(TokenType.RightBracket))
         {
+            Console.WriteLine(parser.Current());
             var element = GetValue(new GType(arrayType.Kind));
+
             elements.Add(element);
         }
 

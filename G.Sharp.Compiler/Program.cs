@@ -5,47 +5,46 @@ using G.Sharp.Compiler.Lexer;
 using G.Sharp.Compiler.Parsers;
 
 
-var code = """
-           let name: string = "greg";
-           let age: number = 33;
-           let isTrue: bool = true;
-           println name;
-           println age;
-           println isTrue;
-           """;
-
-// var code = "let variable:number = 10.1m;  println variable;";
-
-//
 // var code = """
-//                let name: string = "greg";
-//                let age: number = 33;
-//                let isTrue: bool = true;
-//                
-//                println name;
-//                println age;
-//                println isTrue;
-//                
-//                let variable:number = 10; variable = 20; println variable;                       
-//                println variable;
-//                
-//                let nums: number[] = [1 2 3];
-//                let names: string[] = ["Greg" "Felicio"];
-//                let flags: bool[] = [true false true];
-//                
-//                for item in nums {
-//                    println item;
-//                }
-//                for name in names {
-//                    println name;
-//                }
-//                for flag in flags {
-//                    println flag;
-//                }
-//                for item in [4 5 6] {
-//                    println item;
-//                }
+//            let name: string = "greg";
+//            let age: number = 33;
+//            let isTrue: bool = true;
+//            println name;
+//            println age;
+//            println isTrue;
 //            """;
+
+
+
+var code = """
+               let name: string = "greg";
+               let age: number = 33;
+               let isTrue: bool = true;
+               
+               println name;
+               println age;
+               println isTrue;
+               
+               let variable:number = 10; variable = 20; println variable;                       
+               println variable;
+               
+               let nums: number[] = [1 2 3];
+               let names: string[] = ["Greg" "Felicio"];
+               let flags: bool[] = [true false true];
+               
+               for item in nums {
+                   println item;
+               }
+               for name in names {
+                   println name;
+               }
+               for flag in flags {
+                   println flag;
+               }
+               for item in [4 5 6] {
+                   println item;
+               }
+           """;
 
 var lexer = new Lexer(code);
 var tokens = lexer.Tokenize();

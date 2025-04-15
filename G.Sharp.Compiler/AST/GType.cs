@@ -20,6 +20,7 @@ public readonly struct GType(GPrimitiveType kind, bool isArray = false)
     {
         var baseType = Kind switch
         {
+            GPrimitiveType.Number => typeof(int), // HEHAHAHAHAHAHAH OMG I`TS A JOKE LOL
             GPrimitiveType.Int => typeof(int),
             GPrimitiveType.Float => typeof(float),
             GPrimitiveType.Double => typeof(double),

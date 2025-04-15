@@ -10,9 +10,6 @@ public class ValueParser(Parser parser)
             ? ParseArray(type)
             : GetValue(type);
 
-    private StringValue ParseString() =>
-        new(parser.Consume(TokenType.StringLiteral).Value);
-
     private NumberValue ParseNumber()
     {
         var token = parser.Consume(TokenType.NumberLiteral).Value;
@@ -20,9 +17,15 @@ public class ValueParser(Parser parser)
         if (token.EndsWith('f')) return new FloatValue(float.Parse(token[..^1]));
         if (token.EndsWith('d')) return new DoubleValue(double.Parse(token[..^1]));
         if (token.EndsWith('m')) return new DecimalValue(decimal.Parse(token[..^1]));
+        
+        if (token.Contains('.'))
+            throw new Exception("Numeric literals with decimal points must specify a type suffix (f, d, or m).");
 
         return new IntValue(int.Parse(token));
     }
+
+    private StringValue ParseString() =>
+        new(parser.Consume(TokenType.StringLiteral).Value);
 
     private BooleanValue ParseBool()
     {
@@ -34,10 +37,10 @@ public class ValueParser(Parser parser)
     private VariableValue GetValue(GType type) =>
         type.Kind switch
         {
-            GPrimitiveType.String => ParseString(),
             GPrimitiveType.Number => ParseNumber(),
+            GPrimitiveType.String => ParseString(),
             GPrimitiveType.Boolean => ParseBool(),
-            _ => throw new Exception("Unsupported type")
+            _ => throw new Exception($"Unsupported type: {type.Kind}")
         };
 
     private ArrayValue ParseArray(GType arrayType)

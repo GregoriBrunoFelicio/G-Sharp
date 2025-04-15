@@ -19,6 +19,10 @@ public enum TokenType
     //Interger
     Number,
     NumberLiteral,
+    Int,
+    Float,
+    Double,
+    Decimal,
 
     //String
     String,

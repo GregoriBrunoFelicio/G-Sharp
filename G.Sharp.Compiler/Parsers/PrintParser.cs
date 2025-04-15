@@ -7,8 +7,8 @@ public class PrintParser(Parser parser)
 {
     public Statement Parse()
     {
-        var name = parser.Identifier().Value;
+        var expression = new ExpressionParser(parser).Parse();
         parser.Semicolon();
-        return new PrintStatement(name);
+        return new PrintStatement(expression);
     }
 }

@@ -55,6 +55,12 @@ public class Parser(List<Token> tokens)
         throw new Exception($"Expected token {type}, got {tokens[_current].Type}");
     }
 
+    private Token Advance()
+    {
+        if (!IsAtEnd()) _current++;
+        return tokens[_current - 1];
+    }
+
     public bool Match(TokenType type)
     {
         if (!Check(type)) return false;
@@ -80,18 +86,13 @@ public class Parser(List<Token> tokens)
         return tokens[_current];
     }
 
-    private Token Advance()
-    {
-        if (!IsAtEnd()) _current++;
-        return tokens[_current - 1];
-    }
-
     private bool IsAtEnd() => _current >= tokens.Count;
-    
-    public Token Identifier() => Consume(TokenType.Identifier);
-    public void Colon() => Consume(TokenType.Colon);
-    public void Equals() => Consume(TokenType.Equals);
-    public void Semicolon() => Consume(TokenType.Semicolon);
-    
 
+    public Token Identifier() => Consume(TokenType.Identifier);
+
+    public void Colon() => Consume(TokenType.Colon);
+
+    public void Equals() => Consume(TokenType.Equals);
+
+    public void Semicolon() => Consume(TokenType.Semicolon);
 }

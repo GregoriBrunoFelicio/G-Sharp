@@ -10,36 +10,41 @@ public static class AssignmentEmitter
         if (!locals.TryGetValue(statement.VariableName, out var local))
             throw new InvalidOperationException($"Variable '{statement.VariableName}' is not defined.");
 
-        switch (statement.VariableValue)
+        EmitValueToStack(il, statement.Expression, locals);
+
+        il.Emit(OpCodes.Stloc, local);
+    }
+
+    private static void EmitValueToStack(ILGenerator il, Expression expression, Dictionary<string, LocalBuilder> locals)
+    {
+        switch (expression)
         {
-            case IntValue intVal:
-                il.Emit(OpCodes.Ldc_I4, intVal.Value);
+            case LiteralExpression literal:
+                EmitLiteralToStack(il, literal.Value);
                 break;
 
-            case FloatValue floatVal:
-                il.Emit(OpCodes.Ldc_R4, floatVal.Value);
-                break;
-
-            case DoubleValue doubleVal:
-                il.Emit(OpCodes.Ldc_R8, doubleVal.Value);
-                break;
-
-            case DecimalValue decVal:
-                DecimalEmitter.Emit(il, decVal.Value);
-                return;
-
-            case StringValue strVal:
-                il.Emit(OpCodes.Ldstr, strVal.Value);
-                break;
-
-            case BooleanValue boolVal:
-                il.Emit(boolVal.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+            case VariableExpression variable:
+                if (!locals.TryGetValue(variable.Name, out var local))
+                    throw new Exception($"Variable '{variable.Name}' not found.");
+                il.Emit(OpCodes.Ldloc, local);
                 break;
 
             default:
-                throw new NotSupportedException($"Unsupported value type: {statement.VariableValue.GetType().Name}");
+                throw new NotSupportedException($"Unsupported expression: {expression.GetType().Name}");
         }
+    }
 
-        il.Emit(OpCodes.Stloc, local);
+    private static void EmitLiteralToStack(ILGenerator il, VariableValue value)
+    {
+        switch (value)
+        {
+            case IntValue i: il.Emit(OpCodes.Ldc_I4, i.Value); break;
+            case FloatValue f: il.Emit(OpCodes.Ldc_R4, f.Value); break;
+            case DoubleValue d: il.Emit(OpCodes.Ldc_R8, d.Value); break;
+            case BooleanValue b: il.Emit(b.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); break;
+            case StringValue s: il.Emit(OpCodes.Ldstr, s.Value); break;
+            //TODO: add decimal support
+            default: throw new NotSupportedException("Unsupported literal type");
+        }
     }
 }

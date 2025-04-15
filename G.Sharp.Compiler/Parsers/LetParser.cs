@@ -13,9 +13,12 @@ public class LetParser(Parser parser)
 
         var varType = GetVariableType();
 
-        var value = GetVariableValue(varType);
+        parser.Equals();
+        var expression = new ExpressionParser(parser).Parse();
 
-        if (!IsTypeCompatible(varType, value))
+        var value = expression.GetLiteralValue();
+
+        if (!IsTypeCompatible(varType, value.Type))
         {
             throw new Exception($"Type mismatch: expected {varType}, but got {value.Type}");
         }
@@ -24,7 +27,7 @@ public class LetParser(Parser parser)
 
         parser.VariablesDeclared.Add(variableName, varType);
 
-        return new LetStatement(variableName, value);
+        return new LetStatement(variableName, expression);
     }
 
     private string GetVariableName()
@@ -46,13 +49,6 @@ public class LetParser(Parser parser)
             throw new Exception($"'{variableName}' is a reserved keyword.");
     }
 
-    private VariableValue GetVariableValue(GType type)
-    {
-        parser.Equals();
-        var valueParser = new ValueParser(parser);
-        return valueParser.Parse(type);
-    }
-
     private GType GetVariableType()
     {
         parser.Colon();
@@ -72,7 +68,7 @@ public class LetParser(Parser parser)
     {
         if (parser.Match(TokenType.Number))
             return GPrimitiveType.Number;
-
+        
         if (parser.Match(TokenType.String))
             return GPrimitiveType.String;
 

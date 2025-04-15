@@ -38,13 +38,26 @@ public class ExpressionParser(Parser parser)
 
         var kind = token.Type switch
         {
-            TokenType.NumberLiteral => GPrimitiveType.Number,
             TokenType.StringLiteral => GPrimitiveType.String,
             TokenType.BooleanTrueLiteral or TokenType.BooleanFalseLiteral => GPrimitiveType.Boolean,
+            TokenType.NumberLiteral => InferNumberKind(token.Value),
             _ => throw new Exception("Unable to infer array element type.")
         };
 
         var arrayValue = _valueParser.Parse(new GType(kind, isArray: true));
         return new LiteralExpression(arrayValue);
+    }
+
+    private GPrimitiveType InferNumberKind(string raw)
+    {
+        if (raw.Length == 0) return GPrimitiveType.Int;
+
+        return raw[^1] switch
+        {
+            'f' => GPrimitiveType.Float,
+            'd' => GPrimitiveType.Double,
+            'm' => GPrimitiveType.Decimal,
+            _ => GPrimitiveType.Int
+        };
     }
 }

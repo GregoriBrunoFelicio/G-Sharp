@@ -10,8 +10,19 @@ public static class ForEmitter
         ForStatement statement,
         Dictionary<string, LocalBuilder> variables)
     {
-        var arrayLocal = ExpressionEmitter.Emit(il, statement.Iterable, variables);
+        // Empilha o array (não cria variável)
+        ExpressionEmitter.EmitToStack(il, statement.Iterable, variables);
 
+        // Cria variável local para o array
+        var arrayType = GetExpressionClrType(statement.Iterable, variables);
+
+        if (!arrayType.IsArray)
+            throw new InvalidOperationException($"Expected array expression in 'for', got: {arrayType}");
+
+        var arrayLocal = il.DeclareLocal(arrayType);
+        il.Emit(OpCodes.Stloc, arrayLocal);
+
+        // int i = 0;
         var indexLocal = il.DeclareLocal(typeof(int));
         il.Emit(OpCodes.Ldc_I4_0);
         il.Emit(OpCodes.Stloc, indexLocal);
@@ -21,29 +32,32 @@ public static class ForEmitter
 
         il.MarkLabel(loopStart);
 
+        // if (i >= array.Length) goto loopEnd;
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldloc, arrayLocal);
         il.Emit(OpCodes.Ldlen);
         il.Emit(OpCodes.Conv_I4);
         il.Emit(OpCodes.Bge, loopEnd);
 
-        var elementType = arrayLocal.LocalType.GetElementType(); // It can return null if the type is not an array?
+        // var item = array[i];
+        var elementType = arrayType.GetElementType()
+            ?? throw new InvalidOperationException($"Unable to get element type from array: {arrayType}");
+
         var loopVar = il.DeclareLocal(elementType);
         variables[statement.Variable] = loopVar;
 
         il.Emit(OpCodes.Ldloc, arrayLocal);
         il.Emit(OpCodes.Ldloc, indexLocal);
-        
-        var loadOpCode = GetLdelemOpCode(elementType);
-        il.Emit(loadOpCode);
-        
+        il.Emit(GetLdelemOpCode(elementType));
         il.Emit(OpCodes.Stloc, loopVar);
 
+        // Loop body
         foreach (var s in statement.Body)
         {
             StatementEmitter.Emit(il, s, variables);
         }
 
+        // i++
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldc_I4_1);
         il.Emit(OpCodes.Add);
@@ -60,9 +74,16 @@ public static class ForEmitter
         if (type == typeof(double)) return OpCodes.Ldelem_R8;
         if (type == typeof(string)) return OpCodes.Ldelem_Ref;
         if (type == typeof(bool)) return OpCodes.Ldelem_I1;
-        if (type == typeof(decimal))
-            throw new NotSupportedException("Arrays of decimal are not supported");
-
         throw new NotSupportedException($"Unsupported array element type: {type}");
+    }
+
+    private static Type GetExpressionClrType(Expression expression, Dictionary<string, LocalBuilder> locals)
+    {
+        return expression switch
+        {
+            LiteralExpression lit => lit.Value.Type.GetClrType(),
+            VariableExpression v when locals.TryGetValue(v.Name, out var local) => local.LocalType,
+            _ => throw new NotSupportedException($"Cannot determine CLR type for expression: {expression}")
+        };
     }
 }

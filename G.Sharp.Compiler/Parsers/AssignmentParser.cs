@@ -13,20 +13,17 @@ public class AssignmentParser(Parser parser)
         if (!parser.VariablesDeclared.TryGetValue(variableName, out var varType))
             throw new Exception($"Variable '{variableName}' is not declared.");
 
-        var value = GetVariableValue(varType);
-        
-        if (!IsTypeCompatible(varType, value))
+        parser.Equals();
+        var expression = new ExpressionParser(parser).Parse();
+
+        var value = expression.GetLiteralValue();
+
+        // IT is TERRIBLE!!!!
+        if (!IsTypeCompatible(varType, value.Type))
             throw new Exception($"Type mismatch: expected {varType}, but got {value.Type}");
 
         parser.Semicolon();
 
-        return new AssignmentStatement(variableName, value);
-    }
-
-    private VariableValue GetVariableValue(GType type)
-    {
-        parser.Equals();
-        var valueParser = new ValueParser(parser);
-        return valueParser.Parse(type);
+        return new AssignmentStatement(variableName, expression);
     }
 }

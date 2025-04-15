@@ -42,6 +42,19 @@ public static partial class Validations
         return reserved.Contains(word);
     }
 
-    public static bool IsTypeCompatible(GType expected, VariableValue actual) =>
-        expected.Kind == actual.Type.Kind && expected.IsArray == actual.Type.IsArray;
+    private static readonly HashSet<GPrimitiveType> NumericTypes =
+    [
+        GPrimitiveType.Int,
+        GPrimitiveType.Float,
+        GPrimitiveType.Double,
+        GPrimitiveType.Decimal
+    ];
+
+    // I really need to change it, don't make sense this check
+    public static bool IsTypeCompatible(GType expected, GType actual) =>
+        expected.Kind switch
+        {
+            GPrimitiveType.Number => NumericTypes.Contains(actual.Kind) && expected.IsArray == actual.IsArray,
+            _ => expected.Kind == actual.Kind && expected.IsArray == actual.IsArray
+        };
 }

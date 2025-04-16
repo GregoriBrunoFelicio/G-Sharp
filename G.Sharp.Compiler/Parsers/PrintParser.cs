@@ -5,7 +5,7 @@ namespace G.Sharp.Compiler.Parsers;
 
 public class PrintParser(Parser parser)
 {
-    public Statement Parse()
+    public PrintStatement Parse()
     {
         var expression = new ExpressionParser(parser).Parse();
         parser.Semicolon();

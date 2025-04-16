@@ -5,14 +5,6 @@ namespace G.Sharp.Compiler.CodeGen;
 
 public static class ArrayEmitter
 {
-    public static LocalBuilder Emit(ILGenerator il, ArrayValue array)
-    {
-        EmitToStack(il, array);
-        var local = il.DeclareLocal(array.Type.GetClrType());
-        il.Emit(OpCodes.Stloc, local);
-        return local;
-    }
-
     public static void EmitToStack(ILGenerator il, ArrayValue array)
     {
         var elementType = array.ElementType.GetClrType();
@@ -41,17 +33,6 @@ public static class ArrayEmitter
             default: throw new NotSupportedException($"Unsupported array element: {value.GetType().Name}");
         }
     }
-
-    // private static Type GetSystemType(GType gType)
-    // {
-    //     return gType.Kind switch
-    //     {
-    //         GPrimitiveType.Number => typeof(int),
-    //         GPrimitiveType.String => typeof(string),
-    //         GPrimitiveType.Boolean => typeof(bool),
-    //         _ => throw new NotSupportedException($"Unsupported type: {gType.Kind}")
-    //     };
-    // }
 
     private static OpCode GetStelemOpCode(Type type)
     {

@@ -7,7 +7,7 @@ namespace G.Sharp.Compiler.Tests.Parser;
 public class ParserTests
 {
     [Fact]
-    public void Parse_Should_Return_Three_Distinct_Statements_When_Input_Is_Valid()
+    public void Should_Parse_Multiple_Statements()
     {
         var tokens = new List<Token>
         {
@@ -16,12 +16,7 @@ public class ParserTests
             new(TokenType.Colon, ":"),
             new(TokenType.Number, "number"),
             new(TokenType.Equals, "="),
-            new(TokenType.NumberLiteral, "1"),
-            new(TokenType.Semicolon, ";"),
-
-            new(TokenType.Identifier, "x"),
-            new(TokenType.Equals, "="),
-            new(TokenType.NumberLiteral, "2"),
+            new(TokenType.NumberLiteral, "42"),
             new(TokenType.Semicolon, ";"),
 
             new(TokenType.Println, "println"),
@@ -32,136 +27,7 @@ public class ParserTests
         };
 
         var parser = new Parsers.Parser(tokens);
-        var result = parser.Parse();
 
-        result.Should().HaveCount(3);
-        result[0].Should().BeOfType<LetStatement>();
-        result[1].Should().BeOfType<AssignmentStatement>();
-        result[2].Should().BeOfType<PrintStatement>();
-    }
-
-    [Fact]
-    public void Parse_Should_Throw_When_Colon_Token_Is_Missing_In_Let_Declaration()
-    {
-        var tokens = new List<Token>
-        {
-            new(TokenType.Let, "let"),
-            new(TokenType.Identifier, "x"),
-            new(TokenType.Equals, "="),
-            new(TokenType.NumberLiteral, "10"),
-            new(TokenType.Semicolon, ";"),
-            new(TokenType.EndOfFile, "")
-        };
-
-        var parser = new Parsers.Parser(tokens);
-        var act = () => parser.Parse();
-
-        act.Should().Throw<Exception>().WithMessage("*Expected token Colon*");
-    }
-
-    [Fact]
-    public void Parse_Should_Throw_When_Unexpected_Token_Is_Found_As_Statement_Start()
-    {
-        var tokens = new List<Token>
-        {
-            new(TokenType.NumberLiteral, "99"),
-            new(TokenType.EndOfFile, "")
-        };
-
-        var parser = new Parsers.Parser(tokens);
-        var act = () => parser.Parse();
-
-        act.Should().Throw<Exception>().WithMessage("*Invalid statement*");
-    }
-
-    [Fact]
-    public void Parse_Should_Throw_When_Let_Statement_Is_Truncated_Before_Equals()
-    {
-        var tokens = new List<Token>
-        {
-            new(TokenType.Let, "let"),
-            new(TokenType.Identifier, "x"),
-            new(TokenType.Colon, ":"),
-            new(TokenType.Number, "number"),
-            new(TokenType.EndOfFile, "")
-        };
-
-        var parser = new Parsers.Parser(tokens);
-        var act = () => parser.Parse();
-
-        act.Should().Throw<Exception>().WithMessage("*Expected token Equals*");
-    }
-
-    [Fact]
-    public void Parse_Should_Succeed_When_Multiple_EndOfFile_Tokens_Are_Present()
-    {
-        var tokens = new List<Token>
-        {
-            new(TokenType.Let, "let"),
-            new(TokenType.Identifier, "x"),
-            new(TokenType.Colon, ":"),
-            new(TokenType.Number, "number"),
-            new(TokenType.Equals, "="),
-            new(TokenType.NumberLiteral, "5"),
-            new(TokenType.Semicolon, ";"),
-
-            new(TokenType.EndOfFile, ""),
-        };
-
-        var parser = new Parsers.Parser(tokens);
-        var result = parser.Parse();
-
-        result.Should().HaveCount(1);
-    }
-
-    [Fact]
-    public void Parse_Should_Handle_Let_With_String_Type()
-    {
-        var tokens = new List<Token>
-        {
-            new(TokenType.Let, "let"),
-            new(TokenType.Identifier, "name"),
-            new(TokenType.Colon, ":"),
-            new(TokenType.String, "string"),
-            new(TokenType.Equals, "="),
-            new(TokenType.StringLiteral, "greg"),
-            new(TokenType.Semicolon, ";"),
-            new(TokenType.EndOfFile, "")
-        };
-
-        var parser = new Parsers.Parser(tokens);
-        var result = parser.Parse();
-
-        result.Should().HaveCount(1);
-        result[0].Should().BeOfType<LetStatement>();
-        var let = (LetStatement)result[0];
-        let.VariableName.Should().Be("name");
-        let.VariableValue.Should().BeOfType<StringValue>();
-    }
-
-    [Fact]
-    public void Parse_Should_Handle_For_Loop()
-    {
-        var tokens = new Compiler.Lexer.Lexer("for item in items { println item; }").Tokenize();
-        var parser = new Parsers.Parser(tokens);
-        var result = parser.Parse();
-
-        result.Should().HaveCount(1);
-        result[0].Should().BeOfType<ForStatement>();
-        var forStmt = (ForStatement)result[0];
-        forStmt.Variable.Should().Be("item");
-        forStmt.Iterable.Should().BeOfType<VariableExpression>();
-    }
-
-    [Fact]
-    public void Parse_Should_Handle_Let_Then_Println_Using_Variable()
-    {
-        var code = """
-                   let x: number = 10;
-                   println x;
-                   """;
-        var tokens = new Compiler.Lexer.Lexer(code).Tokenize();
-        var parser = new Parsers.Parser(tokens);
         var result = parser.Parse();
 
         result.Should().HaveCount(2);
@@ -170,19 +36,200 @@ public class ParserTests
     }
 
     [Fact]
-    public void Parse_Should_Throw_When_Unexpected_Keyword_Appears()
+    public void Should_Parse_Print_Statement()
     {
         var tokens = new List<Token>
         {
             new(TokenType.Println, "println"),
+            new(TokenType.Identifier, "x"),
             new(TokenType.Semicolon, ";"),
             new(TokenType.EndOfFile, "")
         };
 
-        var parser = new Parsers.Parser(tokens);
-        var act = () => parser.Parse();
+        var parser = new Parsers.Parser(tokens)
+        {
+            VariablesDeclared =
+            {
+                ["x"] = new GType(GPrimitiveType.Number)
+            }
+        };
 
-        act.Should().Throw<Exception>()
-            .WithMessage("*Expected token Identifier*");
+        var result = parser.Parse();
+
+        result.Should().ContainSingle();
+        result[0].Should().BeOfType<PrintStatement>();
+    }
+
+    [Fact]
+    public void Should_Parse_Assignment_When_Identifier_Is_First()
+    {
+        var tokens = new List<Token>
+        {
+            new(TokenType.Identifier, "x"),
+            new(TokenType.Equals, "="),
+            new(TokenType.NumberLiteral, "10"),
+            new(TokenType.Semicolon, ";"),
+            new(TokenType.EndOfFile, "")
+        };
+
+        var parser = new Parsers.Parser(tokens)
+        {
+            VariablesDeclared =
+            {
+                ["x"] = new GType(GPrimitiveType.Number)
+            }
+        };
+
+        var result = parser.Parse();
+
+        result.Should().ContainSingle();
+        result[0].Should().BeOfType<AssignmentStatement>();
+    }
+
+    [Fact]
+    public void Should_Parse_For_Loop()
+    {
+        var tokens = new List<Token>
+        {
+            new(TokenType.For, "for"),
+            new(TokenType.Identifier, "i"),
+            new(TokenType.In, "in"),
+            new(TokenType.NumberLiteral, "123"),
+            new(TokenType.LeftBrace, "{"),
+            new(TokenType.RightBrace, "}"),
+            new(TokenType.EndOfFile, "")
+        };
+
+        var parser = new Parsers.Parser(tokens);
+        var result = parser.Parse();
+
+        result.Should().ContainSingle();
+        result[0].Should().BeOfType<ForStatement>();
+    }
+
+    [Fact]
+    public void Should_Throw_When_Statement_Is_Invalid()
+    {
+        var tokens = new List<Token>
+        {
+            new(TokenType.String, "string"),
+            new(TokenType.EndOfFile, "")
+        };
+
+        var parser = new Parsers.Parser(tokens);
+
+        var action = () => parser.Parse();
+
+        action.Should().Throw<Exception>()
+            .WithMessage("Invalid statement");
+    }
+
+    [Fact]
+    public void Should_Consume_Token_When_Match_Is_True()
+    {
+        var tokens = new List<Token>
+        {
+            new(TokenType.Let, "let"),
+            new(TokenType.EndOfFile, "")
+        };
+
+        var parser = new Parsers.Parser(tokens);
+
+        var matched = parser.Match(TokenType.Let);
+
+        matched.Should().BeTrue();
+        parser.Previous().Type.Should().Be(TokenType.Let);
+    }
+
+    [Fact]
+    public void Should_Not_Consume_When_Match_Is_False()
+    {
+        var tokens = new List<Token>
+        {
+            new(TokenType.Println, "println"),
+            new(TokenType.EndOfFile, "")
+        };
+
+        var parser = new Parsers.Parser(tokens);
+
+        var matched = parser.Match(TokenType.Let);
+
+        matched.Should().BeFalse();
+        parser.Current().Type.Should().Be(TokenType.Println);
+    }
+
+    [Fact]
+    public void Should_Throw_When_Consume_Expected_Token_Not_Found()
+    {
+        var tokens = new List<Token>
+        {
+            new(TokenType.Identifier, "x"),
+            new(TokenType.Equals, "="),
+            new(TokenType.NumberLiteral, "42"),
+            new(TokenType.EndOfFile, "")
+        };
+
+        var parser = new Parsers.Parser(tokens);
+
+        parser.Consume(TokenType.Identifier);
+        parser.Consume(TokenType.Equals);
+        parser.Consume(TokenType.NumberLiteral);
+
+        var action = () => parser.Consume(TokenType.Semicolon);
+
+        action.Should().Throw<Exception>()
+            .WithMessage("Expected token Semicolon, got EndOfFile");
+    }
+
+    [Fact]
+    public void Should_Return_Previous_Token()
+    {
+        var tokens = new List<Token>
+        {
+            new(TokenType.Let, "let"),
+            new(TokenType.Identifier, "x")
+        };
+
+        var parser = new Parsers.Parser(tokens);
+
+        parser.Match(TokenType.Let);
+        parser.Match(TokenType.Identifier);
+
+        var previous = parser.Previous();
+
+        previous.Type.Should().Be(TokenType.Identifier);
+    }
+
+    [Fact]
+    public void Should_Throw_When_Previous_Called_Before_Advance()
+    {
+        var tokens = new List<Token>
+        {
+            new(TokenType.Let, "let")
+        };
+
+        var parser = new Parsers.Parser(tokens);
+
+        var action = () => parser.Previous();
+
+        action.Should().Throw<Exception>()
+            .WithMessage("No previous token");
+    }
+
+    [Fact]
+    public void Should_Throw_When_Current_Called_At_End()
+    {
+        var tokens = new List<Token>
+        {
+            new(TokenType.EndOfFile, "")
+        };
+
+        var parser = new Parsers.Parser(tokens);
+        parser.Consume(TokenType.EndOfFile);
+
+        var action = () => parser.Current();
+
+        action.Should().Throw<Exception>()
+            .WithMessage("Unexpected end of input.");
     }
 }

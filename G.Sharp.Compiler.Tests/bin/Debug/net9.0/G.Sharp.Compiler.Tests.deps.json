@@ -12,7 +12,6 @@
           "FluentAssertions": "8.2.0",
           "G.Sharp.Compiler": "1.0.0",
           "Microsoft.NET.Test.Sdk": "17.12.0",
-          "Moq": "4.20.72",
           "coverlet.collector": "6.0.2",
           "xunit": "2.9.2",
           "xunit.runner.visualstudio": "2.8.2"
@@ -38,17 +37,6 @@
           "lib/netstandard2.0/Bogus.dll": {
             "assemblyVersion": "31.0.3.0",
             "fileVersion": "31.0.3.0"
-          }
-        }
-      },
-      "Castle.Core/5.1.1": {
-        "dependencies": {
-          "System.Diagnostics.EventLog": "6.0.0"
-        },
-        "runtime": {
-          "lib/net6.0/Castle.Core.dll": {
-            "assemblyVersion": "5.0.0.0",
-            "fileVersion": "5.1.1.0"
           }
         }
       },
@@ -321,17 +309,6 @@
           }
         }
       },
-      "Moq/4.20.72": {
-        "dependencies": {
-          "Castle.Core": "5.1.1"
-        },
-        "runtime": {
-          "lib/net6.0/Moq.dll": {
-            "assemblyVersion": "4.20.72.0",
-            "fileVersion": "4.20.72.0"
-          }
-        }
-      },
       "Newtonsoft.Json/13.0.1": {
         "runtime": {
           "lib/netstandard2.0/Newtonsoft.Json.dll": {
@@ -341,28 +318,6 @@
         }
       },
       "System.Data.DataSetExtensions/4.5.0": {},
-      "System.Diagnostics.EventLog/6.0.0": {
-        "runtime": {
-          "lib/net6.0/System.Diagnostics.EventLog.dll": {
-            "assemblyVersion": "6.0.0.0",
-            "fileVersion": "6.0.21.52210"
-          }
-        },
-        "runtimeTargets": {
-          "runtimes/win/lib/net6.0/System.Diagnostics.EventLog.Messages.dll": {
-            "rid": "win",
-            "assetType": "runtime",
-            "assemblyVersion": "6.0.0.0",
-            "fileVersion": "6.0.21.52210"
-          },
-          "runtimes/win/lib/net6.0/System.Diagnostics.EventLog.dll": {
-            "rid": "win",
-            "assetType": "runtime",
-            "assemblyVersion": "6.0.0.0",
-            "fileVersion": "6.0.21.52210"
-          }
-        }
-      },
       "System.Reflection.Metadata/1.6.0": {},
       "xunit/2.9.2": {
         "dependencies": {
@@ -447,13 +402,6 @@
       "path": "bogus/31.0.3",
       "hashPath": "bogus.31.0.3.nupkg.sha512"
     },
-    "Castle.Core/5.1.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-rpYtIczkzGpf+EkZgDr9CClTdemhsrwA/W5hMoPjLkRFnXzH44zDLoovXeKtmxb1ykXK9aJVODSpiJml8CTw2g==",
-      "path": "castle.core/5.1.1",
-      "hashPath": "castle.core.5.1.1.nupkg.sha512"
-    },
     "coverlet.collector/6.0.2": {
       "type": "package",
       "serviceable": true,
@@ -496,13 +444,6 @@
       "path": "microsoft.testplatform.testhost/17.12.0",
       "hashPath": "microsoft.testplatform.testhost.17.12.0.nupkg.sha512"
     },
-    "Moq/4.20.72": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-EA55cjyNn8eTNWrgrdZJH5QLFp2L43oxl1tlkoYUKIE9pRwL784OWiTXeCV5ApS+AMYEAlt7Fo03A2XfouvHmQ==",
-      "path": "moq/4.20.72",
-      "hashPath": "moq.4.20.72.nupkg.sha512"
-    },
     "Newtonsoft.Json/13.0.1": {
       "type": "package",
       "serviceable": true,
@@ -516,13 +457,6 @@
       "sha512": "sha512-221clPs1445HkTBZPL+K9sDBdJRB8UN8rgjO3ztB0CQ26z//fmJXtlsr6whGatscsKGBrhJl5bwJuKSA8mwFOw==",
       "path": "system.data.datasetextensions/4.5.0",
       "hashPath": "system.data.datasetextensions.4.5.0.nupkg.sha512"
-    },
-    "System.Diagnostics.EventLog/6.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-lcyUiXTsETK2ALsZrX+nWuHSIQeazhqPphLfaRxzdGaG93+0kELqpgEHtwWOlQe7+jSFnKwaCAgL4kjeZCQJnw==",
-      "path": "system.diagnostics.eventlog/6.0.0",
-      "hashPath": "system.diagnostics.eventlog.6.0.0.nupkg.sha512"
     },
     "System.Reflection.Metadata/1.6.0": {
       "type": "package",

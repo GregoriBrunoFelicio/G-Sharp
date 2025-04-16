@@ -7,30 +7,30 @@ namespace G.Sharp.Compiler.Tests.Parser;
 public class ParseValidationsTests
 {
     [Theory]
-    [InlineData("name")]
-    [InlineData("my_variable")]
-    [InlineData("variable1")]
-    [InlineData("user_input_2")]
-    [InlineData("_internal")]
-    [InlineData("validName123")]
-    public void Should_Accept_Valid_Names(string variableName)
+    [InlineData("x")]
+    [InlineData("var123")]
+    [InlineData("_var")]
+    [InlineData("my_var2")]
+    [InlineData("A")]
+    [InlineData("CamelCase")]
+    public void Should_Return_True_If_Variable_Name_Is_Valid(string name)
     {
-        var result = Validations.IsValidVariableName(variableName);
+        var result = Validations.IsValidVariableName(name);
+
         result.Should().BeTrue();
     }
 
     [Theory]
-    [InlineData("1name")]
-    [InlineData("no$me")]
-    [InlineData("var#123")]
-    [InlineData("#hidden")]
-    [InlineData("with space")]
+    [InlineData("1var")]
+    [InlineData("!var")]
+    [InlineData(" ")]
     [InlineData("")]
-    [InlineData("123")]
-    [InlineData("name!")]
-    public void Should_Reject_Invalid_Names(string variableName)
+    [InlineData("var-name")]
+    [InlineData("x y")]
+    public void Should_Return_False_If_Variable_Name_Is_Invalid(string name)
     {
-        var result = Validations.IsValidVariableName(variableName);
+        var result = Validations.IsValidVariableName(name);
+
         result.Should().BeFalse();
     }
 
@@ -51,107 +51,82 @@ public class ParseValidationsTests
     [InlineData("string")]
     [InlineData("number")]
     [InlineData("boolean")]
-    public void IsReserved_Should_Return_True_For_Reserved_Keywords(string keyword)
+    [InlineData("bool")]
+    [InlineData("in")]
+    [InlineData("int")]
+    [InlineData("float")]
+    [InlineData("char")]
+    [InlineData("void")]
+    public void Should_Return_True_If_Word_Is_Reserved(string word)
     {
-        var result = Validations.IsReserved(keyword);
+        var result = Validations.IsReserved(word);
+
         result.Should().BeTrue();
     }
 
     [Theory]
+    [InlineData("myVar")]
+    [InlineData("custom")]
     [InlineData("variable")]
-    [InlineData("customName")]
-    [InlineData("main")]
-    [InlineData("calculateSum")]
-    [InlineData("my_var_123")]
-    public void IsReserved_Should_Return_False_For_Non_Reserved_Keywords(string keyword)
+    [InlineData("list")]
+    [InlineData("Index")]
+    [InlineData("Map")]
+    public void Should_Return_False_If_Word_Is_Not_Reserved(string word)
     {
-        var result = Validations.IsReserved(keyword);
+        var result = Validations.IsReserved(word);
+
         result.Should().BeFalse();
     }
 
     [Theory]
-    [InlineData("LET")]
-    [InlineData("If")]
-    [InlineData("While")]
-    [InlineData("Return")]
-    [InlineData("False")]
-    public void IsReserved_Should_Be_Case_Sensitive(string keyword)
+    [InlineData(GPrimitiveType.Int)]
+    [InlineData(GPrimitiveType.Float)]
+    [InlineData(GPrimitiveType.Double)]
+    [InlineData(GPrimitiveType.Decimal)]
+    public void Should_Return_True_If_Number_Assigned_To_NumberSupertype(GPrimitiveType actualKind)
     {
-        var result = Validations.IsReserved(keyword);
-        result.Should().BeFalse();
-    }
+        var expected = new GType(GPrimitiveType.Number);
+        var actual = new GType(actualKind);
 
-    [Theory]
-    [InlineData("")]
-    [InlineData(null)]
-    public void IsReserved_Should_Return_False_For_Empty_Or_Null(string keyword)
-    {
-        var result = Validations.IsReserved(keyword);
-        result.Should().BeFalse();
-    }
+        var result = Validations.IsTypeCompatible(expected, actual);
 
-    [Theory]
-    [InlineData(GPrimitiveType.Number, "string")]
-    [InlineData(GPrimitiveType.Number, "boolean")]
-    [InlineData(GPrimitiveType.String, "int")]
-    [InlineData(GPrimitiveType.String, "boolean")]
-    [InlineData(GPrimitiveType.Boolean, "int")]
-    [InlineData(GPrimitiveType.Boolean, "string")]
-    public void Should_Return_False_When_Primitive_Types_Do_Not_Match(GPrimitiveType expectedKind, string valueKind)
-    {
-        var expectedType = new GType(expectedKind);
-
-        VariableValue value = valueKind switch
-        {
-            "int" => new IntValue(1),
-            "float" => new FloatValue(1.0f),
-            "double" => new DoubleValue(1.0),
-            "decimal" => new DecimalValue(1.0m),
-            "string" => new StringValue("mismatch"),
-            "boolean" => new BooleanValue(false),
-            _ => throw new InvalidOperationException("Unknown value kind")
-        };
-
-        var result = Validations.IsTypeCompatible(expectedType, value);
-        result.Should().BeFalse();
-    }
-
-    [Theory]
-    [InlineData(GPrimitiveType.Number, "int")]
-    [InlineData(GPrimitiveType.Number, "float")]
-    [InlineData(GPrimitiveType.Number, "double")]
-    [InlineData(GPrimitiveType.Number, "decimal")]
-    [InlineData(GPrimitiveType.String, "string")]
-    [InlineData(GPrimitiveType.Boolean, "boolean")]
-    public void Should_Return_True_When_Primitive_Types_Match(GPrimitiveType expectedKind, string valueKind)
-    {
-        var expectedType = new GType(expectedKind);
-
-        VariableValue value = valueKind switch
-        {
-            "int" => new IntValue(1),
-            "float" => new FloatValue(1.0f),
-            "double" => new DoubleValue(1.0),
-            "decimal" => new DecimalValue(1.0m),
-            "string" => new StringValue("ok"),
-            "boolean" => new BooleanValue(true),
-            _ => throw new ArgumentOutOfRangeException(nameof(valueKind), valueKind, null)
-        };
-
-        var result = Validations.IsTypeCompatible(expectedType, value);
         result.Should().BeTrue();
     }
-    
-    [Fact]
-    public void IsPrimitiveTypeCompatible_Should_Return_False_When_Value_Is_Array()
-    {
-        var expectedType = new GType(GPrimitiveType.String); 
-        var arrayValue = new ArrayValue(
-            Elements: new List<VariableValue> { new StringValue("greg"), new StringValue("ana") },
-            ElementType: new GType(GPrimitiveType.String)
-        );
 
-        var result = Validations.IsTypeCompatible(expectedType, arrayValue);
+    [Theory]
+    [InlineData(GPrimitiveType.String)]
+    [InlineData(GPrimitiveType.Boolean)]
+    [InlineData(GPrimitiveType.Number)]
+    public void Should_Return_True_If_Kinds_Are_Exactly_The_Same(GPrimitiveType kind)
+    {
+        var expected = new GType(kind);
+        var actual = new GType(kind);
+
+        var result = Validations.IsTypeCompatible(expected, actual);
+
+        result.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(GPrimitiveType.Int)]
+    [InlineData(GPrimitiveType.Float)]
+    public void Should_Return_False_If_Kinds_Different_And_Not_Supertype(GPrimitiveType actualKind)
+    {
+        var expected = new GType(GPrimitiveType.String);
+        var actual = new GType(actualKind);
+
+        var result = Validations.IsTypeCompatible(expected, actual);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Should_Return_False_If_Array_Types_Are_Different()
+    {
+        var expected = new GType(GPrimitiveType.Int, isArray: true);
+        var actual = new GType(GPrimitiveType.Int, isArray: false);
+
+        var result = Validations.IsTypeCompatible(expected, actual);
 
         result.Should().BeFalse();
     }

@@ -1,60 +1,55 @@
 using FluentAssertions;
 using G.Sharp.Compiler.AST;
+using G.Sharp.Compiler.Lexer;
+using G.Sharp.Compiler.Parsers;
 
 namespace G.Sharp.Compiler.Tests.Parser;
 
 public class ForParserTests
 {
     [Fact]
-    public void Parse_For_With_Variable_Iterable_Should_Return_Valid_For_Statement()
+    public void Should_Return_ForStatement_If_All_Is_Valid()
     {
-        var code = "for item in nums { println item; }";
-        var tokens = new Compiler.Lexer.Lexer(code).Tokenize();
+        var tokens = new List<Token>
+        {
+            new(TokenType.Identifier, "item"),
+            new(TokenType.In, "in"),
+            new(TokenType.NumberLiteral, "123"),
+            new(TokenType.LeftBrace, "{"),
+            new(TokenType.RightBrace, "}"),
+            new(TokenType.EndOfFile, "")
+        };
+
         var parser = new Parsers.Parser(tokens);
-        var statements = parser.Parse();
+        var result = new ForParser(parser).Parse();
 
-        statements.Should().HaveCount(1);
-        statements[0].Should().BeOfType<ForStatement>();
-
-        var forStatement = (statements[0] as ForStatement)!;
-
-        forStatement.Variable.Should().Be("item");
-        forStatement.Iterable.Should().BeOfType<VariableExpression>();
-        ((VariableExpression)forStatement.Iterable).Name.Should().Be("nums");
-
-        forStatement.Body.Should().HaveCount(1);
-        forStatement.Body[0].Should().BeOfType<PrintStatement>();
-        ((PrintStatement)forStatement.Body[0]).VariableName.Should().Be("item");
+        result.Variable.Should().Be("item");
+        result.Iterable.Should().BeOfType<LiteralExpression>();
+        result.Body.Should().BeEmpty();
     }
 
     [Fact]
-    public void Parse_For_With_Array_Literal_Should_Return_Literal_As_Iterable()
+    public void Should_Parse_Statement_Inside_For_Body()
     {
-        var code = "for n in [1 2 3] { println n; }";
-        var tokens = new Compiler.Lexer.Lexer(code).Tokenize();
+        var tokens = new List<Token>
+        {
+            new(TokenType.Identifier, "i"),
+            new(TokenType.In, "in"),
+            new(TokenType.NumberLiteral, "123"),
+            new(TokenType.LeftBrace, "{"),
+            new(TokenType.Println, "println"),
+            new(TokenType.StringLiteral, "hello"),
+            new(TokenType.Semicolon, ";"),
+            new(TokenType.RightBrace, "}"),
+            new(TokenType.EndOfFile, "")
+        };
+
         var parser = new Parsers.Parser(tokens);
-        var statements = parser.Parse();
+        var result = new ForParser(parser).Parse();
 
-        statements.Should().HaveCount(1);
-        statements[0].Should().BeOfType<ForStatement>();
-
-        var forStatement = (statements[0] as ForStatement)!;
-        forStatement.Variable.Should().Be("n");
-        forStatement.Iterable.Should().BeOfType<LiteralExpression>();
-        forStatement.Body.Should().HaveCount(1);
-        forStatement.Body[0].Should().BeOfType<PrintStatement>();
-    }
-
-    [Fact]
-    public void Parse_For_With_Empty_Body_Should_Return_Empty_Body_List()
-    {
-        var code = "for x in xs { }";
-        var tokens = new Compiler.Lexer.Lexer(code).Tokenize();
-        var parser = new Parsers.Parser(tokens);
-        var statements = parser.Parse();
-
-        statements.Should().HaveCount(1);
-        var forStatement = (statements[0] as ForStatement)!;
-        forStatement.Body.Should().BeEmpty();
+        result.Variable.Should().Be("i");
+        result.Iterable.Should().BeOfType<LiteralExpression>();
+        result.Body.Should().ContainSingle();
+        result.Body[0].Should().BeOfType<PrintStatement>();
     }
 }

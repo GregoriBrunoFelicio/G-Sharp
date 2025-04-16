@@ -1,33 +1,31 @@
 using FluentAssertions;
 using G.Sharp.Compiler.AST;
 using G.Sharp.Compiler.Lexer;
+using G.Sharp.Compiler.Parsers;
 
 namespace G.Sharp.Compiler.Tests.Parser;
 
-public class PrintStatementTests
+public class PrintParserTests
 {
     [Fact]
-    public void Should_Parse_Println_Statement()
+    public void Should_Return_PrintStatement_With_Expression()
     {
         var tokens = new List<Token>
         {
-            new(TokenType.Println, "println"),
-            new(TokenType.Identifier, "name"),
+            new(TokenType.NumberLiteral, "42"),
             new(TokenType.Semicolon, ";"),
             new(TokenType.EndOfFile, "")
         };
 
         var parser = new Parsers.Parser(tokens);
-        var result = parser.Parse();
+        var printParser = new PrintParser(parser);
 
-        var let = result.Should()
-            .ContainSingle()
-            .Which
-            .Should()
-            .BeOfType<PrintStatement>()
-            .Subject
-            .As<PrintStatement>();
+        var result = printParser.Parse();
 
-        let.VariableName.Should().Be("name");
+        result.Should().BeOfType<PrintStatement>();
+
+        var value = result.Expression.GetLiteralValue();
+        value.Should().BeOfType<IntValue>();
+        value.As<IntValue>().Value.Should().Be(42);
     }
 }

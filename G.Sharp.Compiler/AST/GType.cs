@@ -15,7 +15,7 @@ public readonly struct GType(GPrimitiveType kind, bool isArray = false)
 {
     public GPrimitiveType Kind { get; } = kind;
     public bool IsArray { get; } = isArray;
-    
+
     public Type GetClrType()
     {
         var baseType = Kind switch
@@ -31,5 +31,10 @@ public readonly struct GType(GPrimitiveType kind, bool isArray = false)
         };
 
         return IsArray ? baseType.MakeArrayType() : baseType;
+    }
+
+    public override string ToString()
+    {
+        return IsArray ? $"{Kind}[]" : Kind.ToString();
     }
 }

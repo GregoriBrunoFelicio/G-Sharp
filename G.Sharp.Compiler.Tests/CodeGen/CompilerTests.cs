@@ -3,57 +3,103 @@ using G.Sharp.Compiler.AST;
 
 namespace G.Sharp.Compiler.Tests.CodeGen;
 
+[Collection("NonParallelCollection")]
 public class CompilerTests
 {
     [Fact]
-    public void CompileAndRun_Should_Print_Let_Variable()
+    public void Should_Compile_And_Run_LetStatement()
     {
-        var statements = new List<Statement>
-        {
-            new LetStatement("x", new IntValue(42)),
-            new PrintStatement("x")
-        };
+        var let = new LetStatement(
+            "name",
+            new LiteralExpression(new StringValue("Greg"))
+        );
+
+        var print = new PrintStatement(
+            new VariableExpression("name")
+        );
 
         using var sw = new StringWriter();
         Console.SetOut(sw);
 
         var compiler = new Compiler.CodeGen.Compiler();
-        compiler.CompileAndRun(statements);
+        compiler.CompileAndRun([ let, print ]);
 
-        sw.ToString().Trim().Should().Be("42");
+        var output = sw.ToString().Trim();
+        output.Should().Be("Greg");
     }
-
+    
     [Fact]
-    public void CompileAndRun_Should_Print_Assigned_Value()
+    public void Should_Compile_And_Run_AssignmentStatement()
     {
-        var statements = new List<Statement>
-        {
-            new LetStatement("x", new IntValue(0)),
-            new AssignmentStatement("x", new IntValue(99)),
-            new PrintStatement("x")
-        };
+        var let = new LetStatement(
+            "x",
+            new LiteralExpression(new IntValue(10))
+        );
+
+        var assign = new AssignmentStatement(
+            "x",
+            new LiteralExpression(new IntValue(99))
+        );
+
+        var print = new PrintStatement(
+            new VariableExpression("x")
+        );
 
         using var sw = new StringWriter();
         Console.SetOut(sw);
 
         var compiler = new Compiler.CodeGen.Compiler();
-        compiler.CompileAndRun(statements);
+        compiler.CompileAndRun([ let, assign, print ]);
 
-        sw.ToString().Trim().Should().Be("99");
+        var output = sw.ToString().Trim();
+        output.Should().Be("99");
+    }
+    
+    [Fact]
+    public void Should_Compile_And_Run_PrintStatement()
+    {
+        var print = new PrintStatement(
+            new LiteralExpression(new StringValue("Hello"))
+        );
+
+        using var sw = new StringWriter();
+        Console.SetOut(sw);
+
+        var compiler = new Compiler.CodeGen.Compiler();
+        compiler.CompileAndRun([ print ]);
+
+        var output = sw.ToString().Trim();
+        output.Should().Be("Hello");
     }
 
     [Fact]
-    public void CompileAndRun_Should_Throw_When_Statement_Is_Not_Supported()
+    public void Should_Compile_And_Run_ForStatement()
     {
-        var invalidStatement = new FakeStatement();
-        var statements = new List<Statement> { invalidStatement };
+        var arrayValue = new ArrayValue(
+            [
+                new StringValue("one"),
+                new StringValue("two"),
+                new StringValue("three")
+            ],
+            new GType(GPrimitiveType.String)
+        );
+
+        var loop = new ForStatement(
+            "item",
+            new LiteralExpression(arrayValue),
+            [new PrintStatement(new VariableExpression("item"))]
+        );
+
+        using var sw = new StringWriter();
+        Console.SetOut(sw);
+
         var compiler = new Compiler.CodeGen.Compiler();
+        compiler.CompileAndRun([ loop ]);
 
-        var act = () => compiler.CompileAndRun(statements);
-
-        act.Should().Throw<NotSupportedException>()
-            .WithMessage("Unsupported statement: FakeStatement");
+        var output = sw.ToString().Trim().Split(Environment.NewLine);
+        output.Should().BeEquivalentTo("one", "two", "three");
     }
-
-    private record FakeStatement : Statement { }
 }
+
+[CollectionDefinition("NonParallelCollection", DisableParallelization = true)]
+public class NonParallelCollectionDefinition { }

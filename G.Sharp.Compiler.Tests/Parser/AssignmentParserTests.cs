@@ -7,31 +7,8 @@ namespace G.Sharp.Compiler.Tests.Parser;
 
 public class AssignmentParserTests
 {
-    [Fact]
-    public void Should_Parse_Assignment_With_String()
-    {
-        var tokens = new List<Token>
-        {
-            new(TokenType.Identifier, "name"),
-            new(TokenType.Equals, "="),
-            new(TokenType.StringLiteral, "Greg"),
-            new(TokenType.Semicolon, ";"),
-            new(TokenType.EndOfFile, "")
-        };
-
-        var parser = new Parsers.Parser(tokens);
-        parser.VariablesDeclared.Add("name", new GType(GPrimitiveType.String));
-
-        var result = new AssignmentParser(parser).Parse();
-
-        var statement = result.As<AssignmentStatement>();
-        statement.VariableName.Should().Be("name");
-        statement.VariableValue.Should().BeOfType<StringValue>();
-        statement.VariableValue.As<StringValue>().Value.Should().Be("Greg");
-    }
-    
-    [Fact]
-    public void Should_Parse_Assignment_With_Int()
+     [Fact]
+    public void Should_Parse_Assignment_With_IntValue()
     {
         var tokens = new List<Token>
         {
@@ -42,83 +19,65 @@ public class AssignmentParserTests
             new(TokenType.EndOfFile, "")
         };
 
-        var parser = new Parsers.Parser(tokens);
-        parser.VariablesDeclared.Add("x", new GType(GPrimitiveType.Number));
+        var parser = new Parsers.Parser(tokens)
+        {
+            VariablesDeclared =
+            {
+                ["x"] = new GType(GPrimitiveType.Int)
+            }
+        };
 
         var result = new AssignmentParser(parser).Parse();
 
-        var statement = result.As<AssignmentStatement>();
-        statement.VariableName.Should().Be("x");
-        statement.VariableValue.Should().BeOfType<IntValue>();
-        statement.VariableValue.As<IntValue>().Value.Should().Be(42);
+        result.VariableName.Should().Be("x");
+        result.Expression.Should().BeOfType<LiteralExpression>();
+        result.Expression.As<LiteralExpression>().Value.Should().BeOfType<IntValue>();
+        result.Expression.As<LiteralExpression>().Value.As<IntValue>().Value.Should().Be(42);
     }
-    
+
     [Fact]
-    public void Should_Parse_Assignment_With_Boolean_True()
+    public void Should_Throw_If_Variable_Is_Not_Declared()
     {
         var tokens = new List<Token>
         {
-            new(TokenType.Identifier, "flag"),
+            new(TokenType.Identifier, "y"),
             new(TokenType.Equals, "="),
-            new(TokenType.BooleanTrueLiteral, "true"),
+            new(TokenType.NumberLiteral, "10"),
             new(TokenType.Semicolon, ";"),
             new(TokenType.EndOfFile, "")
         };
 
         var parser = new Parsers.Parser(tokens);
-        parser.VariablesDeclared.Add("flag", new GType(GPrimitiveType.Boolean));
 
-        var result = new AssignmentParser(parser).Parse();
+        var act = () => new AssignmentParser(parser).Parse();
 
-        var statement = result.As<AssignmentStatement>();
-        statement.VariableName.Should().Be("flag");
-        statement.VariableValue.Should().BeOfType<BooleanValue>();
-        statement.VariableValue.As<BooleanValue>().Value.Should().BeTrue();
+        act.Should().Throw<Exception>()
+            .WithMessage("Variable 'y' is not declared.");
     }
-    
+
     [Fact]
-    public void Should_Parse_Assignment_With_Boolean_False()
-    {
-        var tokens = new List<Token>
-        {
-            new(TokenType.Identifier, "flag"),
-            new(TokenType.Equals, "="),
-            new(TokenType.BooleanFalseLiteral, "false"),
-            new(TokenType.Semicolon, ";"),
-            new(TokenType.EndOfFile, "")
-        };
-
-        var parser = new Parsers.Parser(tokens);
-        parser.VariablesDeclared.Add("flag", new GType(GPrimitiveType.Boolean));
-
-        var result = new AssignmentParser(parser).Parse();
-
-        var statement = result.As<AssignmentStatement>();
-        statement.VariableName.Should().Be("flag");
-        statement.VariableValue.Should().BeOfType<BooleanValue>();
-        statement.VariableValue.As<BooleanValue>().Value.Should().BeFalse();
-    }
-    
-    [Fact]
-    public void Should_Assign_Value_To_Already_Declared_Variable()
+    public void Should_Throw_If_Type_Is_Not_Compatible()
     {
         var tokens = new List<Token>
         {
             new(TokenType.Identifier, "x"),
             new(TokenType.Equals, "="),
-            new(TokenType.NumberLiteral, "100"),
+            new(TokenType.StringLiteral, "hello"),
             new(TokenType.Semicolon, ";"),
             new(TokenType.EndOfFile, "")
         };
 
-        var parser = new Parsers.Parser(tokens);
-        parser.VariablesDeclared.Add("x", new GType(GPrimitiveType.Number));
+        var parser = new Parsers.Parser(tokens)
+        {
+            VariablesDeclared =
+            {
+                ["x"] = new GType(GPrimitiveType.Int)
+            }
+        };
 
-        var result = new AssignmentParser(parser).Parse();
+        var act = () => new AssignmentParser(parser).Parse();
 
-        var stmt = result.As<AssignmentStatement>();
-        stmt.VariableName.Should().Be("x");
-        stmt.VariableValue.Should().BeOfType<IntValue>();
-        stmt.VariableValue.As<IntValue>().Value.Should().Be(100);
+        act.Should().Throw<Exception>()
+            .WithMessage("Type mismatch: expected Int, but got String");
     }
 }

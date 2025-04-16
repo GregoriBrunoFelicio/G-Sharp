@@ -10,10 +10,8 @@ public static class ForEmitter
         ForStatement statement,
         Dictionary<string, LocalBuilder> variables)
     {
-        // Empilha o array (não cria variável)
         ExpressionEmitter.EmitToStack(il, statement.Iterable, variables);
 
-        // Cria variável local para o array
         var arrayType = GetExpressionClrType(statement.Iterable, variables);
 
         if (!arrayType.IsArray)
@@ -22,7 +20,6 @@ public static class ForEmitter
         var arrayLocal = il.DeclareLocal(arrayType);
         il.Emit(OpCodes.Stloc, arrayLocal);
 
-        // int i = 0;
         var indexLocal = il.DeclareLocal(typeof(int));
         il.Emit(OpCodes.Ldc_I4_0);
         il.Emit(OpCodes.Stloc, indexLocal);
@@ -32,14 +29,12 @@ public static class ForEmitter
 
         il.MarkLabel(loopStart);
 
-        // if (i >= array.Length) goto loopEnd;
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldloc, arrayLocal);
         il.Emit(OpCodes.Ldlen);
         il.Emit(OpCodes.Conv_I4);
         il.Emit(OpCodes.Bge, loopEnd);
 
-        // var item = array[i];
         var elementType = arrayType.GetElementType()
             ?? throw new InvalidOperationException($"Unable to get element type from array: {arrayType}");
 
@@ -51,13 +46,11 @@ public static class ForEmitter
         il.Emit(GetLdelemOpCode(elementType));
         il.Emit(OpCodes.Stloc, loopVar);
 
-        // Loop body
         foreach (var s in statement.Body)
         {
             StatementEmitter.Emit(il, s, variables);
         }
 
-        // i++
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldc_I4_1);
         il.Emit(OpCodes.Add);

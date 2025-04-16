@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Reflection.Emit;
 using G.Sharp.Compiler.AST;
 

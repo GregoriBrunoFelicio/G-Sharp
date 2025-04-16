@@ -1,5 +1,3 @@
-using G.Sharp.Compiler.Extensions;
-
 namespace G.Sharp.Compiler.Lexer;
 
 public static class StringLexer

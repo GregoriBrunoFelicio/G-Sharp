@@ -97,11 +97,10 @@ public static class ExpressionEmitter
         var sign = (bits[3] & 0x80000000) != 0;
         var scale = (byte)((bits[3] >> 16) & 0x7F);
 
-        var ctor = typeof(decimal).GetConstructor(new[]
-        {
+        var ctor = typeof(decimal).GetConstructor([
             typeof(int), typeof(int), typeof(int),
             typeof(bool), typeof(byte)
-        }) ?? throw new Exception("Decimal constructor not found");
+        ]) ?? throw new Exception("Decimal constructor not found");
 
         il.Emit(OpCodes.Ldc_I4, lo);
         il.Emit(OpCodes.Ldc_I4, mid);

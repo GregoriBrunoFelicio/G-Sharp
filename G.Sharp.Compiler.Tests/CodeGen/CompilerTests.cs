@@ -3,7 +3,6 @@ using G.Sharp.Compiler.AST;
 
 namespace G.Sharp.Compiler.Tests.CodeGen;
 
-[Collection("NonParallelCollection")]
 public class CompilerTests
 {
     [Fact]
@@ -100,6 +99,3 @@ public class CompilerTests
         output.Should().BeEquivalentTo("one", "two", "three");
     }
 }
-
-[CollectionDefinition("NonParallelCollection", DisableParallelization = true)]
-public class NonParallelCollectionDefinition { }

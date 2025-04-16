@@ -1,6 +1,4 @@
-﻿using G.Sharp;
-using G.Sharp.Compiler;
-using G.Sharp.Compiler.CodeGen;
+﻿using G.Sharp.Compiler.CodeGen;
 using G.Sharp.Compiler.Lexer;
 using G.Sharp.Compiler.Parsers;
 

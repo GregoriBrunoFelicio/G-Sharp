@@ -1,5 +1,4 @@
 using G.Sharp.Compiler.AST;
-using G.Sharp.Compiler.Lexer;
 using static G.Sharp.Compiler.Parsers.Validations;
 
 namespace G.Sharp.Compiler.Parsers;

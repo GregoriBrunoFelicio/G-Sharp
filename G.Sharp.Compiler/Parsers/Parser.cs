@@ -43,11 +43,6 @@ public class Parser(List<Token> tokens)
         throw new Exception("Invalid statement");
     }
 
-    /// <summary>
-    /// Token navigation methods
-    /// Core utilities for moving through the token stream, matching and consuming tokens,
-    /// and checking whether the parser has reached the end of the input.
-    /// </summary>
     public Token Consume(TokenType type)
     {
         if (Check(type))

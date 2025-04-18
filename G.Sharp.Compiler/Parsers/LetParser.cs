@@ -6,7 +6,6 @@ namespace G.Sharp.Compiler.Parsers;
 
 public class LetParser(Parser parser)
 {
-    // TODO: Add support to expressions
     public LetStatement Parse()
     {
         var variableName = GetVariableName();

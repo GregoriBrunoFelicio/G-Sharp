@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace G.Sharp.Compiler.AST;
 
 public abstract record VariableValue
@@ -20,9 +22,7 @@ public record ArrayValue(IReadOnlyList<VariableValue> Elements, GType ElementTyp
     public override GType Type => new(ElementType.Kind, isArray: true);
 }
 
-public abstract record NumberValue : VariableValue
-{
-}
+public abstract record NumberValue : VariableValue;
 
 public sealed record IntValue(int Value) : NumberValue
 {

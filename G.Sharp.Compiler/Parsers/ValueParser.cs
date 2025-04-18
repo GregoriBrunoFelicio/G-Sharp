@@ -53,9 +53,8 @@ public class ValueParser(Parser parser)
 
         while (!parser.Check(TokenType.RightBracket))
         {
-            Console.WriteLine(parser.Current());
             var element = GetValue(new GType(arrayType.Kind));
-
+            
             elements.Add(element);
         }
 

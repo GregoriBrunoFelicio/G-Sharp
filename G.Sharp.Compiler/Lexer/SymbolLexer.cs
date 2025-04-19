@@ -7,13 +7,34 @@ public static class SymbolLexer
     public static Token Read(Lexer lexer)
     {
         var current = lexer.Current;
+        var next = lexer.Next();
 
-        if (!Symbols.TryGetValue(current, out var type))
-            throw new Exception($"Unknown symbol: '{current}'");
+        switch (current)
+        {
+            case '>' when next == '=':
+                lexer.Advance();
+                lexer.Advance();
+                return new Token(TokenType.GreaterThanOrEqual, ">=");
+            case '<' when next == '=':
+                lexer.Advance();
+                lexer.Advance();
+                return new Token(TokenType.LessThanOrEqual, "<=");
+            case '=' when next == '=':
+                lexer.Advance();
+                lexer.Advance();
+                return new Token(TokenType.EqualEqual, "==");
+            case '!' when next == '=':
+                lexer.Advance();
+                lexer.Advance();
+                return new Token(TokenType.NotEqual, "!=");
+        }
 
-        lexer.Advance();
+        if (Symbols.TryGetValue(current, out var tokenType))
+        {
+            lexer.Advance();
+            return new Token(tokenType, current.ToString());
+        }
 
-        //TODO: ToString? Maybe use another approach to get the string value
-        return new Token(type, current.ToString());
+        throw new Exception($"Unexpected symbol: '{current}'");
     }
 }

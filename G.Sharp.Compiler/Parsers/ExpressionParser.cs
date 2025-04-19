@@ -1,5 +1,6 @@
 using G.Sharp.Compiler.AST;
 using G.Sharp.Compiler.Lexer;
+using static G.Sharp.Compiler.Parsers.Validations;
 
 namespace G.Sharp.Compiler.Parsers;
 
@@ -8,6 +9,20 @@ public class ExpressionParser(Parser parser)
     private readonly ValueParser _valueParser = new(parser);
 
     public Expression Parse()
+    {
+        var left = GetExpression();
+
+        while (IsOperator(parser.Current().Type))
+        {
+            var op = parser.Advance().Type;
+            var right = GetExpression();
+            left = new BinaryExpression(left, op, right);
+        }
+
+        return left;
+    }
+
+    private Expression GetExpression()
     {
         if (parser.Check(TokenType.NumberLiteral))
             return new LiteralExpression(_valueParser.Parse(new GType(GPrimitiveType.Number)));
@@ -19,9 +34,7 @@ public class ExpressionParser(Parser parser)
             return new LiteralExpression(_valueParser.Parse(new GType(GPrimitiveType.Boolean)));
 
         if (parser.Match(TokenType.LeftBracket))
-        {
-            return ParseArrayExpression();
-        }
+            return ParseArrayExpression(parser, _valueParser);
 
         if (parser.Match(TokenType.Identifier))
             return new VariableExpression(parser.Previous().Value);
@@ -29,7 +42,7 @@ public class ExpressionParser(Parser parser)
         throw new Exception("Unexpected token in expression.");
     }
 
-    private LiteralExpression ParseArrayExpression()
+    private static LiteralExpression ParseArrayExpression(Parser parser, ValueParser valueParser)
     {
         if (parser.Check(TokenType.RightBracket))
             throw new Exception("Empty arrays are not supported.");
@@ -44,7 +57,7 @@ public class ExpressionParser(Parser parser)
             _ => throw new Exception("Unable to infer array element type.")
         };
 
-        var arrayValue = _valueParser.Parse(new GType(kind, isArray: true));
+        var arrayValue = valueParser.Parse(new GType(kind, isArray: true));
         return new LiteralExpression(arrayValue);
     }
 }

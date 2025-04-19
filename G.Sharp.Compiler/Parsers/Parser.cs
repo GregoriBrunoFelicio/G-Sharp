@@ -39,6 +39,9 @@ public class Parser(List<Token> tokens)
 
         if (Check(TokenType.Identifier))
             return new AssignmentParser(this).Parse();
+        
+        if(Check(TokenType.If))
+            return new IfParser(this).Parse();
 
         throw new Exception("Invalid statement");
     }
@@ -50,13 +53,13 @@ public class Parser(List<Token> tokens)
         throw new Exception($"Expected token {type}, got {tokens[_current].Type}");
     }
 
-    private Token Advance()
+    public Token Advance()
     {
         if (!IsAtEnd()) _current++;
         return tokens[_current - 1];
     }
 
-    public bool Match(TokenType type)
+    public bool Match( TokenType type)
     {
         if (!Check(type)) return false;
         Advance();

@@ -3,7 +3,7 @@ using G.Sharp.Compiler.Lexer;
 
 namespace G.Sharp.Compiler.Tests.Lexer;
 
-public class LexerArrayTests
+public class ArrayLexerTests
 {
     [Fact]
     public void Should_Tokenize_NumberArray_Correctly()

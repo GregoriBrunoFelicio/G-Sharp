@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using G.Sharp.Compiler.AST;
+using G.Sharp.Compiler.Lexer;
 
 namespace G.Sharp.Compiler.Parsers;
 
@@ -41,7 +42,7 @@ public static partial class Validations
 
         return reserved.Contains(word);
     }
-    
+
     private static readonly HashSet<GPrimitiveType> NumericTypes =
     [
         GPrimitiveType.Int,
@@ -63,4 +64,18 @@ public static partial class Validations
 
         return sameKind || isNumberSuperType;
     }
+
+    public static bool IsOperator(TokenType type) => Operators.Contains(type);
+
+    private static readonly HashSet<TokenType> Operators =
+    [
+        TokenType.And,
+        TokenType.Or,
+        TokenType.EqualEqual,
+        TokenType.NotEqual,
+        TokenType.GreaterThan,
+        TokenType.LessThan,
+        TokenType.GreaterThanOrEqual,
+        TokenType.LessThanOrEqual
+    ];
 }

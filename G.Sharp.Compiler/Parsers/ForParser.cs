@@ -19,8 +19,8 @@ public class ForParser(Parser parser)
         
         while (!parser.Check(TokenType.RightBrace))
         {
-            var stmt = parser.ParseNextStatement();
-            body.Add(stmt);
+            var statement = parser.ParseNextStatement();
+            body.Add(statement);
         }
 
         parser.Consume(TokenType.RightBrace);

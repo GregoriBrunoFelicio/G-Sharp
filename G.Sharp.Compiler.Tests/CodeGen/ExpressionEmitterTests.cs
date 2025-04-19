@@ -86,7 +86,7 @@ public class ExpressionEmitterTests
     }
 
     [Fact]
-    public void Should_Emit_Variable_Reference()
+    public void Should_Emit_Value_From_Declared_Variable()
     {
         var il = CreateIl<int>(out var method);
         var local = il.DeclareLocal(typeof(int));
@@ -96,9 +96,8 @@ public class ExpressionEmitterTests
         il.Emit(OpCodes.Stloc, local);
 
         var returned = ExpressionEmitter.Emit(il, new VariableExpression("x"), locals);
+        il.Emit(OpCodes.Ldloc, returned); 
         il.Emit(OpCodes.Ret);
-
-        returned.Should().Be(local);
 
         var func = (Func<int>)method.CreateDelegate(typeof(Func<int>));
         func().Should().Be(7);

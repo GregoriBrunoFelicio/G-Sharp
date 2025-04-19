@@ -53,6 +53,12 @@ public class Lexer
     }
 
     public void Advance() => Position++;
+    
+    public char Next()
+    {
+        var next = Position + 1;
+        return next < Code.Length ? Code[next] : '\0';
+    }
 
     public void AdvanceWhile(Func<char, bool> condition)
     {

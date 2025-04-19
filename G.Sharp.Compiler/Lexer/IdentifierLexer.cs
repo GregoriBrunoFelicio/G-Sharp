@@ -18,17 +18,31 @@ public static class IdentifierLexer
 
     private static readonly Dictionary<string, TokenType> KeywordTokenMap = new()
     {
+        // Declarations
         ["let"] = TokenType.Let,
         ["number"] = TokenType.Number,
         ["string"] = TokenType.String,
-        ["println"] = TokenType.Println,
         ["bool"] = TokenType.Boolean,
+
+        // Booleans
         ["true"] = TokenType.BooleanTrueLiteral,
         ["false"] = TokenType.BooleanFalseLiteral,
+
+        // Conditionals
         ["if"] = TokenType.If,
         ["else"] = TokenType.Else,
+
+        // Loops
         ["for"] = TokenType.For,
         ["in"] = TokenType.In,
         ["while"] = TokenType.While,
+
+        // IO
+        ["println"] = TokenType.Println,
+
+        // Logical operators
+        ["and"] = TokenType.And,
+        ["or"] = TokenType.Or,
+        ["not"] = TokenType.Not
     };
 }

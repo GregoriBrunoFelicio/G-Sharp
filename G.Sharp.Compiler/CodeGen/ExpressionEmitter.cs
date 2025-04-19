@@ -1,5 +1,6 @@
 using System.Reflection.Emit;
 using G.Sharp.Compiler.AST;
+using G.Sharp.Compiler.Lexer;
 
 namespace G.Sharp.Compiler.CodeGen;
 
@@ -10,7 +11,8 @@ public static class ExpressionEmitter
         return expression switch
         {
             LiteralExpression lit => EmitLiteralAndStore(il, lit.Value),
-            VariableExpression v => EmitVariable(il, v.Name, locals),
+            VariableExpression v => EmitVariableAndStore(il, v.Name, locals),
+            BinaryExpression b => EmitBinaryExpression(il, b, locals),
             _ => throw new NotSupportedException($"Unsupported expression type: {expression.GetType().Name}")
         };
     }
@@ -40,6 +42,16 @@ public static class ExpressionEmitter
         var local = il.DeclareLocal(value.Type.GetClrType());
         il.Emit(OpCodes.Stloc, local);
         return local;
+    }
+    
+    private static LocalBuilder EmitVariableAndStore(ILGenerator il, string name, Dictionary<string, LocalBuilder> locals)
+    {
+        if (!locals.TryGetValue(name, out var local))
+            throw new Exception($"Variable '{name}' not found.");
+        il.Emit(OpCodes.Ldloc, local);
+        var temp = il.DeclareLocal(local.LocalType);
+        il.Emit(OpCodes.Stloc, temp);
+        return temp;
     }
 
     private static void EmitLiteralToStack(ILGenerator il, VariableValue value)
@@ -79,15 +91,65 @@ public static class ExpressionEmitter
         }
     }
 
-    private static LocalBuilder EmitVariable(ILGenerator il, string name, Dictionary<string, LocalBuilder> locals)
+    private static LocalBuilder EmitBinaryExpression(ILGenerator il, BinaryExpression expr,
+        Dictionary<string, LocalBuilder> locals)
     {
-        if (!locals.TryGetValue(name, out var local))
-            throw new Exception($"Variable '{name}' not found.");
+        var left = Emit(il, expr.Left, locals);
+        il.Emit(OpCodes.Ldloc, left);
 
-        il.Emit(OpCodes.Ldloc, local);
-        return local;
+        var right = Emit(il, expr.Right, locals);
+        il.Emit(OpCodes.Ldloc, right);
+
+        switch (expr.Operator)
+        {
+            case TokenType.GreaterThan:
+                il.Emit(OpCodes.Cgt);
+                break;
+
+            case TokenType.LessThan:
+                il.Emit(OpCodes.Clt);
+                break;
+
+            case TokenType.EqualEqual:
+                il.Emit(OpCodes.Ceq);
+                break;
+
+            case TokenType.NotEqual:
+                il.Emit(OpCodes.Ceq);         
+                il.Emit(OpCodes.Ldc_I4_0);    
+                il.Emit(OpCodes.Ceq);         
+                break;
+
+            case TokenType.GreaterThanOrEqual:
+                il.Emit(OpCodes.Clt);         
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Ceq);        
+                break;
+
+            case TokenType.LessThanOrEqual:
+                il.Emit(OpCodes.Cgt);         
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Ceq);         
+                break;
+
+            case TokenType.And:
+                il.Emit(OpCodes.And);
+                break;
+
+            case TokenType.Or:
+                il.Emit(OpCodes.Or);
+                break;
+
+            default:
+                throw new NotSupportedException($"Unsupported binary operator: {expr.Operator}");
+        }
+
+        var result = il.DeclareLocal(typeof(int)); 
+        il.Emit(OpCodes.Stloc, result);
+        return result;
     }
 
+    // TODO tests
     private static void EmitDecimalToStack(ILGenerator il, decimal value)
     {
         var bits = decimal.GetBits(value);

@@ -24,6 +24,10 @@ public static class StatementEmitter
             case ForStatement forStmt:
                 ForEmitter.Emit(il, forStmt, variables);
                 break;
+            
+            case IfStatement ifStmt:
+                IfEmitter.Emit(il, ifStmt, variables);
+                break;
 
             default:
                 throw new NotSupportedException($"Unsupported statement: {stmt.GetType().Name}");

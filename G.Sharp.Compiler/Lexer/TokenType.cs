@@ -19,10 +19,6 @@ public enum TokenType
     //Interger
     Number,
     NumberLiteral,
-    Int,
-    Float,
-    Double,
-    Decimal,
 
     //String
     String,
@@ -44,4 +40,21 @@ public enum TokenType
     LeftBrace,     // {
     RightBrace,    // }
     
+    // Comparison
+    GreaterThan, // >
+    LessThan,    // <
+    GreaterThanOrEqual, // >=
+    LessThanOrEqual,    // <=
+    NotEqual,    // !=
+    EqualEqual,       // ==
+    
+    // Logical
+    And,        // and
+    Or,         // or
+    Not,        // not
+    
+    // Operators
+    Plus,       // +
+    Minus,      // -
+    Multiply,   // *    
 }

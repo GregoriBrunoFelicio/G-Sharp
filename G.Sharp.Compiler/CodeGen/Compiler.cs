@@ -30,20 +30,28 @@ public class Compiler
 
     public void CompileAndRun(List<Statement> statements)
     {
-        var (methodBuilder, typeBuilder) = CreateBuilders();
-        var il = methodBuilder.GetILGenerator();
-
-        foreach (var statement in statements)
+        try
         {
-            StatementEmitter.Emit(il, statement, _locals);
+            var (methodBuilder, typeBuilder) = CreateBuilders();
+            var il = methodBuilder.GetILGenerator();
+
+            foreach (var statement in statements)
+            {
+                StatementEmitter.Emit(il, statement, _locals);
+            }
+
+            il.Emit(OpCodes.Ret);
+
+            var programType = typeBuilder.CreateType();
+            var main = programType.GetMethod("Main", BindingFlags.Public | BindingFlags.Static);
+            if (main == null)
+                throw new Exception("Method 'Main' was not found.");
+            main.Invoke(null, null);
         }
-
-        il.Emit(OpCodes.Ret);
-
-        var programType = typeBuilder.CreateType();
-        var main = programType.GetMethod("Main", BindingFlags.Public | BindingFlags.Static);
-        if (main == null)
-            throw new Exception("Method 'Main' was not found.");
-        main.Invoke(null, null);
+        catch (Exception exception)
+        {
+            Console.WriteLine(exception.InnerException?.Message);
+            throw;
+        }
     }
 }

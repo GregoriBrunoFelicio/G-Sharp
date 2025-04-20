@@ -43,8 +43,9 @@ public static class ExpressionEmitter
         il.Emit(OpCodes.Stloc, local);
         return local;
     }
-    
-    private static LocalBuilder EmitVariableAndStore(ILGenerator il, string name, Dictionary<string, LocalBuilder> locals)
+
+    private static LocalBuilder EmitVariableAndStore(ILGenerator il, string name,
+        Dictionary<string, LocalBuilder> locals)
     {
         if (!locals.TryGetValue(name, out var local))
             throw new Exception($"Variable '{name}' not found.");
@@ -91,6 +92,7 @@ public static class ExpressionEmitter
         }
     }
 
+    // TODO tests
     private static LocalBuilder EmitBinaryExpression(ILGenerator il, BinaryExpression expr,
         Dictionary<string, LocalBuilder> locals)
     {
@@ -115,21 +117,21 @@ public static class ExpressionEmitter
                 break;
 
             case TokenType.NotEqual:
-                il.Emit(OpCodes.Ceq);         
-                il.Emit(OpCodes.Ldc_I4_0);    
-                il.Emit(OpCodes.Ceq);         
+                il.Emit(OpCodes.Ceq);
+                il.Emit(OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Ceq);
                 break;
 
             case TokenType.GreaterThanOrEqual:
-                il.Emit(OpCodes.Clt);         
+                il.Emit(OpCodes.Clt);
                 il.Emit(OpCodes.Ldc_I4_0);
-                il.Emit(OpCodes.Ceq);        
+                il.Emit(OpCodes.Ceq);
                 break;
 
             case TokenType.LessThanOrEqual:
-                il.Emit(OpCodes.Cgt);         
+                il.Emit(OpCodes.Cgt);
                 il.Emit(OpCodes.Ldc_I4_0);
-                il.Emit(OpCodes.Ceq);         
+                il.Emit(OpCodes.Ceq);
                 break;
 
             case TokenType.And:
@@ -144,12 +146,11 @@ public static class ExpressionEmitter
                 throw new NotSupportedException($"Unsupported binary operator: {expr.Operator}");
         }
 
-        var result = il.DeclareLocal(typeof(int)); 
+        var result = il.DeclareLocal(typeof(int));
         il.Emit(OpCodes.Stloc, result);
         return result;
     }
 
-    // TODO tests
     private static void EmitDecimalToStack(ILGenerator il, decimal value)
     {
         var bits = decimal.GetBits(value);

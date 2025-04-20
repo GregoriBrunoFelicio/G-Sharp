@@ -70,7 +70,7 @@ public class GsFileReaderTests
         act.Should().Throw<InvalidDataException>();
     }
 
-    private string CreateTempFile(string name, string content)
+    private static string CreateTempFile(string name, string content)
     {
         var path = Path.Combine(Path.GetTempPath(), name);
         File.WriteAllText(path, content);

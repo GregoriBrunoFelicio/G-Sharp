@@ -4,7 +4,8 @@ One day I simply woke up and thought:
 “I want to create my own programming language.” 😄
 
 G♯ is a programming language that emits IL (Intermediate Language) and runs on the .NET runtime.
-It’s a challenging project, but I’m learning a lot from it. I’m not a language design expert (yet), so you’ll likely find many rough edges and mistakes along the way — and that’s totally fine.
+It’s a challenging project, but I’m learning a lot from it. I’m not a language design expert (yet), so you’ll likely
+find many rough edges and mistakes along the way — and that’s totally fine.
 
 This whole thing is meant to be fun, experimental, and educational.
 
@@ -15,6 +16,7 @@ This whole thing is meant to be fun, experimental, and educational.
 ## ✨ Current Features
 
 ### ✅ Implemented
+
 - 🧠 Lexer and tokenization
 - 🧱 Parser for basic statements
 - 🖨️ `println` for printing values
@@ -22,6 +24,7 @@ This whole thing is meant to be fun, experimental, and educational.
 - 📦 Type support: `number`, `string`, `bool`
 
 ### 🚧 In Progress / Not Implemented Yet
+
 - 🔁 Conditionals (`if`, `else`) with `{}` blocks
 - 🔂 Loops (`for`, `while`) using `{}`
 - 🧩 Functions with parameters and return types
@@ -33,12 +36,14 @@ This whole thing is meant to be fun, experimental, and educational.
 
 Defining a good syntax has been one of the biggest challenges in this journey.  
 I now understand why some languages made syntax decisions I once judged harshly 😅.  
-It's not easy — especially when you also have to think about performance, IL generation, and how every small choice might impact memory, the runtime, or even GC pressure. A decision made just to make code look "pretty" can have deep architectural consequences.  
+It's not easy — especially when you also have to think about performance, IL generation, and how every small choice
+might impact memory, the runtime, or even GC pressure. A decision made just to make code look "pretty" can have deep
+architectural consequences.
 
 This is the current plan for a first version of the language — a minimal but expressive set of features.  
 ✅ means it's already implemented, and 🛠️ means it's planned but not working yet.
 
-### Variable Declarations ✅ 
+### Variable Declarations ✅
 
 ```gsharp
 let num: number = 10;
@@ -50,7 +55,7 @@ println name;
 
 ---
 
-###  Arrays ✅
+### Arrays ✅
 
 ```gsharp
 let array: number[] = [1 2 3 4 5 6 7 8 9 10];
@@ -71,20 +76,21 @@ if num >= 20 {
 
 ---
 
-### 🛠️ Loops (planned)
+### 🛠️ While (planned)
 
 ```gsharp
-for item in array {
-    println item;
-}
-
 while num < 20 {
     num++;
 }
 ```
 
----
+### 🛠️ For ✅
 
+```gsharp
+for item in array {
+    println item;
+}
+```
 ### 🛠️ Functions (planned)
 
 ```gsharp
@@ -116,10 +122,10 @@ let p: Person("Gregori", 20);
 p.SayHello();
 ```
 
-
 ## 📬 Contact
 
-If you have questions, suggestions, or just want to talk about language design and .NET internals, feel free to reach out:
+If you have questions, suggestions, or just want to talk about language design and .NET internals, feel free to reach
+out:
 
 📧 **gregory.wow@hotmail.com**
 

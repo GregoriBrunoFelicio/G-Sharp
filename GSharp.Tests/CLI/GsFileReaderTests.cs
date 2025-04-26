@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-namespace G.Sharp.Compiler.Tests.Parser;
+namespace G.Sharp.Compiler.Tests.CLI;
 
 public class GsFileReaderTests
 {

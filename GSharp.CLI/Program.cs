@@ -4,7 +4,9 @@ using GSharp.Lexer;
 using GSharp.Parser;
 
 
-var code = GsFileReader.ReadSource("/home/greg/RiderProjects/G-SHARP/GSharp.CLI/hello.gs");
+ var code = GsFileReader.ReadSource("/home/greg/RiderProjects/G-SHARP/GSharp.CLI/hello.gs");
+
+
 var lexer = new Lexer(code);
 var tokens = lexer.Tokenize();
 

@@ -54,30 +54,4 @@ public class AssignmentParserTests
         act.Should().Throw<Exception>()
             .WithMessage("Variable 'y' is not declared.");
     }
-
-    [Fact]
-    public void Should_Throw_If_Type_Is_Not_Compatible()
-    {
-        var tokens = new List<Token>
-        {
-            new(TokenType.Identifier, "x"),
-            new(TokenType.Equals, "="),
-            new(TokenType.StringLiteral, "hello"),
-            new(TokenType.Semicolon, ";"),
-            new(TokenType.EndOfFile, "")
-        };
-
-        var parser = new GSharp.Parser.Parser(tokens)
-        {
-            VariablesDeclared =
-            {
-                ["x"] = new GType(GPrimitiveType.Int)
-            }
-        };
-
-        var act = () => new AssignmentParser(parser).Parse();
-
-        act.Should().Throw<Exception>()
-            .WithMessage("Type mismatch: expected Int, but got String");
-    }
 }

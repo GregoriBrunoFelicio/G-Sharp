@@ -12,14 +12,36 @@ public class ExpressionParser(Parser parser)
     {
         var left = GetExpression();
 
-        while (IsOperator(parser.Current().Type))
+        while (TryGetOperator(out var op, out var precedence))
         {
-            var op = parser.Advance().Type;
+            parser.Advance();
+
             var right = GetExpression();
+
+            while (TryGetOperator(out var nextOp, out var nextPrecedence) &&
+                   nextPrecedence > precedence)
+            {
+                parser.Advance();
+                var nextRight = GetExpression();
+
+                right = new BinaryExpression(right, nextOp, nextRight);
+                precedence = nextPrecedence;
+            }
+
             left = new BinaryExpression(left, op, right);
         }
 
         return left;
+    }
+
+    private bool TryGetOperator(out TokenType op, out int precedence)
+    {
+        op = parser.Current().Type;
+        if (OperatorPrecedence.TryGetValue(op, out precedence))
+            return true;
+
+        precedence = 0;
+        return false;
     }
 
     private Expression GetExpression()

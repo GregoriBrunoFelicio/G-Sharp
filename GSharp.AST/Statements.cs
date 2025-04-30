@@ -9,5 +9,6 @@ public record LetStatement(string VariableName, Expression Expression) : Stateme
 public record PrintStatement(Expression Expression) : Statement; 
 
 public record ForStatement(string Variable, Expression Iterable, List<Statement> Body) : Statement;
+public record WhileStatement(Expression Condition, List<Statement> Body) : Statement;
 
 public record IfStatement(Expression Condition, List<Statement> ThenBody, List<Statement>? ElseBody = null) : Statement;

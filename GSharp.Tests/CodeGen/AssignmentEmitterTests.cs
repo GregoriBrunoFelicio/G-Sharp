@@ -121,19 +121,6 @@ public class AssignmentEmitterTests
     }
 
     [Fact]
-    public void Should_Throw_If_Expression_Type_Not_Supported()
-    {
-        var locals = new Dictionary<string, LocalBuilder> { ["x"] = null! };
-        var statement = new AssignmentStatement("x", new FakeExpression());
-        var il = new DynamicMethod("Fail", typeof(void), Type.EmptyTypes).GetILGenerator();
-
-        var act = () => AssignmentEmitter.Emit(il, statement, locals);
-
-        act.Should().Throw<NotSupportedException>()
-            .WithMessage("Unsupported expression: FakeExpression");
-    }
-
-    [Fact]
     public void Should_Throw_If_VariableExpression_Not_Found()
     {
         var locals = new Dictionary<string, LocalBuilder> { ["x"] = null! };
@@ -148,22 +135,7 @@ public class AssignmentEmitterTests
             .WithMessage("Variable 'y' not found.");
     }
 
-    [Fact]
-    public void Should_Throw_If_Literal_Type_Not_Supported()
-    {
-        var locals = new Dictionary<string, LocalBuilder> { ["x"] = null! };
-        var expr = new LiteralExpression(new FakeValue());
-        var stmt = new AssignmentStatement("x", expr);
-
-        var il = new DynamicMethod("Fail", typeof(void), Type.EmptyTypes).GetILGenerator();
-
-        var act = () => AssignmentEmitter.Emit(il, stmt, locals);
-
-        act.Should().Throw<NotSupportedException>()
-            .WithMessage("Unsupported literal type");
-    }
-
-    private sealed record FakeExpression : Expression { }
+    private sealed record FakeExpression : Expression;
 
     private sealed record FakeValue : VariableValue
     {

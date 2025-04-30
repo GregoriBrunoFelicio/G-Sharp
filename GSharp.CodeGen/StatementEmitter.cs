@@ -25,6 +25,10 @@ public static class StatementEmitter
                 ForEmitter.Emit(il, forStmt, variables);
                 break;
             
+            case WhileStatement whileStmt:
+                WhileEmitter.Emit(il, whileStmt, variables);
+                break;
+            
             case IfStatement ifStmt:
                 IfEmitter.Emit(il, ifStmt, variables);
                 break;

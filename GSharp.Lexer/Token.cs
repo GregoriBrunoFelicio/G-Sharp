@@ -60,4 +60,5 @@ public enum TokenType
     Plus, // +
     Minus, // -
     Multiply, // *    
+    Divide, // /
 }

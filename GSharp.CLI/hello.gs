@@ -141,3 +141,67 @@ if isFalse {
 } else {
     println"isFalse is false ✅";
 }
+
+let counter: number = 0;
+while counter < 5 {
+    println counter;
+    counter = counter + 1;
+}
+
+let i: number = 10;
+while i > 0 {
+    println i;
+    i = i - 2;
+}
+
+let index: number = 1;
+while index <= 3 {
+    println index;
+    index = index + 1;
+}
+
+let running: bool = true;
+let attempts: number = 0;
+while running {
+    println attempts;
+    attempts = attempts + 1;
+    if attempts == 3 {
+        running = false;
+    }
+}
+
+let step: number = 0;
+while step < 5 and step != 3 {
+    println step;
+    step = step + 1;
+}
+
+let progress: number = 1;
+while progress < 10 or progress > 100 {
+    println progress;
+    progress = progress + 3;
+}
+
+let score: number = 0;
+while score < 3 {
+    println score;
+    score = score + 1;
+}
+
+let limit: number = 5;
+let count: number = 0;
+while count < limit and limit < 10 {
+    println count;
+    count = count + 1;
+}
+
+let flag: bool = true;
+let attempts2: number = 0;
+while flag and attempts2 < 2 {
+    println attempts2;
+    attempts2 = attempts2 + 1;
+    if attempts2 == 2 {
+        flag = false;
+    }
+}
+

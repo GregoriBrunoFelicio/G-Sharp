@@ -37,10 +37,13 @@ public class Parser(List<Token> tokens)
         if (Match(TokenType.For))
             return new ForParser(this).Parse();
 
+        if (Match(TokenType.While))
+            return new WhileParser(this).Parse();
+
         if (Check(TokenType.Identifier))
             return new AssignmentParser(this).Parse();
-        
-        if(Check(TokenType.If))
+
+        if (Check(TokenType.If))
             return new IfParser(this).Parse();
 
         throw new Exception("Invalid statement");
@@ -50,6 +53,7 @@ public class Parser(List<Token> tokens)
     {
         if (Check(type))
             return Advance();
+        
         throw new Exception($"Expected token {type}, got {tokens[_current].Type}");
     }
 
@@ -59,7 +63,7 @@ public class Parser(List<Token> tokens)
         return tokens[_current - 1];
     }
 
-    public bool Match( TokenType type)
+    public bool Match(TokenType type)
     {
         if (!Check(type)) return false;
         Advance();
@@ -84,7 +88,7 @@ public class Parser(List<Token> tokens)
         return tokens[_current];
     }
 
-    private bool IsAtEnd() => _current >= tokens.Count;
+    public bool IsAtEnd() => _current >= tokens.Count;
 
     public Token Identifier() => Consume(TokenType.Identifier);
 

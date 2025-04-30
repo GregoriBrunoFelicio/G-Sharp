@@ -24,13 +24,14 @@ public static class ExpressionEmitter
             case LiteralExpression lit:
                 EmitLiteralToStack(il, lit.Value);
                 break;
-
             case VariableExpression v:
                 if (!locals.TryGetValue(v.Name, out var local))
                     throw new Exception($"Variable '{v.Name}' not found.");
                 il.Emit(OpCodes.Ldloc, local);
                 break;
-
+            case BinaryExpression b:
+                EmitBinaryToStack(il, b, locals);
+                break;
             default:
                 throw new NotSupportedException($"Unsupported expression type: {expression.GetType().Name}");
         }
@@ -44,17 +45,6 @@ public static class ExpressionEmitter
         return local;
     }
 
-    private static LocalBuilder EmitVariableAndStore(ILGenerator il, string name,
-        Dictionary<string, LocalBuilder> locals)
-    {
-        if (!locals.TryGetValue(name, out var local))
-            throw new Exception($"Variable '{name}' not found.");
-        il.Emit(OpCodes.Ldloc, local);
-        var temp = il.DeclareLocal(local.LocalType);
-        il.Emit(OpCodes.Stloc, temp);
-        return temp;
-    }
-
     private static void EmitLiteralToStack(ILGenerator il, VariableValue value)
     {
         switch (value)
@@ -62,92 +52,148 @@ public static class ExpressionEmitter
             case IntValue i:
                 il.Emit(OpCodes.Ldc_I4, i.Value);
                 break;
-
             case FloatValue f:
                 il.Emit(OpCodes.Ldc_R4, f.Value);
                 break;
-
             case DoubleValue d:
                 il.Emit(OpCodes.Ldc_R8, d.Value);
                 break;
-
             case DecimalValue m:
                 EmitDecimalToStack(il, m.Value);
                 break;
-
             case BooleanValue b:
                 il.Emit(b.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
                 break;
-
             case StringValue s:
                 il.Emit(OpCodes.Ldstr, s.Value);
                 break;
-
             case ArrayValue a:
                 ArrayEmitter.EmitToStack(il, a);
                 break;
-
             default:
                 throw new NotSupportedException($"Unsupported literal type: {value.GetType().Name}");
         }
     }
 
-    // TODO tests
-    private static LocalBuilder EmitBinaryExpression(ILGenerator il, BinaryExpression expr,
-        Dictionary<string, LocalBuilder> locals)
+    private static LocalBuilder EmitVariableAndStore(ILGenerator il, string name, Dictionary<string, LocalBuilder> locals)
     {
-        var left = Emit(il, expr.Left, locals);
-        il.Emit(OpCodes.Ldloc, left);
+        if (!locals.TryGetValue(name, out var local))
+            throw new Exception($"Variable '{name}' not found.");
 
-        var right = Emit(il, expr.Right, locals);
-        il.Emit(OpCodes.Ldloc, right);
+        il.Emit(OpCodes.Ldloc, local);
+        var temp = il.DeclareLocal(local.LocalType);
+        il.Emit(OpCodes.Stloc, temp);
+        return temp;
+    }
 
-        switch (expr.Operator)
+    private static LocalBuilder EmitBinaryExpression(ILGenerator il, BinaryExpression expr, Dictionary<string, LocalBuilder> locals)
+    {
+        if (expr.Operator is TokenType.And or TokenType.Or)
+            return EmitLogicalShortCircuit(il, expr, locals);
+
+        EmitToStack(il, expr.Left, locals);
+        EmitToStack(il, expr.Right, locals);
+        EmitBinaryOperator(il, expr.Operator);
+
+        var result = il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Stloc, result);
+        return result;
+    }
+
+    private static void EmitBinaryToStack(ILGenerator il, BinaryExpression expr, Dictionary<string, LocalBuilder> locals)
+    {
+        if (expr.Operator is TokenType.And or TokenType.Or)
+        {
+            var result = EmitLogicalShortCircuit(il, expr, locals);
+            il.Emit(OpCodes.Ldloc, result);
+        }
+        else
+        {
+            EmitToStack(il, expr.Left, locals);
+            EmitToStack(il, expr.Right, locals);
+
+            EmitBinaryOperator(il, expr.Operator);
+        }
+    }
+
+
+    private static void EmitBinaryOperator(ILGenerator il, TokenType op)
+    {
+        switch (op)
         {
             case TokenType.GreaterThan:
                 il.Emit(OpCodes.Cgt);
                 break;
-
             case TokenType.LessThan:
                 il.Emit(OpCodes.Clt);
                 break;
-
             case TokenType.EqualEqual:
                 il.Emit(OpCodes.Ceq);
                 break;
-
             case TokenType.NotEqual:
                 il.Emit(OpCodes.Ceq);
                 il.Emit(OpCodes.Ldc_I4_0);
                 il.Emit(OpCodes.Ceq);
                 break;
-
             case TokenType.GreaterThanOrEqual:
                 il.Emit(OpCodes.Clt);
                 il.Emit(OpCodes.Ldc_I4_0);
                 il.Emit(OpCodes.Ceq);
                 break;
-
             case TokenType.LessThanOrEqual:
                 il.Emit(OpCodes.Cgt);
                 il.Emit(OpCodes.Ldc_I4_0);
                 il.Emit(OpCodes.Ceq);
                 break;
-
-            case TokenType.And:
-                il.Emit(OpCodes.And);
+            case TokenType.Plus:
+                il.Emit(OpCodes.Add);
                 break;
-
-            case TokenType.Or:
-                il.Emit(OpCodes.Or);
+            case TokenType.Minus:
+                il.Emit(OpCodes.Sub);
                 break;
-
+            case TokenType.Multiply:
+                il.Emit(OpCodes.Mul);
+                break;
+            case TokenType.Divide:
+                il.Emit(OpCodes.Div);
+                break;
             default:
-                throw new NotSupportedException($"Unsupported binary operator: {expr.Operator}");
+                throw new NotSupportedException($"Unsupported binary operator: {op}");
+        }
+    }
+
+    private static LocalBuilder EmitLogicalShortCircuit(ILGenerator il, BinaryExpression expr, Dictionary<string, LocalBuilder> locals)
+    {
+        var result = il.DeclareLocal(typeof(int));
+        var shortCircuit = il.DefineLabel();
+        var end = il.DefineLabel();
+
+        EmitToStack(il, expr.Left, locals);
+
+        if (expr.Operator == TokenType.And)
+        {
+            il.Emit(OpCodes.Brfalse, shortCircuit);
+        }
+        else
+        {
+            il.Emit(OpCodes.Brtrue, shortCircuit);
         }
 
-        var result = il.DeclareLocal(typeof(int));
+        EmitToStack(il, expr.Right, locals);
         il.Emit(OpCodes.Stloc, result);
+        il.Emit(OpCodes.Br, end);
+
+        il.MarkLabel(shortCircuit);
+
+        if (expr.Operator == TokenType.And)
+            il.Emit(OpCodes.Ldc_I4_0);
+        else
+            il.Emit(OpCodes.Ldc_I4_1);
+
+        il.Emit(OpCodes.Stloc, result);
+
+        il.MarkLabel(end);
+        // ATENÇÃO AQUI! NÃO FAZ Ldloc RESULT AQUI
         return result;
     }
 

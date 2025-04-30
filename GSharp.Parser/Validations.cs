@@ -65,17 +65,21 @@ public static partial class Validations
         return sameKind || isNumberSuperType;
     }
 
-    public static bool IsOperator(TokenType type) => Operators.Contains(type);
+    public static bool IsOperator(TokenType type) => OperatorPrecedence.ContainsKey(type);
 
-    private static readonly HashSet<TokenType> Operators =
-    [
-        TokenType.And,
-        TokenType.Or,
-        TokenType.EqualEqual,
-        TokenType.NotEqual,
-        TokenType.GreaterThan,
-        TokenType.LessThan,
-        TokenType.GreaterThanOrEqual,
-        TokenType.LessThanOrEqual
-    ];
+    public static readonly Dictionary<TokenType, int> OperatorPrecedence = new()
+    {
+        { TokenType.Or, 1 },
+        { TokenType.And, 2 },
+        { TokenType.EqualEqual, 3 },
+        { TokenType.NotEqual, 3 },
+        { TokenType.GreaterThan, 4 },
+        { TokenType.GreaterThanOrEqual, 4 }, 
+        { TokenType.LessThan, 4 },
+        { TokenType.LessThanOrEqual, 4 },
+        { TokenType.Plus, 5 },
+        { TokenType.Minus, 5 },
+        { TokenType.Multiply, 6 },
+        { TokenType.Divide, 6 },
+    };
 }

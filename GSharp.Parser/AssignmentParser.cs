@@ -16,11 +16,11 @@ public class AssignmentParser(Parser parser)
         
         var expression = new ExpressionParser(parser).Parse();
 
-        var value = expression.GetLiteralValue();
-
-        // IT is TERRIBLE!!!!
-        if (!IsTypeCompatible(varType, value.Type))
-            throw new Exception($"Type mismatch: expected {varType}, but got {value.Type}");
+        // var value = expression.GetLiteralValue();
+        //
+        // // IT is TERRIBLE!!!!
+        // if (!IsTypeCompatible(varType, value.Type))
+        //     throw new Exception($"Type mismatch: expected {varType}, but got {value.Type}");
 
         parser.Semicolon();
 

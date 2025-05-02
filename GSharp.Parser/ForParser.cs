@@ -7,6 +7,8 @@ public class ForParser(Parser parser)
 {
     public ForStatement Parse()
     {
+        parser.Consume(TokenType.For);
+        
         var loopVar = parser.Identifier().Value;
 
         parser.Consume(TokenType.In);

@@ -28,16 +28,16 @@ public class Parser(List<Token> tokens)
 
     public Statement ParseNextStatement()
     {
-        if (Match(TokenType.Let))
+        if (Check(TokenType.Let))
             return new LetParser(this).Parse();
 
-        if (Match(TokenType.Println))
+        if (Check(TokenType.Println))
             return new PrintParser(this).Parse();
 
-        if (Match(TokenType.For))
+        if (Check(TokenType.For))
             return new ForParser(this).Parse();
 
-        if (Match(TokenType.While))
+        if (Check(TokenType.While))
             return new WhileParser(this).Parse();
 
         if (Check(TokenType.Identifier))

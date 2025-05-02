@@ -12,6 +12,7 @@ public class PrintParserTests
     {
         var tokens = new List<Token>
         {
+            new(TokenType.Println, "println"),
             new(TokenType.NumberLiteral, "42"),
             new(TokenType.Semicolon, ";"),
             new(TokenType.EndOfFile, "")

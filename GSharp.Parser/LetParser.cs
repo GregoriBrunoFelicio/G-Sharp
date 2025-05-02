@@ -8,6 +8,7 @@ public class LetParser(Parser parser)
 {
     public LetStatement Parse()
     {
+        parser.Consume(TokenType.Let);
         var variableName = GetVariableName();
 
         var varType = GetVariableType();

@@ -12,6 +12,7 @@ public class LetParserTests
     {
         var tokens = new List<Token>
         {
+            new(TokenType.Let, "let"),
             new(TokenType.Identifier, "x"),
             new(TokenType.EndOfFile, "")
         };
@@ -35,6 +36,7 @@ public class LetParserTests
     {
         var tokens = new List<Token>
         {
+            new(TokenType.Let, "let"),
             new(TokenType.Identifier, "1invalid"),
             new(TokenType.EndOfFile, "")
         };
@@ -52,6 +54,7 @@ public class LetParserTests
     {
         var tokens = new List<Token>
         {
+            new(TokenType.Let, "let"),
             new(TokenType.Identifier, "let"),
             new(TokenType.EndOfFile, "")
         };
@@ -69,6 +72,7 @@ public class LetParserTests
     {
         var tokens = new List<Token>
         {
+            new(TokenType.Let, "let"),
             new(TokenType.Identifier, "x"),
             new(TokenType.Colon, ":"),
             new(TokenType.Equals, "="),
@@ -90,6 +94,7 @@ public class LetParserTests
     {
         var tokens = new List<Token>
         {
+            new(TokenType.Let, "let"),
             new(TokenType.Identifier, "x"),
             new(TokenType.Colon, ":"),
             new(TokenType.Number, "number"),
@@ -112,6 +117,7 @@ public class LetParserTests
     {
         var tokens = new List<Token>
         {
+            new(TokenType.Let, "let"),
             new(TokenType.Identifier, "x"),
             new(TokenType.Colon, ":"),
             new(TokenType.Number, "number"),

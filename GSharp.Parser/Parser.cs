@@ -46,7 +46,7 @@ public class Parser(List<Token> tokens)
         if (Check(TokenType.If))
             return new IfParser(this).Parse();
 
-        throw new Exception("Invalid statement");
+        throw new Exception($"Invalid statement {tokens[_current].Type}");
     }
 
     public Token Consume(TokenType type)
@@ -87,8 +87,18 @@ public class Parser(List<Token> tokens)
         if (IsAtEnd()) throw new Exception("Unexpected end of input.");
         return tokens[_current];
     }
+    
+    public string ExpectDeclaredIdentifier()
+    {
+        var name = Identifier().Value;
 
-    public bool IsAtEnd() => _current >= tokens.Count;
+        if (!VariablesDeclared.ContainsKey(name))
+            throw new Exception($"Variable '{name}' is not declared.");
+
+        return name;
+    }
+
+    private bool IsAtEnd() => _current >= tokens.Count;
 
     public Token Identifier() => Consume(TokenType.Identifier);
 

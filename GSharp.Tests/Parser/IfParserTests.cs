@@ -112,7 +112,7 @@ public class IfParserTests
         var parser = new GSharp.Parser.Parser(tokens);
         var act = () => new IfParser(parser).Parse();
 
-        act.Should().Throw<Exception>().WithMessage("Invalid statement");
+        act.Should().Throw<Exception>().WithMessage("Invalid statement EndOfFile");
     }
 
     [Fact]
@@ -252,6 +252,6 @@ public class IfParserTests
         var parser = new GSharp.Parser.Parser(tokens);
         var act = () => new IfParser(parser).Parse();
 
-        act.Should().Throw<Exception>().WithMessage("Unexpected token in expression.");
+        act.Should().Throw<Exception>().WithMessage("*Unexpected token in expression*");
     }
 }

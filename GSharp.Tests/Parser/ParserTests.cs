@@ -121,7 +121,7 @@ public class ParserTests
         var action = () => parser.Parse();
 
         action.Should().Throw<Exception>()
-            .WithMessage("Invalid statement");
+            .WithMessage("Invalid statement string");
     }
 
     [Fact]

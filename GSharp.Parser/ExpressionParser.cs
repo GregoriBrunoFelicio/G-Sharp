@@ -61,7 +61,7 @@ public class ExpressionParser(Parser parser)
         if (parser.Match(TokenType.Identifier))
             return new VariableExpression(parser.Previous().Value);
 
-        throw new Exception("Unexpected token in expression.");
+        throw new Exception($"Unexpected token in expression: {parser.Current().Type}.");
     }
 
     private static LiteralExpression ParseArrayExpression(Parser parser, ValueParser valueParser)

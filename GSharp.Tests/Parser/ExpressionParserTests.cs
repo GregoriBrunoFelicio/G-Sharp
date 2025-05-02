@@ -168,7 +168,7 @@ public class ExpressionParserTests
         var parser = new GSharp.Parser.Parser(tokens);
         var act = () => new ExpressionParser(parser).Parse();
 
-        act.Should().Throw<Exception>().WithMessage("Unexpected token in expression.");
+        act.Should().Throw<Exception>().WithMessage("*Unexpected token in expression*");
     }
 
     [Fact]
@@ -341,7 +341,7 @@ public class ExpressionParserTests
         var parser = new GSharp.Parser.Parser(tokens);
         var act = () => new ExpressionParser(parser).Parse();
 
-        act.Should().Throw<Exception>().WithMessage("Unexpected token in expression.");
+        act.Should().Throw<Exception>().WithMessage("*Unexpected token in expression*");
     }
 
     [Fact]

@@ -78,7 +78,7 @@ public class Parser(List<Token> tokens)
 
     public Token Previous()
     {
-        if (_current == 0) throw new Exception("No previous token");
+        if (_current == 0) throw new Exception("No previous token.");
         return tokens[_current - 1];
     }
 

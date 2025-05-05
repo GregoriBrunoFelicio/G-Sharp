@@ -86,7 +86,7 @@ public class LetParserTests
         var act = () => new LetParser(parser).Parse();
 
         act.Should().Throw<Exception>()
-            .WithMessage("Expected a valid primitive type.");
+            .WithMessage("Expected a valid primitive type.*");
     }
 
     [Fact]

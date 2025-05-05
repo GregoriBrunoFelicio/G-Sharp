@@ -65,8 +65,6 @@ public static partial class Validations
         return sameKind || isNumberSuperType;
     }
 
-    public static bool IsOperator(TokenType type) => OperatorPrecedence.ContainsKey(type);
-
     public static readonly Dictionary<TokenType, int> OperatorPrecedence = new()
     {
         { TokenType.Or, 1 },

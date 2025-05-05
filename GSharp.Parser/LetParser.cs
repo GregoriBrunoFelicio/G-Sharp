@@ -68,13 +68,13 @@ public class LetParser(Parser parser)
     {
         if (parser.Match(TokenType.Number))
             return GPrimitiveType.Number;
-        
+
         if (parser.Match(TokenType.String))
             return GPrimitiveType.String;
 
         if (parser.Match(TokenType.Boolean))
             return GPrimitiveType.Boolean;
 
-        throw new Exception("Expected a valid primitive type.");
+        throw new Exception($"Expected a valid primitive type. But received: {parser.Current().Type}");
     }
 }

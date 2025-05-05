@@ -137,7 +137,7 @@ public class ExpressionParserTests
         var parser = new GSharp.Parser.Parser(tokens);
         var act = () => new ExpressionParser(parser).Parse();
 
-        act.Should().Throw<Exception>().WithMessage("Unable to infer array element type.");
+        act.Should().Throw<Exception>().WithMessage("*Unable to infer array element type*");
     }
 
     [Fact]

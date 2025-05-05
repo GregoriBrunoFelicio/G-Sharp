@@ -213,7 +213,7 @@ public class ParserTests
         var action = () => parser.Previous();
 
         action.Should().Throw<Exception>()
-            .WithMessage("No previous token");
+            .WithMessage("No previous token.");
     }
 
     [Fact]

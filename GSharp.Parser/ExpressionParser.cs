@@ -76,7 +76,7 @@ public class ExpressionParser(Parser parser)
             TokenType.StringLiteral => GPrimitiveType.String,
             TokenType.BooleanTrueLiteral or TokenType.BooleanFalseLiteral => GPrimitiveType.Boolean,
             TokenType.NumberLiteral => GPrimitiveType.Number,
-            _ => throw new Exception("Unable to infer array element type.")
+            _ => throw new Exception($"Unable to infer array element type:{token.Type}")
         };
 
         var arrayValue = valueParser.Parse(new GType(kind, isArray: true));

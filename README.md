@@ -76,7 +76,7 @@ if num >= 20 {
 
 ---
 
-### 🛠️ While (planned)
+### 🛠️ While ✅
 
 ```gsharp
 while num < 20 {

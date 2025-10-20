@@ -22,14 +22,13 @@ This whole thing is meant to be fun, experimental, and educational.
 - 🖨️ `println` for printing values
 - 🔤 Variable declarations using `let`
 - 📦 Type support: `number`, `string`, `bool`
+- 🔁 Conditionals (`if`, `else`) with `{}` blocks
+- 🔂 Loops (`for`, `while`) using `{}`
 
 ### 🚧 In Progress / Not Implemented Yet
 
-- 🔁 Conditionals (`if`, `else`) with `{}` blocks
-- 🔂 Loops (`for`, `while`) using `{}`
 - 🧩 Functions with parameters and return types
 - 🧱 Object types with constructor-based instantiation
-
 ---
 
 ## 🧪 Syntax Examples

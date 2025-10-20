@@ -1,7 +1,7 @@
 # G♯
 
 One day I simply woke up and thought:
-“I want to create my own programming language.” 😄
+“I want to create my own programming language.” 
 
 G♯ is a programming language that emits IL (Intermediate Language) and runs on the .NET runtime.
 It’s a challenging project, but I’m learning a lot from it. I’m not a language design expert (yet), so you’ll likely
@@ -35,7 +35,7 @@ This whole thing is meant to be fun, experimental, and educational.
 ## 🧪 Syntax Examples
 
 Defining a good syntax has been one of the biggest challenges in this journey.  
-I now understand why some languages made syntax decisions I once judged harshly 😅.  
+I now understand why some languages made syntax decisions I once judged harshly.  
 It's not easy — especially when you also have to think about performance, IL generation, and how every small choice
 might impact memory, the runtime, or even GC pressure. A decision made just to make code look "pretty" can have deep
 architectural consequences.

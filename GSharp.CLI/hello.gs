@@ -5,6 +5,7 @@ let isFoo: bool = true;
 println name;
 println age;
 println isFoo;
+println 1 + 1 + 1 + 1;
 
 let variable: number = 10;
 variable = 20;

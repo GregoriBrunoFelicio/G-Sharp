@@ -7,7 +7,7 @@ using GSharp.Parser;
  var code = GsFileReader.ReadSource("/home/greg/RiderProjects/G-SHARP/GSharp.CLI/hello.gs");
 
 
-var lexer = new Lexer("println 1000 + 1 + 1 + 1;");
+var lexer = new Lexer(code);
 var tokens = lexer.Tokenize();
 
 var parser = new Parser(tokens);

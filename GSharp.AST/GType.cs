@@ -11,27 +11,45 @@ public enum GPrimitiveType
     Boolean
 }
 
-public readonly struct GType(GPrimitiveType kind, bool isArray = false)
+public abstract class GType
 {
-    public GPrimitiveType Kind { get; } = kind;
-    public bool IsArray { get; } = isArray;
+    public abstract string Name { get; }
 
-    public Type GetClrType() => IsArray
-        ? GetBaseType().MakeArrayType()
-        : GetBaseType();
+    public abstract Type GetClrType();
 
-    private Type GetBaseType() => Kind switch
+    public override string ToString() => Name;
+}
+
+public sealed class GNumberType : GType
+{
+    public override string Name => "number";
+    
+    public override Type GetClrType() => typeof(int);
+}
+
+public sealed class GStringType : GType
+{
+    public override string Name => "string";
+
+    public override Type GetClrType() => typeof(string);
+}
+
+public sealed class GBooleanType : GType
+{
+    public override string Name => "boolean";
+    public override Type GetClrType() => typeof(bool);
+}
+
+public sealed class GArrayType : GType
+{
+    public GType ElementType { get; }
+
+    public GArrayType(GType elementType)
     {
-        GPrimitiveType.Number => typeof(int),
-        GPrimitiveType.Int => typeof(int),
-        GPrimitiveType.Float => typeof(float),
-        GPrimitiveType.Double => typeof(double),
-        GPrimitiveType.Decimal => typeof(decimal),
-        GPrimitiveType.String => typeof(string),
-        GPrimitiveType.Boolean => typeof(bool),
-        _ => throw new NotSupportedException($"Unknown type {Kind}")
-    };
+        ElementType = elementType; 
+    }
 
-    public override string ToString() =>
-        IsArray ? $"{Kind}[]" : Kind.ToString();
+    public override string Name => $"{ElementType.Name}[]";
+
+    public override Type GetClrType() => ElementType.GetClrType().MakeArrayType();
 }

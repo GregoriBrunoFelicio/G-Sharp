@@ -134,11 +134,4 @@ public class AssignmentEmitterTests
         act.Should().Throw<Exception>()
             .WithMessage("Variable 'y' not found.");
     }
-
-    private sealed record FakeExpression : Expression;
-
-    private sealed record FakeValue : VariableValue
-    {
-        public override GType Type => new(GPrimitiveType.Int);
-    }
 } 

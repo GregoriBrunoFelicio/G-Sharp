@@ -50,7 +50,7 @@ public class ParserTests
         {
             VariablesDeclared =
             {
-                ["x"] = new GType(GPrimitiveType.Number)
+                ["x"] = new GNumberType()
             }
         };
 
@@ -76,7 +76,7 @@ public class ParserTests
         {
             VariablesDeclared =
             {
-                ["x"] = new GType(GPrimitiveType.Number)
+                ["x"] = new GNumberType()
             }
         };
 

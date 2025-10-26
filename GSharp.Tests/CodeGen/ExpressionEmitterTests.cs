@@ -140,7 +140,7 @@ public class ExpressionEmitterTests
             new IntValue(1),
             new IntValue(2),
             new IntValue(3)
-        ], new GType(GPrimitiveType.Int));
+        ], new GNumberType());
 
         var il = CreateIl<object>(out var method);
         ExpressionEmitter.EmitToStack(il, new LiteralExpression(array), new());
@@ -169,6 +169,6 @@ public class ExpressionEmitterTests
     private sealed record FakeExpression : Expression { }
     private sealed record FakeValue : VariableValue
     {
-        public override GType Type => new(GPrimitiveType.Int);
+        public override GType Type => new GNumberType();
     }
 }

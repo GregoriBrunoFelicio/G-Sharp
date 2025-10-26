@@ -52,9 +52,9 @@ public class LetParser(Parser parser)
     private GType GetVariableType()
     {
         parser.Colon();
-        var type = GetPrimitiveType();
+        var baseType = GetConcreteType();
         var isArray = IsArrayType();
-        return new GType(type, isArray);
+        return isArray ? new GArrayType(baseType) : baseType;
     }
 
     private bool IsArrayType()
@@ -64,17 +64,17 @@ public class LetParser(Parser parser)
         return true;
     }
 
-    private GPrimitiveType GetPrimitiveType()
+    private GType GetConcreteType()
     {
         if (parser.Match(TokenType.Number))
-            return GPrimitiveType.Number;
+            return new GNumberType();
 
         if (parser.Match(TokenType.String))
-            return GPrimitiveType.String;
+            return new GStringType();
 
         if (parser.Match(TokenType.Boolean))
-            return GPrimitiveType.Boolean;
+            return new GBooleanType();
 
-        throw new Exception($"Expected a valid primitive type. But received: {parser.Current().Type}");
+        throw new Exception($"Unknown type: {parser.Current().Type}");
     }
 }

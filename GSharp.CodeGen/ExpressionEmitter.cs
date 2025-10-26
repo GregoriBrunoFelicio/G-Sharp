@@ -40,10 +40,23 @@ public static class ExpressionEmitter
     private static LocalBuilder EmitLiteralAndStore(ILGenerator il, VariableValue value)
     {
         EmitLiteralToStack(il, value);
-        var local = il.DeclareLocal(value.Type.GetClrType());
+        var local = il.DeclareLocal(GetClrTypeFromValue(value));
+
         il.Emit(OpCodes.Stloc, local);
         return local;
     }
+    
+    private static Type GetClrTypeFromValue(VariableValue value) => value switch
+    {
+        IntValue      => typeof(int),
+        FloatValue    => typeof(float),
+        DoubleValue   => typeof(double),
+        DecimalValue  => typeof(decimal),
+        BooleanValue  => typeof(bool),
+        StringValue   => typeof(string),
+        ArrayValue a  => a.ElementType.GetClrType().MakeArrayType(),
+        _ => value.Type.GetClrType() 
+    };
 
     private static void EmitLiteralToStack(ILGenerator il, VariableValue value)
     {
@@ -115,7 +128,6 @@ public static class ExpressionEmitter
             EmitBinaryOperator(il, expr.Operator);
         }
     }
-
 
     private static void EmitBinaryOperator(ILGenerator il, TokenType op)
     {

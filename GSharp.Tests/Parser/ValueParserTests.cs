@@ -14,7 +14,7 @@ public class ValueParserTests
         var parser = new GSharp.Parser.Parser([token]);
         var valueParser = new ValueParser(parser);
 
-        var result = valueParser.Parse(new GType(GPrimitiveType.String));
+        var result = valueParser.Parse(new GStringType());
 
         result.Should().BeOfType<StringValue>();
         result.As<StringValue>().Value.Should().Be("hello");
@@ -27,7 +27,7 @@ public class ValueParserTests
         var parser = new GSharp.Parser.Parser([token]);
         var valueParser = new ValueParser(parser);
 
-        var result = valueParser.Parse(new GType(GPrimitiveType.Number));
+        var result = valueParser.Parse(new  GNumberType());
 
         result.Should().BeOfType<IntValue>();
         result.As<IntValue>().Value.Should().Be(42);
@@ -40,7 +40,7 @@ public class ValueParserTests
         var parser = new GSharp.Parser.Parser([token]);
         var valueParser = new ValueParser(parser);
 
-        var result = valueParser.Parse(new GType(GPrimitiveType.Number));
+        var result = valueParser.Parse(new GNumberType());
 
         result.Should().BeOfType<FloatValue>();
         result.As<FloatValue>().Value.Should().Be(3.14f);
@@ -53,7 +53,7 @@ public class ValueParserTests
         var parser = new GSharp.Parser.Parser([token]);
         var valueParser = new ValueParser(parser);
 
-        var result = valueParser.Parse(new GType(GPrimitiveType.Number));
+        var result = valueParser.Parse(new GNumberType());
 
         result.Should().BeOfType<DoubleValue>();
         result.As<DoubleValue>().Value.Should().Be(2.71);
@@ -66,7 +66,7 @@ public class ValueParserTests
         var parser = new GSharp.Parser.Parser([token]);
         var valueParser = new ValueParser(parser);
 
-        var result = valueParser.Parse(new GType(GPrimitiveType.Number));
+        var result = valueParser.Parse(new GNumberType());
 
         result.Should().BeOfType<DecimalValue>();
         result.As<DecimalValue>().Value.Should().Be(100.5m);
@@ -79,7 +79,7 @@ public class ValueParserTests
         var parser = new GSharp.Parser.Parser([token]);
         var valueParser = new ValueParser(parser);
 
-        var result = valueParser.Parse(new GType(GPrimitiveType.Boolean));
+        var result = valueParser.Parse(new GBooleanType());
 
         result.Should().BeOfType<BooleanValue>();
         result.As<BooleanValue>().Value.Should().BeTrue();
@@ -92,7 +92,7 @@ public class ValueParserTests
         var parser = new GSharp.Parser.Parser([token]);
         var valueParser = new ValueParser(parser);
 
-        var result = valueParser.Parse(new GType(GPrimitiveType.Boolean));
+        var result = valueParser.Parse(new GBooleanType());
 
         result.Should().BeOfType<BooleanValue>();
         result.As<BooleanValue>().Value.Should().BeFalse();
@@ -105,7 +105,7 @@ public class ValueParserTests
         var parser = new GSharp.Parser.Parser([token]);
         var valueParser = new ValueParser(parser);
 
-        var act = () => valueParser.Parse(new GType(GPrimitiveType.Boolean));
+        var act = () => valueParser.Parse(new  GBooleanType());
 
         act.Should().Throw<Exception>().WithMessage("Expected boolean literal");
     }

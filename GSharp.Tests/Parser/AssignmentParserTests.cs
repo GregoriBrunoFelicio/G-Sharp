@@ -23,7 +23,7 @@ public class AssignmentParserTests
         {
             VariablesDeclared =
             {
-                ["x"] = new GType(GPrimitiveType.Int)
+                ["x"] = new GNumberType()
             }
         };
 

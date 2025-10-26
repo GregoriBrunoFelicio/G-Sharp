@@ -21,7 +21,7 @@ public class LetParserTests
         {
             VariablesDeclared =
             {
-                ["x"] = new GType(GPrimitiveType.Number)
+                ["x"] = new GNumberType()
             }
         };
 
@@ -138,6 +138,6 @@ public class LetParserTests
         var value = result.Expression.GetLiteralValue();
         value.Should().BeOfType<IntValue>();
         value.As<IntValue>().Value.Should().Be(42);
-        value.Type.Should().Be(new GType(GPrimitiveType.Int));
+        value.Type.Should().Be(new GNumberType());
     }
 }

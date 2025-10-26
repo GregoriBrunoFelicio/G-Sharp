@@ -16,7 +16,7 @@ public class ArrayEmitterTests
                 new StringValue("two"),
                 new StringValue("three")
             ],
-            new GType(GPrimitiveType.String)
+            new GStringType()
         );
 
         var method = new DynamicMethod(
@@ -46,7 +46,7 @@ public class ArrayEmitterTests
                 new IntValue(2),
                 new IntValue(3)
             ],
-            new GType(GPrimitiveType.Int)
+            new GNumberType()
         );
 
         var method = new DynamicMethod(
@@ -76,7 +76,7 @@ public class ArrayEmitterTests
                 new BooleanValue(false),
                 new BooleanValue(true)
             ],
-            new GType(GPrimitiveType.Boolean)
+            new GBooleanType()
         );
 
         var method = new DynamicMethod(
@@ -102,7 +102,7 @@ public class ArrayEmitterTests
     {
         var array = new ArrayValue(
             [ new FloatValue(1.1f), new FloatValue(2.2f), new FloatValue(3.3f) ],
-            new GType(GPrimitiveType.Float)
+            new GNumberType()
         );
 
         var method = new DynamicMethod("CreateFloatArray", typeof(object), Type.EmptyTypes);

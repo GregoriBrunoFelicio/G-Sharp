@@ -80,7 +80,7 @@ public class CompilerTests
                 new StringValue("two"),
                 new StringValue("three")
             ],
-            new GType(GPrimitiveType.String)
+            new GStringType()
         );
 
         var loop = new ForStatement(

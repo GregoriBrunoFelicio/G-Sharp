@@ -53,16 +53,21 @@ public static partial class Validations
 
     public static bool IsTypeCompatible(GType expected, GType actual)
     {
-        if (expected.IsArray != actual.IsArray)
-            return false;
+        if (expected is GArrayType expectedArray)
+        {
+            return actual is GArrayType actualArray && IsTypeCompatible(expectedArray.ElementType, actualArray.ElementType);
+        }
 
-        var sameKind = expected.Kind == actual.Kind;
+        if (expected is GNumberType && actual is GNumberType)
+            return true;
 
-        var isNumberSuperType =
-            expected.Kind == GPrimitiveType.Number &&
-            NumericTypes.Contains(actual.Kind);
+        if (expected.GetType() == actual.GetType())
+            return true;
 
-        return sameKind || isNumberSuperType;
+        if (expected is GNumberType && actual is GNumberType)
+            return true;
+
+        return false;
     }
 
     public static readonly Dictionary<TokenType, int> OperatorPrecedence = new()

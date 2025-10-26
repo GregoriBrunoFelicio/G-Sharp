@@ -47,13 +47,13 @@ public class ExpressionParser(Parser parser)
     private Expression GetExpression()
     {
         if (parser.Check(TokenType.NumberLiteral))
-            return new LiteralExpression(_valueParser.Parse(new GType(GPrimitiveType.Number)));
+            return new LiteralExpression(_valueParser.Parse(new GNumberType()));
 
         if (parser.Check(TokenType.StringLiteral))
-            return new LiteralExpression(_valueParser.Parse(new GType(GPrimitiveType.String)));
+            return new LiteralExpression(_valueParser.Parse(new GStringType()));
 
         if (parser.Check(TokenType.BooleanTrueLiteral) || parser.Check(TokenType.BooleanFalseLiteral))
-            return new LiteralExpression(_valueParser.Parse(new GType(GPrimitiveType.Boolean)));
+            return new LiteralExpression(_valueParser.Parse(new GBooleanType()));
 
         if (parser.Match(TokenType.LeftBracket))
             return ParseArrayExpression(parser, _valueParser);
@@ -71,15 +71,16 @@ public class ExpressionParser(Parser parser)
 
         var token = parser.Current();
 
-        var kind = token.Type switch
+        GType elementType = token.Type switch
         {
-            TokenType.StringLiteral => GPrimitiveType.String,
-            TokenType.BooleanTrueLiteral or TokenType.BooleanFalseLiteral => GPrimitiveType.Boolean,
-            TokenType.NumberLiteral => GPrimitiveType.Number,
-            _ => throw new Exception($"Unable to infer array element type:{token.Type}")
-        };
-
-        var arrayValue = valueParser.Parse(new GType(kind, isArray: true));
+            TokenType.StringLiteral => new GStringType(),
+            TokenType.BooleanTrueLiteral or TokenType.BooleanFalseLiteral => new GBooleanType(),
+            TokenType.NumberLiteral => new GNumberType(),
+            _ => throw new Exception($"Unable to infer array element type: {token.Type}")
+        }; 
+        
+        var arrayValue = valueParser.Parse(new GArrayType(elementType));
+        
         return new LiteralExpression(arrayValue);
     }
 }

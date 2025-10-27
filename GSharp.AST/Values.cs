@@ -7,7 +7,7 @@ public abstract record VariableValue
     public override string ToString()
     {
         // TODO: think a better approach to do this..
-        var valueProp = this.GetType().GetProperty("Value");
+        var valueProp = GetType().GetProperty("Value");
         var val = valueProp?.GetValue(this);
         return val?.ToString() ?? "<uninitialized>";
     }

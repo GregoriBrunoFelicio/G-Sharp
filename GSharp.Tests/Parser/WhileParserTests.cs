@@ -40,7 +40,7 @@ public class WhileParserTests
 
         var parser = new GSharp.Parser.Parser(tokens)
         {
-            VariablesDeclared = { ["isReady"] = new GType(GPrimitiveType.Boolean) }
+            VariablesDeclared = { ["isReady"] = new GBooleanType() }
         };
 
         var result = new WhileParser(parser).Parse();
@@ -67,7 +67,7 @@ public class WhileParserTests
 
         var parser = new GSharp.Parser.Parser(tokens)
         {
-            VariablesDeclared = { ["x"] = new GType(GPrimitiveType.Number) }
+            VariablesDeclared = { ["x"] = new GNumberType() }
         };
 
         var result = new WhileParser(parser).Parse();
@@ -132,7 +132,7 @@ public class WhileParserTests
 
         var parser = new GSharp.Parser.Parser(tokens)
         {
-            VariablesDeclared = { ["x"] = new GType(GPrimitiveType.Number) }
+            VariablesDeclared = { ["x"] = new GNumberType() }
         };
 
         var act = () => new WhileParser(parser).Parse();

@@ -1,16 +1,5 @@
 namespace GSharp.AST;
 
-public enum GPrimitiveType
-{
-    Number,
-    Int,
-    Float,
-    Double,
-    Decimal,
-    String, // I know, I know that string is not primitive type, I`ll fix it later :/
-    Boolean
-}
-
 public abstract class GType
 {
     public abstract string Name { get; }

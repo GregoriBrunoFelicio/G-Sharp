@@ -43,14 +43,6 @@ public static partial class Validations
         return reserved.Contains(word);
     }
 
-    private static readonly HashSet<GPrimitiveType> NumericTypes =
-    [
-        GPrimitiveType.Int,
-        GPrimitiveType.Float,
-        GPrimitiveType.Double,
-        GPrimitiveType.Decimal
-    ];
-
     public static bool IsTypeCompatible(GType expected, GType actual)
     {
         if (expected is GArrayType expectedArray)

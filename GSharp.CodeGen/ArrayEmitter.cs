@@ -5,42 +5,24 @@ namespace GSharp.CodeGen;
 
 public static class ArrayEmitter
 {
-    public static void EmitToStack(ILGenerator il, ArrayValue array)
+    public static void EmitToStack(ILGenerator il, object[] array)
     {
-        var elementType = array.ElementType.GetClrType();
+        // tamanho do array
+        il.Emit(OpCodes.Ldc_I4, array.Length);
 
-        il.Emit(OpCodes.Ldc_I4, array.Elements.Count); 
-        il.Emit(OpCodes.Newarr, elementType); 
+        // cria object[]
+        il.Emit(OpCodes.Newarr, typeof(object));
 
-        for (var i = 0; i < array.Elements.Count; i++)
+        for (var i = 0; i < array.Length; i++)
         {
-            il.Emit(OpCodes.Dup); 
-            il.Emit(OpCodes.Ldc_I4, i); 
-            EmitElement(il, array.Elements[i]);
-            il.Emit(GetStelemOpCode(elementType)); 
-        }
-    }
+            il.Emit(OpCodes.Dup);        // duplica referência do array
+            il.Emit(OpCodes.Ldc_I4, i);  // índice
 
-    private static void EmitElement(ILGenerator il, VariableValue value)
-    {
-        switch (value)
-        {
-            case IntValue i: il.Emit(OpCodes.Ldc_I4, i.Value); break;
-            case FloatValue f: il.Emit(OpCodes.Ldc_R4, f.Value); break;
-            case DoubleValue d: il.Emit(OpCodes.Ldc_R8, d.Value); break;
-            case BooleanValue b: il.Emit(b.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0); break;
-            case StringValue s: il.Emit(OpCodes.Ldstr, s.Value); break;
-            default: throw new NotSupportedException($"Unsupported array element: {value.GetType().Name}");
-        }
-    }
+            // empilha o elemento (object)
+            ExpressionEmitter.EmitLiteralToStack(il, array[i]);
 
-    private static OpCode GetStelemOpCode(Type type)
-    {
-        if (type == typeof(int)) return OpCodes.Stelem_I4;
-        if (type == typeof(float)) return OpCodes.Stelem_R4;
-        if (type == typeof(double)) return OpCodes.Stelem_R8;
-        if (type == typeof(string)) return OpCodes.Stelem_Ref;
-        if (type == typeof(bool)) return OpCodes.Stelem_I1;
-        throw new NotSupportedException($"Unsupported array element type: {type}");
+            // armazena no array
+            il.Emit(OpCodes.Stelem_Ref);
+        }
     }
 }

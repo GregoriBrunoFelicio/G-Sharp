@@ -28,7 +28,7 @@ public static class PrintEmitter
     {
         return expr switch
         {
-            LiteralExpression lit => lit.Value.Type.GetClrType(),
+            LiteralExpression lit => lit.Value.GetType(),
             VariableExpression v when locals.TryGetValue(v.Name, out var local) => local.LocalType,
             BinaryExpression b => GetExpressionType(b.Left, locals), 
             _ => throw new NotSupportedException($"Cannot infer type of expression: {expr}")

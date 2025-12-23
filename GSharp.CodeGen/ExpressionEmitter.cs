@@ -6,87 +6,169 @@ namespace GSharp.CodeGen;
 
 public static class ExpressionEmitter
 {
-    public static LocalBuilder Emit(ILGenerator il, Expression expression, Dictionary<string, LocalBuilder> locals)
+        public static LocalBuilder Emit(
+        ILGenerator il,
+        Expression expression,
+        Dictionary<string, LocalBuilder> locals)
     {
-        return expression switch
-        {
-            LiteralExpression lit => EmitLiteralAndStore(il, lit.Value),
-            VariableExpression v => EmitVariableAndStore(il, v.Name, locals),
-            BinaryExpression b => EmitBinaryExpression(il, b, locals),
-            _ => throw new NotSupportedException($"Unsupported expression type: {expression.GetType().Name}")
-        };
+        EmitToStack(il, expression, locals);
+
+        // TODA expressão vira object
+        var local = il.DeclareLocal(typeof(object));
+        il.Emit(OpCodes.Stloc, local);
+        return local;
     }
 
-    public static void EmitToStack(ILGenerator il, Expression expression, Dictionary<string, LocalBuilder> locals)
+    public static void EmitToStack(
+        ILGenerator il,
+        Expression expression,
+        Dictionary<string, LocalBuilder> locals)
     {
         switch (expression)
         {
             case LiteralExpression lit:
                 EmitLiteralToStack(il, lit.Value);
                 break;
+
             case VariableExpression v:
                 if (!locals.TryGetValue(v.Name, out var local))
                     throw new Exception($"Variable '{v.Name}' not found.");
                 il.Emit(OpCodes.Ldloc, local);
                 break;
+
             case BinaryExpression b:
-                EmitBinaryToStack(il, b, locals);
+                EmitBinaryExpression(il, b, locals);
                 break;
+
             default:
-                throw new NotSupportedException($"Unsupported expression type: {expression.GetType().Name}");
+                throw new NotSupportedException(
+                    $"Unsupported expression type: {expression.GetType().Name}");
         }
     }
 
-    private static LocalBuilder EmitLiteralAndStore(ILGenerator il, VariableValue value)
-    {
-        EmitLiteralToStack(il, value);
-        var local = il.DeclareLocal(GetClrTypeFromValue(value));
-
-        il.Emit(OpCodes.Stloc, local);
-        return local;
-    }
-    
-    private static Type GetClrTypeFromValue(VariableValue value) => value switch
-    {
-        IntValue      => typeof(int),
-        FloatValue    => typeof(float),
-        DoubleValue   => typeof(double),
-        DecimalValue  => typeof(decimal),
-        BooleanValue  => typeof(bool),
-        StringValue   => typeof(string),
-        ArrayValue a  => a.ElementType.GetClrType().MakeArrayType(),
-        _ => value.Type.GetClrType() 
-    };
-
-    private static void EmitLiteralToStack(ILGenerator il, VariableValue value)
+    public static void EmitLiteralToStack(ILGenerator il, object value)
     {
         switch (value)
         {
-            case IntValue i:
-                il.Emit(OpCodes.Ldc_I4, i.Value);
+            case int i:
+                il.Emit(OpCodes.Ldc_I4, i);
+                il.Emit(OpCodes.Box, typeof(int));
                 break;
-            case FloatValue f:
-                il.Emit(OpCodes.Ldc_R4, f.Value);
+
+            case float f:
+                il.Emit(OpCodes.Ldc_R4, f);
+                il.Emit(OpCodes.Box, typeof(float));
                 break;
-            case DoubleValue d:
-                il.Emit(OpCodes.Ldc_R8, d.Value);
+
+            case double d:
+                il.Emit(OpCodes.Ldc_R8, d);
+                il.Emit(OpCodes.Box, typeof(double));
                 break;
-            case DecimalValue m:
-                EmitDecimalToStack(il, m.Value);
+
+            case decimal m:
+                EmitDecimalToStack(il, m);
+                il.Emit(OpCodes.Box, typeof(decimal));
                 break;
-            case BooleanValue b:
-                il.Emit(b.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+
+            case bool b:
+                il.Emit(b ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Box, typeof(bool));
                 break;
-            case StringValue s:
-                il.Emit(OpCodes.Ldstr, s.Value);
+
+            case string s:
+                il.Emit(OpCodes.Ldstr, s);
                 break;
-            case ArrayValue a:
-                ArrayEmitter.EmitToStack(il, a);
+
+            case object[] arr:
+                ArrayEmitter.EmitToStack(il, arr);
                 break;
+
             default:
-                throw new NotSupportedException($"Unsupported literal type: {value.GetType().Name}");
+                throw new NotSupportedException(
+                    $"Unsupported literal type: {value?.GetType().Name}");
         }
     }
+    // public static LocalBuilder Emit(ILGenerator il, Expression expression, Dictionary<string, LocalBuilder> locals)
+    // {
+    //     return expression switch
+    //     {
+    //         LiteralExpression lit => EmitLiteralAndStore(il, lit.Value),
+    //         VariableExpression v => EmitVariableAndStore(il, v.Name, locals),
+    //         BinaryExpression b => EmitBinaryExpression(il, b, locals),
+    //         _ => throw new NotSupportedException($"Unsupported expression type: {expression.GetType().Name}")
+    //     };
+    // }
+    //
+    // public static void EmitToStack(ILGenerator il, Expression expression, Dictionary<string, LocalBuilder> locals)
+    // {
+    //     switch (expression)
+    //     {
+    //         case LiteralExpression lit:
+    //             EmitLiteralToStack(il, lit.Value);
+    //             break;
+    //         case VariableExpression v:
+    //             if (!locals.TryGetValue(v.Name, out var local))
+    //                 throw new Exception($"Variable '{v.Name}' not found.");
+    //             il.Emit(OpCodes.Ldloc, local);
+    //             break;
+    //         case BinaryExpression b:
+    //             EmitBinaryToStack(il, b, locals);
+    //             break;
+    //         default:
+    //             throw new NotSupportedException($"Unsupported expression type: {expression.GetType().Name}");
+    //     }
+    // }
+    //
+    // private static LocalBuilder EmitLiteralAndStore(ILGenerator il, VariableValue value)
+    // {
+    //     EmitLiteralToStack(il, value);
+    //     var local = il.DeclareLocal(GetClrTypeFromValue(value));
+    //
+    //     il.Emit(OpCodes.Stloc, local);
+    //     return local;
+    // }
+    //
+    // private static Type GetClrTypeFromValue(VariableValue value) => value switch
+    // {
+    //     IntValue      => typeof(int),
+    //     FloatValue    => typeof(float),
+    //     DoubleValue   => typeof(double),
+    //     DecimalValue  => typeof(decimal),
+    //     BooleanValue  => typeof(bool),
+    //     StringValue   => typeof(string),
+    //     ArrayValue a  => a.ElementType.GetClrType().MakeArrayType(),
+    //     _ => value.Type.GetClrType() 
+    // };
+    //
+    // private static void EmitLiteralToStack(ILGenerator il, VariableValue value)
+    // {
+    //     switch (value)
+    //     {
+    //         case IntValue i:
+    //             il.Emit(OpCodes.Ldc_I4, i.Value);
+    //             break;
+    //         case FloatValue f:
+    //             il.Emit(OpCodes.Ldc_R4, f.Value);
+    //             break;
+    //         case DoubleValue d:
+    //             il.Emit(OpCodes.Ldc_R8, d.Value);
+    //             break;
+    //         case DecimalValue m:
+    //             EmitDecimalToStack(il, m.Value);
+    //             break;
+    //         case BooleanValue b:
+    //             il.Emit(b.Value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+    //             break;
+    //         case StringValue s:
+    //             il.Emit(OpCodes.Ldstr, s.Value);
+    //             break;
+    //         case ArrayValue a:
+    //             ArrayEmitter.EmitToStack(il, a);
+    //             break;
+    //         default:
+    //             throw new NotSupportedException($"Unsupported literal type: {value.GetType().Name}");
+    //     }
+    // }
 
     private static LocalBuilder EmitVariableAndStore(ILGenerator il, string name, Dictionary<string, LocalBuilder> locals)
     {

@@ -10,11 +10,10 @@ public static class ForEmitter
         ForStatement statement,
         Dictionary<string, LocalBuilder> variables)
     {
-        // materialize iterable (literal or variable)
-        var iterableLocal = ExpressionEmitter.Emit(il, statement.Iterable, variables);
+        // 1️⃣ Avalia o iterable (empilha object)
+        ExpressionEmitter.EmitToStack(il, statement.Iterable, variables);
 
-        // assume it's an array (dynamic language, trust runtime)
-        il.Emit(OpCodes.Ldloc, iterableLocal);
+        // 2️⃣ Converte para object[]
         il.Emit(OpCodes.Castclass, typeof(object[]));
 
         var arrayLocal = il.DeclareLocal(typeof(object[]));
@@ -30,14 +29,14 @@ public static class ForEmitter
 
         il.MarkLabel(loopStart);
 
-        // if index >= array.Length -> exit
+        // if index >= array.Length -> break
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldloc, arrayLocal);
         il.Emit(OpCodes.Ldlen);
         il.Emit(OpCodes.Conv_I4);
         il.Emit(OpCodes.Bge, loopEnd);
 
-        // load element
+        // element = array[index]
         il.Emit(OpCodes.Ldloc, arrayLocal);
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldelem_Ref);
@@ -59,7 +58,5 @@ public static class ForEmitter
 
         il.Emit(OpCodes.Br, loopStart);
         il.MarkLabel(loopEnd);
-        
-        // :)
     }
 }

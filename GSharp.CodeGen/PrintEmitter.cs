@@ -9,17 +9,8 @@ public static class PrintEmitter
     {
         ExpressionEmitter.EmitToStack(il, statement.Expression, locals);
 
-        var type = GetExpressionType(statement.Expression, locals);
-
-        var method = typeof(Console).GetMethods()
-            .FirstOrDefault(m =>
-                m.Name == "WriteLine" &&
-                m.GetParameters().Length == 1 &&
-                m.GetParameters()[0].ParameterType == type);
-
-        if (method == null)
-            throw new MissingMethodException(
-                $"No suitable Console.WriteLine method found for type '{type.Name}'.");
+        var method = typeof(Console)
+            .GetMethod("WriteLine", new[] { typeof(object) })!;
 
         il.Emit(OpCodes.Call, method);
     }

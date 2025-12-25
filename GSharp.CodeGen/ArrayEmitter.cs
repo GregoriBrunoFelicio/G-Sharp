@@ -18,11 +18,40 @@ public static class ArrayEmitter
             il.Emit(OpCodes.Dup);        // duplica referência do array
             il.Emit(OpCodes.Ldc_I4, i);  // índice
 
-            // empilha o elemento (object)
-            ExpressionEmitter.EmitLiteralToStack(il, array[i]);
+            // empilha o valor diretamente
+            EmitObject(il, array[i]);
 
-            // armazena no array
+            // array[i] = value
             il.Emit(OpCodes.Stelem_Ref);
+        }
+    }
+
+    private static void EmitObject(ILGenerator il, object value)
+    {
+        switch (value)
+        {
+            case int i:
+                il.Emit(OpCodes.Ldc_I4, i);
+                il.Emit(OpCodes.Box, typeof(int));
+                break;
+
+            case double d:
+                il.Emit(OpCodes.Ldc_R8, d);
+                il.Emit(OpCodes.Box, typeof(double));
+                break;
+
+            case bool b:
+                il.Emit(b ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Box, typeof(bool));
+                break;
+
+            case string s:
+                il.Emit(OpCodes.Ldstr, s);
+                break;
+
+            default:
+                throw new NotSupportedException(
+                    $"Unsupported array literal element: {value?.GetType().Name}");
         }
     }
 }

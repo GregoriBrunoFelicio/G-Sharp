@@ -1,24 +1,12 @@
 using System.Reflection.Emit;
 using GSharp.AST;
+using GSharp.CodeGen.Helpers;
 using GSharp.Lexer;
 
 namespace GSharp.CodeGen;
 
 public static class ExpressionEmitter
 {
-        public static LocalBuilder Emit(
-        ILGenerator il,
-        Expression expression,
-        Dictionary<string, LocalBuilder> locals)
-    {
-        EmitToStack(il, expression, locals);
-
-        // TODA expressão vira object
-        var local = il.DeclareLocal(typeof(object));
-        il.Emit(OpCodes.Stloc, local);
-        return local;
-    }
-
     public static void EmitToStack(
         ILGenerator il,
         Expression expression,
@@ -27,26 +15,57 @@ public static class ExpressionEmitter
         switch (expression)
         {
             case LiteralExpression lit:
-                EmitLiteralToStack(il, lit.Value);
+                EmitLiteral(il, lit.Value);
                 break;
 
             case VariableExpression v:
-                if (!locals.TryGetValue(v.Name, out var local))
-                    throw new Exception($"Variable '{v.Name}' not found.");
-                il.Emit(OpCodes.Ldloc, local);
+                il.Emit(OpCodes.Ldloc, locals[v.Name]);
                 break;
 
             case BinaryExpression b:
-                EmitBinaryExpression(il, b, locals);
+                EmitBinary(il, b, locals);
                 break;
 
             default:
                 throw new NotSupportedException(
-                    $"Unsupported expression type: {expression.GetType().Name}");
+                    $"Unsupported expression: {expression.GetType().Name}");
         }
     }
 
-    public static void EmitLiteralToStack(ILGenerator il, object value)
+    private static void EmitBinary(
+        ILGenerator il,
+        BinaryExpression expr,
+        Dictionary<string, LocalBuilder> locals)
+    {
+        EmitToStack(il, expr.Left, locals);
+        EmitToStack(il, expr.Right, locals);
+
+        var method = expr.Operator switch
+        {
+            TokenType.GreaterThan =>
+                typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThan)),
+            TokenType.LessThan =>
+                typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThan)),
+            TokenType.GreaterThanOrEqual =>
+                typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThanOrEqual)),
+            TokenType.LessThanOrEqual =>
+                typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThanOrEqual)),
+            TokenType.EqualEqual =>
+                typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.EqualEqual)),
+            TokenType.NotEqual =>
+                typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.NotEqual)),
+            TokenType.Plus =>
+                typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Add)),
+            TokenType.Minus =>
+                typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Subtract)),
+            _ => throw new NotSupportedException(expr.Operator.ToString())
+        };
+
+        il.Emit(OpCodes.Call, method!);
+        // resultado: object no topo da stack
+    }
+
+    private static void EmitLiteral(ILGenerator il, object value)
     {
         switch (value)
         {
@@ -55,19 +74,9 @@ public static class ExpressionEmitter
                 il.Emit(OpCodes.Box, typeof(int));
                 break;
 
-            case float f:
-                il.Emit(OpCodes.Ldc_R4, f);
-                il.Emit(OpCodes.Box, typeof(float));
-                break;
-
             case double d:
                 il.Emit(OpCodes.Ldc_R8, d);
                 il.Emit(OpCodes.Box, typeof(double));
-                break;
-
-            case decimal m:
-                EmitDecimalToStack(il, m);
-                il.Emit(OpCodes.Box, typeof(decimal));
                 break;
 
             case bool b:
@@ -78,128 +87,28 @@ public static class ExpressionEmitter
             case string s:
                 il.Emit(OpCodes.Ldstr, s);
                 break;
-
+            
+            case float f:
+                il.Emit(OpCodes.Ldc_R4, f);
+                il.Emit(OpCodes.Box, typeof(float));
+                break;
+            
+            case decimal m:
+                EmitDecimal(il, m);
+                il.Emit(OpCodes.Box, typeof(decimal));
+                break;
+            
             case object[] arr:
                 ArrayEmitter.EmitToStack(il, arr);
                 break;
 
             default:
                 throw new NotSupportedException(
-                    $"Unsupported literal type: {value?.GetType().Name}");
-        }
-    }
-    
-    private static LocalBuilder EmitBinaryExpression(ILGenerator il, BinaryExpression expr, Dictionary<string, LocalBuilder> locals)
-    {
-        if (expr.Operator is TokenType.And or TokenType.Or)
-            return EmitLogicalShortCircuit(il, expr, locals);
-
-        EmitToStack(il, expr.Left, locals);
-        EmitToStack(il, expr.Right, locals);
-        EmitBinaryOperator(il, expr.Operator);
-
-        var result = il.DeclareLocal(typeof(int));
-        il.Emit(OpCodes.Stloc, result);
-        return result;
-    }
-
-    private static void EmitBinaryToStack(ILGenerator il, BinaryExpression expr, Dictionary<string, LocalBuilder> locals)
-    {
-        if (expr.Operator is TokenType.And or TokenType.Or)
-        {
-            var result = EmitLogicalShortCircuit(il, expr, locals);
-            il.Emit(OpCodes.Ldloc, result);
-        }
-        else
-        {
-            EmitToStack(il, expr.Left, locals);
-            EmitToStack(il, expr.Right, locals);
-
-            EmitBinaryOperator(il, expr.Operator);
+                    $"Unsupported literal: {value?.GetType().Name}");
         }
     }
 
-    private static void EmitBinaryOperator(ILGenerator il, TokenType op)
-    {
-        switch (op)
-        {
-            case TokenType.GreaterThan:
-                il.Emit(OpCodes.Cgt);
-                break;
-            case TokenType.LessThan:
-                il.Emit(OpCodes.Clt);
-                break;
-            case TokenType.EqualEqual:
-                il.Emit(OpCodes.Ceq);
-                break;
-            case TokenType.NotEqual:
-                il.Emit(OpCodes.Ceq);
-                il.Emit(OpCodes.Ldc_I4_0);
-                il.Emit(OpCodes.Ceq);
-                break;
-            case TokenType.GreaterThanOrEqual:
-                il.Emit(OpCodes.Clt);
-                il.Emit(OpCodes.Ldc_I4_0);
-                il.Emit(OpCodes.Ceq);
-                break;
-            case TokenType.LessThanOrEqual:
-                il.Emit(OpCodes.Cgt);
-                il.Emit(OpCodes.Ldc_I4_0);
-                il.Emit(OpCodes.Ceq);
-                break;
-            case TokenType.Plus:
-                il.Emit(OpCodes.Add);
-                break;
-            case TokenType.Minus:
-                il.Emit(OpCodes.Sub);
-                break;
-            case TokenType.Multiply:
-                il.Emit(OpCodes.Mul);
-                break;
-            case TokenType.Divide:
-                il.Emit(OpCodes.Div);
-                break;
-            default:
-                throw new NotSupportedException($"Unsupported binary operator: {op}");
-        }
-    }
-
-    private static LocalBuilder EmitLogicalShortCircuit(ILGenerator il, BinaryExpression expr, Dictionary<string, LocalBuilder> locals)
-    {
-        var result = il.DeclareLocal(typeof(int));
-        var shortCircuit = il.DefineLabel();
-        var end = il.DefineLabel();
-
-        EmitToStack(il, expr.Left, locals);
-
-        if (expr.Operator == TokenType.And)
-        {
-            il.Emit(OpCodes.Brfalse, shortCircuit);
-        }
-        else
-        {
-            il.Emit(OpCodes.Brtrue, shortCircuit);
-        }
-
-        EmitToStack(il, expr.Right, locals);
-        il.Emit(OpCodes.Stloc, result);
-        il.Emit(OpCodes.Br, end);
-
-        il.MarkLabel(shortCircuit);
-
-        if (expr.Operator == TokenType.And)
-            il.Emit(OpCodes.Ldc_I4_0);
-        else
-            il.Emit(OpCodes.Ldc_I4_1);
-
-        il.Emit(OpCodes.Stloc, result);
-
-        il.MarkLabel(end);
-        // ATENÇÃO AQUI! NÃO FAZ Ldloc RESULT AQUI
-        return result;
-    }
-
-    private static void EmitDecimalToStack(ILGenerator il, decimal value)
+    private static void EmitDecimal(ILGenerator il, decimal value)
     {
         var bits = decimal.GetBits(value);
         var lo = bits[0];

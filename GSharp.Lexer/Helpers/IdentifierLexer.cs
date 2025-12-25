@@ -43,6 +43,9 @@ public static class IdentifierLexer
         // Logical operators
         ["and"] = TokenType.And,
         ["or"] = TokenType.Or,
-        ["not"] = TokenType.Not
+        ["not"] = TokenType.Not,
+        
+        // Functions
+        ["function"] = TokenType.Function
     };
 }

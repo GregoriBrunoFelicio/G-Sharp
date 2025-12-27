@@ -4,7 +4,7 @@ namespace GSharp.AST;
 
 public abstract record Expression;
 
-public record LiteralExpression(VariableValue Value) : Expression;
+public record LiteralExpression(object Value) : Expression;
 
 public record VariableExpression(string Name) : Expression;
 

@@ -42,26 +42,7 @@ public static partial class Validations
 
         return reserved.Contains(word);
     }
-
-    public static bool IsTypeCompatible(GType expected, GType actual)
-    {
-        if (expected is GArrayType expectedArray)
-        {
-            return actual is GArrayType actualArray && IsTypeCompatible(expectedArray.ElementType, actualArray.ElementType);
-        }
-
-        if (expected is GNumberType && actual is GNumberType)
-            return true;
-
-        if (expected.GetType() == actual.GetType())
-            return true;
-
-        if (expected is GNumberType && actual is GNumberType)
-            return true;
-
-        return false;
-    }
-
+    
     public static readonly Dictionary<TokenType, int> OperatorPrecedence = new()
     {
         { TokenType.Or, 1 },

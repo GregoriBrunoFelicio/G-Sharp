@@ -3,6 +3,7 @@ using GSharp.AST;
 
 namespace GSharp.CodeGen;
 
+// This class is responsible for emitting IL for 'for' loops.
 public static class ForEmitter
 {
     public static void Emit(
@@ -10,73 +11,70 @@ public static class ForEmitter
         ForStatement statement,
         Dictionary<string, LocalBuilder> variables)
     {
+        // 1) Evaluate the iterable expression
+        // This leaves exactly ONE object on the stack.
+        // At runtime, we expect this object to be an object[].
         ExpressionEmitter.EmitToStack(il, statement.Iterable, variables);
 
-        var arrayType = GetExpressionClrType(statement.Iterable, variables);
+        // Cast the value to object[].
+        // If the value is not an array, this will throw at runtime.
+        // That is a language error, not a codegen concern.
+        il.Emit(OpCodes.Castclass, typeof(object[]));
 
-        if (!arrayType.IsArray)
-            throw new InvalidOperationException($"Expected array expression in 'for', got: {arrayType}");
-
-        var arrayLocal = il.DeclareLocal(arrayType);
+        // Store the array reference in a local variable.
+        var arrayLocal = il.DeclareLocal(typeof(object[]));
         il.Emit(OpCodes.Stloc, arrayLocal);
 
+        // int index = 0;
         var indexLocal = il.DeclareLocal(typeof(int));
         il.Emit(OpCodes.Ldc_I4_0);
         il.Emit(OpCodes.Stloc, indexLocal);
 
+        // Labels that define the loop structure.
         var loopStart = il.DefineLabel();
         var loopEnd = il.DefineLabel();
 
+        // Jump target for the beginning of each iteration.
         il.MarkLabel(loopStart);
 
+        // if (index >= array.Length)
+        //     break;
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldloc, arrayLocal);
-        il.Emit(OpCodes.Ldlen);
-        il.Emit(OpCodes.Conv_I4);
+        il.Emit(OpCodes.Ldlen);     // array.Length (native unsigned)
+        il.Emit(OpCodes.Conv_I4);   // convert length to int32
         il.Emit(OpCodes.Bge, loopEnd);
 
-        var elementType = arrayType.GetElementType()
-            ?? throw new InvalidOperationException($"Unable to get element type from array: {arrayType}");
-
-        var loopVar = il.DeclareLocal(elementType);
-        variables[statement.Variable] = loopVar;
-
+        // element = array[index]
         il.Emit(OpCodes.Ldloc, arrayLocal);
         il.Emit(OpCodes.Ldloc, indexLocal);
-        il.Emit(GetLdelemOpCode(elementType));
+        il.Emit(OpCodes.Ldelem_Ref);
+
+        // Store the current element in a local variable.
+        // The loop variable is always an object,
+        // since the language is dynamically typed.
+        var loopVar = il.DeclareLocal(typeof(object));
         il.Emit(OpCodes.Stloc, loopVar);
 
-        foreach (var s in statement.Body)
-        {
-            StatementEmitter.Emit(il, s, variables);
-        }
+        // Bind the loop variable name to the local.
+        // From this point on, any reference to the loop variable
+        // inside the body will resolve to this local.
+        variables[statement.Variable] = loopVar;
 
+        // Emit each statement inside the loop body.
+        foreach (var s in statement.Body)
+            StatementEmitter.Emit(il, s, variables);
+
+        // index++
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldc_I4_1);
         il.Emit(OpCodes.Add);
         il.Emit(OpCodes.Stloc, indexLocal);
 
+        // Jump back to the beginning of the loop.
         il.Emit(OpCodes.Br, loopStart);
+
+        // Execution continues here after the loop finishes.
         il.MarkLabel(loopEnd);
-    }
-
-    private static OpCode GetLdelemOpCode(Type type)
-    {
-        if (type == typeof(int)) return OpCodes.Ldelem_I4;
-        if (type == typeof(float)) return OpCodes.Ldelem_R4;
-        if (type == typeof(double)) return OpCodes.Ldelem_R8;
-        if (type == typeof(string)) return OpCodes.Ldelem_Ref;
-        if (type == typeof(bool)) return OpCodes.Ldelem_I1;
-        throw new NotSupportedException($"Unsupported array element type: {type}");
-    }
-
-    private static Type GetExpressionClrType(Expression expression, Dictionary<string, LocalBuilder> locals)
-    {
-        return expression switch
-        {
-            LiteralExpression lit => lit.Value.Type.GetClrType(),
-            VariableExpression v when locals.TryGetValue(v.Name, out var local) => local.LocalType,
-            _ => throw new NotSupportedException($"Cannot determine CLR type for expression: {expression}")
-        };
     }
 }

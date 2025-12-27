@@ -1,3 +1,4 @@
+using System.Globalization;
 using GSharp.AST;
 using GSharp.Lexer;
 using static GSharp.Parser.Validations;
@@ -6,8 +7,6 @@ namespace GSharp.Parser;
 
 public class ExpressionParser(Parser parser)
 {
-    private readonly ValueParser _valueParser = new(parser);
-
     public Expression Parse()
     {
         var left = GetExpression();
@@ -46,17 +45,20 @@ public class ExpressionParser(Parser parser)
 
     private Expression GetExpression()
     {
-        if (parser.Check(TokenType.NumberLiteral))
-            return new LiteralExpression(_valueParser.Parse(new GNumberType()));
+        if (parser.Match(TokenType.NumberLiteral))
+            return new LiteralExpression(ParseNumber(parser.Previous().Value));
 
-        if (parser.Check(TokenType.StringLiteral))
-            return new LiteralExpression(_valueParser.Parse(new GStringType()));
+        if (parser.Match(TokenType.StringLiteral))
+            return new LiteralExpression(parser.Previous().Value);
 
-        if (parser.Check(TokenType.BooleanTrueLiteral) || parser.Check(TokenType.BooleanFalseLiteral))
-            return new LiteralExpression(_valueParser.Parse(new GBooleanType()));
+        if (parser.Match(TokenType.BooleanTrueLiteral))
+            return new LiteralExpression(true);
 
+        if (parser.Match(TokenType.BooleanFalseLiteral))
+            return new LiteralExpression(false);
+        
         if (parser.Match(TokenType.LeftBracket))
-            return ParseArrayExpression(parser, _valueParser);
+            return ParseArrayExpression(parser);
 
         if (parser.Match(TokenType.Identifier))
             return new VariableExpression(parser.Previous().Value);
@@ -64,23 +66,52 @@ public class ExpressionParser(Parser parser)
         throw new Exception($"Unexpected token in expression: {parser.Current().Type}.");
     }
 
-    private static LiteralExpression ParseArrayExpression(Parser parser, ValueParser valueParser)
+    private static object ParseNumber(string text)
     {
+        if (text.EndsWith('f'))
+            return float.Parse(text[..^1]);
+    
+        if (text.EndsWith('d'))
+            return double.Parse(text[..^1]);
+    
+        if (text.EndsWith('m'))
+            return decimal.Parse(text[..^1]);
+    
+        if (text.Contains('.'))
+            return double.Parse(text);
+    
+        return int.Parse(text);
+    }
+
+    private static LiteralExpression ParseArrayExpression(Parser parser)
+    {
+        var elements = new List<object>();
+
         if (parser.Check(TokenType.RightBracket))
-            throw new Exception("Empty arrays are not supported.");
+            throw new Exception("Empty arrays are not supported."); // Maybe not..
+        
+        Type? elementType = null;
 
-        var token = parser.Current();
-
-        GType elementType = token.Type switch
+        while (!parser.Check(TokenType.RightBracket))
         {
-            TokenType.StringLiteral => new GStringType(),
-            TokenType.BooleanTrueLiteral or TokenType.BooleanFalseLiteral => new GBooleanType(),
-            TokenType.NumberLiteral => new GNumberType(),
-            _ => throw new Exception($"Unable to infer array element type: {token.Type}")
-        }; 
+            var expr = new ExpressionParser(parser).Parse();
+
+            if (expr is not LiteralExpression lit)
+                throw new Exception("Only literal expressions are supported in arrays for now.");
+            
+            var value = lit.Value;
+
+            elementType ??= value?.GetType();
+
+            if (value?.GetType() != elementType)
+                throw new Exception(
+                    "Array literals must contain elements of the same type."); // o___O
+
+            elements.Add(lit.Value);
+        }
         
-        var arrayValue = valueParser.Parse(new GArrayType(elementType));
-        
-        return new LiteralExpression(arrayValue);
+        parser.Consume(TokenType.RightBracket);
+
+        return new LiteralExpression(elements.ToArray());
     }
 }

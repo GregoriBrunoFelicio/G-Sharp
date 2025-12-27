@@ -1,28 +1,28 @@
-let name: string = "greg";
-let age: number = 33;
-let isFoo: bool = true;
+let name = "greg";
+let age = 33;
+let isFoo = true;
 
 println name;
 println age;
 println isFoo;
 println 1 + 1 + 1 + 1;
 
-let variable: number = 10;
+let variable = 10;
 variable = 20;
 println variable;
 println variable;
 
-let d: number = 10.13d;
-let m: number = 10.24m;
-let f: number = 10.87f;
+let d = 10.13d;
+let m = 10.24m;
+let f = 10.87f;
 
 println d;
 println m;
 println f;
 
-let nums: number[] = [1 2 3];
-let names: string[] = ["Greg" "Felicio"];
-let flags: bool[] = [true false true];
+let nums = [1 2 3];
+let names = ["Greg" "Felicio"];
+let flags = [true false true];
 
 for item in nums {
     println item;
@@ -37,7 +37,7 @@ for item in [4 5 6] {
     println item;
 }
 
-let n: number = 10;
+let n = 10;
 if n != 10 {
     println"n is NOT 10 ❌";
 } else {
@@ -50,14 +50,14 @@ if 1 == 1 {
     println"1 == 1 ❌";
 }
 
-let x: number = 7;
+let x = 7;
 if x == 7 {
     println"x is 7 ✅";
 } else {
     println"x is not 7 ❌";
 }
 
-let a: number = 10;
+let a = 10;
 if a >= 5 {
     println"a >= 5 ✅";
 } else {
@@ -70,7 +70,7 @@ if a <= 10 {
     println"a <= 10 ❌";
 }
 
-let value: number = 3;
+let value = 3;
 if value < 5 {
     println"value < 5 ✅";
 } else {
@@ -83,14 +83,14 @@ if value > 1 {
     println"value > 1 ❌";
 }
 
-let z: number = 8;
+let z = 8;
 if z == 10 {
     println"z is 10 ❌";
 } else {
     println"z is NOT 10 ✅";
 }
 
-let y: number = 20;
+let y = 20;
 if y > 10 {
     println"y is big ✅";
 } else {
@@ -103,7 +103,7 @@ if y < 5 {
     println"y is not tiny ✅";
 }
 
-let b: number = 20;
+let b = 20;
 
 if a != b {
     println"a != b ✅";
@@ -129,40 +129,40 @@ if a == 10 {
     println"a == 10 ❌";
 }
 
-let isTrue: bool = true;
+let isTrue = true;
 if isTrue {
     println"isTrue is true ✅";
 } else {
     println"isTrue is false ❌";
 }
 
-let isFalse: bool = false;
+let isFalse = false;
 if isFalse {
     println"isFalse is true ❌";
 } else {
     println"isFalse is false ✅";
 }
 
-let counter: number = 0;
+let counter = 0;
 while counter < 5 {
     println counter;
     counter = counter + 1;
 }
 
-let i: number = 10;
+let i = 10;
 while i > 0 {
     println i;
     i = i - 2;
 }
 
-let index: number = 1;
+let index = 1;
 while index <= 3 {
     println index;
     index = index + 1;
 }
 
-let running: bool = true;
-let attempts: number = 0;
+let running = true;
+let attempts = 0;
 while running {
     println attempts;
     attempts = attempts + 1;
@@ -171,33 +171,33 @@ while running {
     }
 }
 
-let step: number = 0;
+let step = 0;
 while step < 5 and step != 3 {
     println step;
     step = step + 1;
 }
 
-let progress: number = 1;
+let progress = 1;
 while progress < 10 or progress > 100 {
     println progress;
     progress = progress + 3;
 }
 
-let score: number = 0;
+let score = 0;
 while score < 3 {
     println score;
     score = score + 1;
 }
 
-let limit: number = 5;
-let count: number = 0;
+let limit = 5;
+let count = 0;
 while count < limit and limit < 10 {
     println count;
     count = count + 1;
 }
 
-let flag: bool = true;
-let attempts2: number = 0;
+let flag = true;
+let attempts2 = 0;
 while flag and attempts2 < 2 {
     println attempts2;
     attempts2 = attempts2 + 1;
@@ -205,4 +205,3 @@ while flag and attempts2 < 2 {
         flag = false;
     }
 }
-

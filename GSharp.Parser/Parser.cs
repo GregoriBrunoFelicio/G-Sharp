@@ -6,8 +6,8 @@ namespace GSharp.Parser;
 public class Parser(List<Token> tokens)
 {
     private int _current;
-    public readonly Dictionary<string, GType> VariablesDeclared = [];
-
+    public readonly Dictionary<string, object> VariablesDeclared = [];
+    
     public List<Statement> Parse()
     {
         var statements = new List<Statement>();
@@ -99,12 +99,7 @@ public class Parser(List<Token> tokens)
     }
 
     private bool IsAtEnd() => _current >= tokens.Count;
-
     public Token Identifier() => Consume(TokenType.Identifier);
-
-    public void Colon() => Consume(TokenType.Colon);
-
     public void Equals() => Consume(TokenType.Equals);
-
     public void Semicolon() => Consume(TokenType.Semicolon);
 }

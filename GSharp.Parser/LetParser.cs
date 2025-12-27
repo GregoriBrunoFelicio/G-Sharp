@@ -11,19 +11,14 @@ public class LetParser(Parser parser)
         parser.Consume(TokenType.Let);
         var variableName = GetVariableName();
 
-        var varType = GetVariableType();
-
         parser.Equals();
         var expression = new ExpressionParser(parser).Parse();
 
         var value = expression.GetLiteralValue();
 
-        if (!IsTypeCompatible(varType, value.Type))
-        {
-            throw new Exception($"Type mismatch: expected {varType}, but got {value.Type}");
-        }
-
         parser.Semicolon();
+        
+        var varType = value.GetType();
 
         parser.VariablesDeclared.Add(variableName, varType);
 
@@ -49,32 +44,10 @@ public class LetParser(Parser parser)
             throw new Exception($"'{variableName}' is a reserved keyword.");
     }
 
-    private GType GetVariableType()
-    {
-        parser.Colon();
-        var baseType = GetConcreteType();
-        var isArray = IsArrayType();
-        return isArray ? new GArrayType(baseType) : baseType;
-    }
-
     private bool IsArrayType()
     {
         if (!parser.Match(TokenType.LeftBracket)) return false;
         parser.Consume(TokenType.RightBracket);
         return true;
-    }
-
-    private GType GetConcreteType()
-    {
-        if (parser.Match(TokenType.Number))
-            return new GNumberType();
-
-        if (parser.Match(TokenType.String))
-            return new GStringType();
-
-        if (parser.Match(TokenType.Boolean))
-            return new GBooleanType();
-
-        throw new Exception($"Unknown type: {parser.Current().Type}");
     }
 }

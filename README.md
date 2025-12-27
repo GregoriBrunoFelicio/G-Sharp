@@ -2,7 +2,7 @@
 
 G♯ is a programming language that emits IL (Intermediate Language) and runs on the .NET runtime.
 It’s a challenging project, but I’m learning a lot from it. I’m not a language design expert (yet), so you’ll likely
-find many rough edges and mistakes along the way — and that’s totally fine.
+find many rough edges and mistakes along the way, and that’s totally fine.
 
 This whole thing is meant to be fun, experimental, and educational.
 
@@ -18,7 +18,7 @@ This whole thing is meant to be fun, experimental, and educational.
 - 🧱 Parser for basic statements
 - 🖨️ `println` for printing values
 - 🔤 Variable declarations using `let`
-- 📦 Type support: `number`, `string`, `bool`
+- 📦 Dynamic type system
 - 🔁 Conditionals (`if`, `else`) with `{}` blocks
 - 🔂 Loops (`for`, `while`) using `{}`
 
@@ -33,9 +33,9 @@ This is the current plan for a first version of the language, a minimal but expr
 ### Variable Declarations ✅
 
 ```gsharp
-let num: number = 10;
-let name: string = "Gregori";
-let isTrue: bool = false;
+let num = 10;
+let name = "Gregori";
+let isTrue = false;
 num = 20;
 println name;
 ```
@@ -45,7 +45,7 @@ println name;
 ### Arrays ✅
 
 ```gsharp
-let array: number[] = [1 2 3 4 5 6 7 8 9 10];
+let array = [1 2 3 4 5 6 7 8 9 10];
 array[10] = 90;
 ```
 
@@ -81,11 +81,11 @@ for item in array {
 ### 🛠️ Functions (planned)
 
 ```gsharp
-function Sum(a: number, b: number): number {
+function Sum(a b) {
     return a + b;
 }
 
-function Greet(): void {
+function Greet() {
     println "Hello!";
 }
 ```
@@ -95,17 +95,17 @@ function Greet(): void {
 ### 🛠️ Object with Constructor (planned)
 
 ```gsharp
-object Person(name: string, age: number) {
-    function SayHello(): void {
+object Person(name, age) {
+    function SayHello() {
         println "Hello, my name is " + name;
     }
 
-    function IsAdult(): bool {
+    function IsAdult() {
         return age >= 18;
     }
 }
 
-let p: Person("Gregori", 20);
+let p = new Person("Gregori", 20);
 p.SayHello();
 ```
 

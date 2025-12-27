@@ -3,26 +3,26 @@ using GSharp.AST;
 
 namespace GSharp.CodeGen;
 
+// This class is responsible for emitting IL for 'print' / 'println' statements.
+
 public static class PrintEmitter
 {
-    public static void Emit(ILGenerator il, PrintStatement statement, Dictionary<string, LocalBuilder> locals)
+    public static void Emit(
+        ILGenerator il,
+        PrintStatement statement,
+        Dictionary<string, LocalBuilder> locals)
     {
+        // Emit the expression to be printed.
+        // This leaves exactly one object on the stack.
         ExpressionEmitter.EmitToStack(il, statement.Expression, locals);
 
+        // Resolve Console.WriteLine(object).
+        // Since everything in the language is an object,
+        // this overload fits perfectly.
         var method = typeof(Console)
-            .GetMethod("WriteLine", new[] { typeof(object) })!;
+            .GetMethod("WriteLine", [typeof(object)])!;
 
+        // Call Console.WriteLine with the value on the stack.
         il.Emit(OpCodes.Call, method);
-    }
-
-    private static Type GetExpressionType(Expression expr, Dictionary<string, LocalBuilder> locals)
-    {
-        return expr switch
-        {
-            LiteralExpression lit => lit.Value.GetType(),
-            VariableExpression v when locals.TryGetValue(v.Name, out var local) => local.LocalType,
-            BinaryExpression b => GetExpressionType(b.Left, locals), 
-            _ => throw new NotSupportedException($"Cannot infer type of expression: {expr}")
-        };
     }
 }

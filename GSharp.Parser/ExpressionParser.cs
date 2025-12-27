@@ -89,6 +89,8 @@ public class ExpressionParser(Parser parser)
 
         if (parser.Check(TokenType.RightBracket))
             throw new Exception("Empty arrays are not supported."); // Maybe not..
+        
+        Type? elementType = null;
 
         while (!parser.Check(TokenType.RightBracket))
         {
@@ -96,6 +98,14 @@ public class ExpressionParser(Parser parser)
 
             if (expr is not LiteralExpression lit)
                 throw new Exception("Only literal expressions are supported in arrays for now.");
+            
+            var value = lit.Value;
+
+            elementType ??= value?.GetType();
+
+            if (value?.GetType() != elementType)
+                throw new Exception(
+                    "Array literals must contain elements of the same type."); // o___O
 
             elements.Add(lit.Value);
         }

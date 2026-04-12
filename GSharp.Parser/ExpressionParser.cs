@@ -1,4 +1,3 @@
-using System.Globalization;
 using GSharp.AST;
 using GSharp.Lexer;
 using static GSharp.Parser.Validations;

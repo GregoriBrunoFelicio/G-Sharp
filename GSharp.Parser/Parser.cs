@@ -6,7 +6,7 @@ namespace GSharp.Parser;
 public class Parser(List<Token> tokens)
 {
     private int _current;
-    public readonly Dictionary<string, object> VariablesDeclared = [];
+    public readonly HashSet<string> VariablesDeclared = [];
     
     public List<Statement> Parse()
     {
@@ -92,7 +92,7 @@ public class Parser(List<Token> tokens)
     {
         var name = Identifier().Value;
 
-        if (!VariablesDeclared.ContainsKey(name))
+        if (!VariablesDeclared.Contains(name))
             throw new Exception($"Variable '{name}' is not declared.");
 
         return name;

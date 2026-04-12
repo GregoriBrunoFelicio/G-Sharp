@@ -14,13 +14,9 @@ public class LetParser(Parser parser)
         parser.Equals();
         var expression = new ExpressionParser(parser).Parse();
 
-        var value = expression.GetLiteralValue();
-
         parser.Semicolon();
-        
-        var varType = value.GetType();
 
-        parser.VariablesDeclared.Add(variableName, varType);
+        parser.VariablesDeclared.Add(variableName);
 
         return new LetStatement(variableName, expression);
     }
@@ -34,7 +30,7 @@ public class LetParser(Parser parser)
 
     private void ValidateVariableName(string variableName)
     {
-        if (parser.VariablesDeclared.ContainsKey(variableName))
+        if (parser.VariablesDeclared.Contains(variableName))
             throw new Exception($"Variable {variableName} already declared.");
 
         if (!IsValidVariableName(variableName))
@@ -42,12 +38,5 @@ public class LetParser(Parser parser)
 
         if (IsReserved(variableName))
             throw new Exception($"'{variableName}' is a reserved keyword.");
-    }
-
-    private bool IsArrayType()
-    {
-        if (!parser.Match(TokenType.LeftBracket)) return false;
-        parser.Consume(TokenType.RightBracket);
-        return true;
     }
 }

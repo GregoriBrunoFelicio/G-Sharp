@@ -1,8 +1,8 @@
 # G♯
 
 G♯ is a programming language that emits IL (Intermediate Language) and runs on the .NET runtime.
-It’s a challenging project, but I’m learning a lot from it. I’m not a language design expert (yet), so you’ll likely
-find many rough edges and mistakes along the way, and that’s totally fine.
+It's a challenging project, but I'm learning a lot from it. I'm not a language design expert (yet), so you'll likely
+find many rough edges and mistakes along the way, and that's totally fine.
 
 This whole thing is meant to be fun, experimental, and educational.
 
@@ -10,27 +10,28 @@ This whole thing is meant to be fun, experimental, and educational.
 
 ---
 
-## ✨ Current Features
+## Current Features
 
-### ✅ Implemented
+### Implemented
 
-- 🧠 Lexer and tokenization
-- 🧱 Parser for basic statements
-- 🖨️ `println` for printing values
-- 🔤 Variable declarations using `let`
-- 📦 Dynamic type system
-- 🔁 Conditionals (`if`, `else`) with `{}` blocks
-- 🔂 Loops (`for`, `while`) using `{}`
+- Lexer and tokenization
+- Parser for basic statements
+- `println` for printing values
+- Variable declarations using `let`
+- Dynamic type system
+- Conditionals (`if`, `else`) with `{}` blocks
+- Loops (`for`, `while`) using `{}`
 
-### 🚧 In Progress / Not Implemented Yet
+### In Progress / Not Implemented Yet
 
-- 🧩 Functions with parameters and return types
-- 🧱 Object types with constructor-based instantiation
+- Functions with parameters and return types
+- Object types with constructor-based instantiation
+
 ---
 
-This is the current plan for a first version of the language, a minimal but expressive set of features.  
+This is the current plan for a first version of the language, a minimal but expressive set of features.
 
-### Variable Declarations ✅
+### Variable Declarations
 
 ```gsharp
 let num = 10
@@ -42,7 +43,7 @@ println name
 
 ---
 
-### Arrays ✅
+### Arrays
 
 ```gsharp
 let array = [1 2 3 4 5 6 7 8 9 10]
@@ -51,7 +52,7 @@ array[10] = 90
 
 ---
 
-### Conditionals ✅
+### Conditionals
 
 ```gsharp
 if num >= 20 {
@@ -63,7 +64,7 @@ if num >= 20 {
 
 ---
 
-### 🛠️ While ✅
+### While
 
 ```gsharp
 while num < 20 {
@@ -71,14 +72,15 @@ while num < 20 {
 }
 ```
 
-### 🛠️ For ✅
+### For
 
 ```gsharp
 for item in array {
     println item
 }
 ```
-### 🛠️ Functions (planned)
+
+### Functions (planned)
 
 ```gsharp
 function Sum(a b) {
@@ -92,7 +94,7 @@ function Greet() {
 
 ---
 
-### 🛠️ Object with Constructor (planned)
+### Object with Constructor (planned)
 
 ```gsharp
 object Person(name, age) {
@@ -109,16 +111,15 @@ let p = new Person("Gregori", 20)
 p.SayHello()
 ```
 
-## 📬 Contact
+## Contact
 
 If you have questions, suggestions, or just want to talk about language design and .NET internals, feel free to reach
 out:
 
-📧 **gregory.wow@hotmail.com**
+**gregory.wow@hotmail.com**
 
 ---
 
-## 📄 MIT License
+## MIT License
 
 This project is licensed under the [MIT License](LICENSE).
-

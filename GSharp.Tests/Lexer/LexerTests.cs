@@ -63,30 +63,30 @@ public class LexerTests
 
     public static IEnumerable<object[]> GetTokenizationSamples()
     {
-        yield return ["""let name: string = "greg";"""];
-        yield return ["let age: number = 33;"];
-        yield return ["let isTrue: bool = true;"];
-        yield return ["println name;"];
-        yield return ["let variable:number = 10; variable = 20; println variable;"];
-        yield return ["let d: number = 10.13d;"];
-        yield return ["let m: number = 10.24m;"];
-        yield return ["let f: number = 10.87f;"];
-        yield return ["let nums: number[] = [1 2 3];"];
-        yield return ["""let names: string[] = ["Greg" "Felicio"];"""];
-        yield return ["let flags: bool[] = [true false true];"];
-        yield return ["for item in nums { println item; }"];
-        yield return ["""if 1 == 1 { println "ok"; }"""];
-        yield return ["""if n != 10 { println "x"; } else { println "y"; }"""];
-        yield return ["""if a >= 5 { println "a >= 5"; }"""];
-        yield return ["""if b <= a { println "b <= a"; }"""];
-        yield return ["""if a == 10 { println "ok"; }"""];
-        yield return ["""if value < 5 { println "less"; }"""];
-        yield return ["""if value > 1 { println "greater"; }"""];
-        yield return ["""let isFalse: bool = false; if isFalse { println "no"; } else { println "yes"; }"""];
-        yield return ["""let isTrue: bool = true; if isTrue { println "yes"; } else { println "no"; }"""];
-        yield return ["let empty: number[] = [];"];
-        yield return ["""if isTrue and 1 == 1 { println "compound"; }"""];
-        yield return ["""if not isFalse { println "negated"; }"""];
-        yield return ["""if isTrue or isFalse { println "logic"; }"""];
+        yield return ["""let name: string = "greg" """];
+        yield return ["let age: number = 33"];
+        yield return ["let isTrue: bool = true"];
+        yield return ["println name"];
+        yield return ["let variable:number = 10\nvariable = 20\nprintln variable"];
+        yield return ["let d: number = 10.13d"];
+        yield return ["let m: number = 10.24m"];
+        yield return ["let f: number = 10.87f"];
+        yield return ["let nums: number[] = [1 2 3]"];
+        yield return ["""let names: string[] = ["Greg" "Felicio"]"""];
+        yield return ["let flags: bool[] = [true false true]"];
+        yield return ["for item in nums { println item }"];
+        yield return ["""if 1 == 1 { println "ok" }"""];
+        yield return ["""if n != 10 { println "x" } else { println "y" }"""];
+        yield return ["""if a >= 5 { println "a >= 5" }"""];
+        yield return ["""if b <= a { println "b <= a" }"""];
+        yield return ["""if a == 10 { println "ok" }"""];
+        yield return ["""if value < 5 { println "less" }"""];
+        yield return ["""if value > 1 { println "greater" }"""];
+        yield return ["let isFalse: bool = false\nif isFalse { println \"no\" } else { println \"yes\" }"];
+        yield return ["let isTrue: bool = true\nif isTrue { println \"yes\" } else { println \"no\" }"];
+        yield return ["let empty: number[] = []"];
+        yield return ["""if isTrue and 1 == 1 { println "compound" }"""];
+        yield return ["""if not isFalse { println "negated" }"""];
+        yield return ["""if isTrue or isFalse { println "logic" }"""];
     }
 }

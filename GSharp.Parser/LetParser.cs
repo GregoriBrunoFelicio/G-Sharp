@@ -14,8 +14,6 @@ public class LetParser(Parser parser)
         parser.Equals();
         var expression = new ExpressionParser(parser).Parse();
 
-        parser.Semicolon();
-
         parser.VariablesDeclared.Add(variableName);
 
         return new LetStatement(variableName, expression);

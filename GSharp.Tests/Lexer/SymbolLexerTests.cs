@@ -24,10 +24,10 @@ public class SymbolLexerTests
     [InlineData("<", TokenType.LessThan)]
     [InlineData("=", TokenType.Equals)]
     [InlineData(":", TokenType.Colon)]
-    [InlineData(";", TokenType.Semicolon)]
     [InlineData("+", TokenType.Plus)]
     [InlineData("-", TokenType.Minus)]
     [InlineData("*", TokenType.Multiply)]
+    [InlineData("/", TokenType.Divide)]
     public void Should_Recognize_Single_Symbols(string code, TokenType expected)
     {
         var lexer = new GSharp.Lexer.Lexer(code);

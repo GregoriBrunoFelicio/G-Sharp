@@ -17,6 +17,9 @@ public class WhileParser(Parser parser)
 
         while (!parser.Check(TokenType.RightBrace))
         {
+            if (parser.Match(TokenType.Newline))
+                continue;
+
             var statement = parser.ParseNextStatement();
             body.Add(statement);
         }

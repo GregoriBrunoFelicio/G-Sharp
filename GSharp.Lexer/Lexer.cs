@@ -21,6 +21,12 @@ public class Lexer
     {
         while (!IsAtEnd())
         {
+            if (IsNewLine())
+            {
+                ConsumeNewLine();
+                continue;
+            }
+
             if (Current.IsWhitespace())
             {
                 Advance();
@@ -34,6 +40,22 @@ public class Lexer
         _tokens.Add(new Token(TokenType.EndOfFile, ""));
         return _tokens;
     }
+
+    private bool IsNewLine() => Current == '\n' || Current == '\r';
+
+    private void ConsumeNewLine()
+    {
+        if (Current == '\r' && Next() == '\n')
+            Advance();
+
+        Advance();
+
+        if (!LastTokenIsNewline())
+            _tokens.Add(new Token(TokenType.Newline, "\n"));
+    }
+
+    private bool LastTokenIsNewline() =>
+        _tokens.Count > 0 && _tokens[^1].Type == TokenType.Newline;
 
     private Token ReadNextToken()
     {

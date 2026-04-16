@@ -14,6 +14,9 @@ public class Parser(List<Token> tokens)
 
         while (IsNotEndOfFile())
         {
+            if (Match(TokenType.Newline))
+                continue;
+
             var statement = ParseNextStatement();
             statements.Add(statement);
         }
@@ -101,5 +104,4 @@ public class Parser(List<Token> tokens)
     private bool IsAtEnd() => _current >= tokens.Count;
     public Token Identifier() => Consume(TokenType.Identifier);
     public void Equals() => Consume(TokenType.Equals);
-    public void Semicolon() => Consume(TokenType.Semicolon);
 }

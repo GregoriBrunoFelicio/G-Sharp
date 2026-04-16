@@ -12,8 +12,6 @@ public class AssignmentParser(Parser parser)
 
         var expression = new ExpressionParser(parser).Parse();
 
-        parser.Semicolon();
-
         return new AssignmentStatement(variableName, expression);
     }
 }

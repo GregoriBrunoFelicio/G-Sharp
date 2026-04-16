@@ -40,3 +40,7 @@ $RECYCLE.BIN/
 # Publish folders
 publish/
 out/
+
+# Claude Code
+.claude/
+CLAUDE.md

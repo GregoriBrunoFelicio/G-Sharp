@@ -33,11 +33,11 @@ This is the current plan for a first version of the language, a minimal but expr
 ### Variable Declarations ✅
 
 ```gsharp
-let num = 10;
-let name = "Gregori";
-let isTrue = false;
-num = 20;
-println name;
+let num = 10
+let name = "Gregori"
+let isTrue = false
+num = 20
+println name
 ```
 
 ---
@@ -45,8 +45,8 @@ println name;
 ### Arrays ✅
 
 ```gsharp
-let array = [1 2 3 4 5 6 7 8 9 10];
-array[10] = 90;
+let array = [1 2 3 4 5 6 7 8 9 10]
+array[10] = 90
 ```
 
 ---
@@ -55,9 +55,9 @@ array[10] = 90;
 
 ```gsharp
 if num >= 20 {
-    println "X";
+    println "X"
 } else {
-    println "Y";
+    println "Y"
 }
 ```
 
@@ -67,7 +67,7 @@ if num >= 20 {
 
 ```gsharp
 while num < 20 {
-    num++;
+    num = num + 1
 }
 ```
 
@@ -75,18 +75,18 @@ while num < 20 {
 
 ```gsharp
 for item in array {
-    println item;
+    println item
 }
 ```
 ### 🛠️ Functions (planned)
 
 ```gsharp
 function Sum(a b) {
-    return a + b;
+    return a + b
 }
 
 function Greet() {
-    println "Hello!";
+    println "Hello!"
 }
 ```
 
@@ -97,16 +97,16 @@ function Greet() {
 ```gsharp
 object Person(name, age) {
     function SayHello() {
-        println "Hello, my name is " + name;
+        println "Hello, my name is " + name
     }
 
     function IsAdult() {
-        return age >= 18;
+        return age >= 18
     }
 }
 
-let p = new Person("Gregori", 20);
-p.SayHello();
+let p = new Person("Gregori", 20)
+p.SayHello()
 ```
 
 ## 📬 Contact

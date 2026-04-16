@@ -7,7 +7,6 @@ public static class SymbolTokenMap
         // Separators
         { ':', TokenType.Colon },
         { '=', TokenType.Equals },
-        { ';', TokenType.Semicolon },
 
         // Brackets
         { '[', TokenType.LeftBracket },
@@ -23,6 +22,7 @@ public static class SymbolTokenMap
         // Arithmetic
         { '+', TokenType.Plus },
         { '-', TokenType.Minus },
-        { '*', TokenType.Multiply }
+        { '*', TokenType.Multiply },
+        { '/', TokenType.Divide }
     };
 }

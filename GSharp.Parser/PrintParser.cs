@@ -9,7 +9,6 @@ public class PrintParser(Parser parser)
     {
         parser.Consume(TokenType.Println);
         var expression = new ExpressionParser(parser).Parse();
-        parser.Semicolon();
         return new PrintStatement(expression);
     }
 }

@@ -127,6 +127,10 @@ public static class ExpressionEmitter
                 typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Add)),
             TokenType.Minus =>
                 typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Subtract)),
+            TokenType.Multiply =>
+                typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Multiply)),
+            TokenType.Divide =>
+                typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Divide)),
             _ => throw new NotSupportedException(expr.Operator.ToString())
         };
 

@@ -7,7 +7,7 @@ public enum TokenType
     // Keywords
     Colon,
     Equals,
-    Semicolon,
+    Newline,
     Println,
     EndOfFile,
 

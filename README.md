@@ -19,8 +19,8 @@ This whole thing is meant to be fun, experimental, and educational.
 - `println` for printing values
 - Variable declarations using `let`
 - Dynamic type system
-- Conditionals (`if`, `else`) with `{}` blocks
-- Loops (`for`, `while`) using `{}`
+- Conditionals (`if`, `else`) with `then` — inline or indented block
+- Loops (`for`, `while`) with `do` — indented block
 
 ### In Progress / Not Implemented Yet
 
@@ -55,11 +55,14 @@ array[10] = 90
 ### Conditionals
 
 ```gsharp
-if num >= 20 {
+# inline
+if num >= 20 then println "X" else println "Y"
+
+# block
+if num >= 20 then
     println "X"
-} else {
+else
     println "Y"
-}
 ```
 
 ---
@@ -67,17 +70,15 @@ if num >= 20 {
 ### While
 
 ```gsharp
-while num < 20 {
+while num < 20 do
     num = num + 1
-}
 ```
 
 ### For
 
 ```gsharp
-for item in array {
+for item in array do
     println item
-}
 ```
 
 ### Functions (planned)

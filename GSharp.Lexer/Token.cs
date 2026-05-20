@@ -39,8 +39,8 @@ public enum TokenType
     Do,
 
     // Indentation
-    Indent,
-    Dedent,
+    BlockOpen,
+    BlockClose,
 
     // Block openers
     Then,

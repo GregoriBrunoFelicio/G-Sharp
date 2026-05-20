@@ -29,11 +29,11 @@ public class IfParser(Parser parser)
     private List<Statement> BlockBody()
     {
         parser.Match(TokenType.Newline);
-        parser.Consume(TokenType.Indent);
+        parser.Consume(TokenType.BlockOpen);
 
         var statements = new List<Statement>();
 
-        while (!parser.Check(TokenType.Dedent))
+        while (!parser.Check(TokenType.BlockClose))
         {
             if (parser.Match(TokenType.Newline))
                 continue;
@@ -41,7 +41,7 @@ public class IfParser(Parser parser)
             statements.Add(parser.ParseNextStatement());
         }
 
-        parser.Consume(TokenType.Dedent);
+        parser.Consume(TokenType.BlockClose);
 
         return statements;
     }

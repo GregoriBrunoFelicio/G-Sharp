@@ -11,7 +11,7 @@ public class Lexer
 
     private readonly List<Token> _tokens = [];
     private bool _atStartOfLine = true;
-    private readonly Stack<int> _indentStack = new([0]);
+    private readonly Stack<int> _blockLevelStack = new([0]);
 
     public Lexer(string code)
     {
@@ -33,7 +33,7 @@ public class Lexer
             if (_atStartOfLine)
             {
                 _atStartOfLine = false;
-                HandleIndentationChange();
+                HandleBlockLevelChange();
                 continue;
             }
 
@@ -47,42 +47,42 @@ public class Lexer
             _tokens.Add(token);
         }
 
-        while (_indentStack.Count > 1)
+        while (_blockLevelStack.Count > 1)
         {
-            _indentStack.Pop();
-            _tokens.Add(new Token(TokenType.Dedent, ""));
+            _blockLevelStack.Pop();
+            _tokens.Add(new Token(TokenType.BlockClose, ""));
         }
 
         _tokens.Add(new Token(TokenType.EndOfFile, ""));
         return _tokens;
     }
 
-    private void HandleIndentationChange()
+    private void HandleBlockLevelChange()
     {
-        var indent = 0;
+        var spaces = 0;
         while (!IsAtEnd() && Current == ' ')
         {
-            indent++;
+            spaces++;
             Advance();
         }
 
-        // blank or whitespace-only line — skip, don't change indent level
+        // blank or whitespace-only line — skip, don't change block level
         if (IsAtEnd() || IsNewLine())
             return;
 
-        var current = _indentStack.Peek();
+        var currentLevel = _blockLevelStack.Peek();
 
-        if (indent > current)
+        if (spaces > currentLevel)
         {
-            _indentStack.Push(indent);
-            _tokens.Add(new Token(TokenType.Indent, ""));
+            _blockLevelStack.Push(spaces);
+            _tokens.Add(new Token(TokenType.BlockOpen, ""));
         }
-        else if (indent < current)
+        else if (spaces < currentLevel)
         {
-            while (_indentStack.Count > 1 && _indentStack.Peek() > indent)
+            while (_blockLevelStack.Count > 1 && _blockLevelStack.Peek() > spaces)
             {
-                _indentStack.Pop();
-                _tokens.Add(new Token(TokenType.Dedent, ""));
+                _blockLevelStack.Pop();
+                _tokens.Add(new Token(TokenType.BlockClose, ""));
             }
         }
     }

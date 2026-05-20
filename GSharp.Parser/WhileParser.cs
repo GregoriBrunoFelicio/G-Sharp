@@ -13,11 +13,11 @@ public class WhileParser(Parser parser)
 
         parser.Consume(TokenType.Do);
         parser.Match(TokenType.Newline);
-        parser.Consume(TokenType.Indent);
+        parser.Consume(TokenType.BlockOpen);
 
         var body = new List<Statement>();
 
-        while (!parser.Check(TokenType.Dedent))
+        while (!parser.Check(TokenType.BlockClose))
         {
             if (parser.Match(TokenType.Newline))
                 continue;
@@ -26,7 +26,7 @@ public class WhileParser(Parser parser)
             body.Add(statement);
         }
 
-        parser.Consume(TokenType.Dedent);
+        parser.Consume(TokenType.BlockClose);
 
         return new WhileStatement(condition, body);
     }

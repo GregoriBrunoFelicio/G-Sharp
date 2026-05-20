@@ -10,6 +10,60 @@ This whole thing is meant to be fun, experimental, and educational.
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TD
+    SRC["SOURCE FILE (.gs)\nHuman-readable G# code — keywords, operators, indentation, literals"]
+
+    subgraph LEXER["LEXER — Tokenization"]
+        direction TB
+        L1["IdentifierLexer — keywords and variable names"]
+        L2["NumberLexer — integers, floats, decimals"]
+        L3["StringLexer — string literals"]
+        L4["SymbolLexer — operators and punctuation"]
+        L5["Indentation Tracking — BlockOpen / BlockClose tokens"]
+    end
+
+    T["List&lt;Token&gt; — If, Identifier, Then, BlockOpen, Number, ..."]
+
+    subgraph PARSER["PARSER — Syntax Analysis"]
+        direction TB
+        P1["LetParser / AssignmentParser — variable bindings"]
+        P2["IfParser — condition + then / else branches (inline or block)"]
+        P3["ForParser / WhileParser — loop variable + body"]
+        P4["ExpressionParser — arithmetic, comparisons, logical operators"]
+    end
+
+    AST["List&lt;Statement&gt; (AST) — IfStatement, ForStatement, LetStatement, ..."]
+
+    subgraph CODEGEN["CODE GEN — IL Emission"]
+        direction TB
+        C1["StatementEmitter — dispatches each node to the right emitter"]
+        C2["ExpressionEmitter — pushes values onto the IL stack"]
+        C3["IfEmitter / ForEmitter / WhileEmitter — control flow via IL labels"]
+        C4["LetEmitter / AssignmentEmitter — local variable slots"]
+        C5["RuntimeHelpers — numeric type promotion (int / long / double)"]
+    end
+
+    IL["IL Bytecode — System.Reflection.Emit / ILGenerator"]
+
+    RT[".NET RUNTIME — JIT compiles IL to native code and executes it in memory"]
+
+    OUT["OUTPUT"]
+
+    SRC --> LEXER
+    LEXER --> T
+    T --> PARSER
+    PARSER --> AST
+    AST --> CODEGEN
+    CODEGEN --> IL
+    IL --> RT
+    RT --> OUT
+```
+
+---
+
 ## Current Features
 
 ### Implemented

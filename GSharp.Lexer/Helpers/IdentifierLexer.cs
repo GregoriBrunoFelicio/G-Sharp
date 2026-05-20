@@ -36,6 +36,8 @@ public static class IdentifierLexer
         ["for"] = TokenType.For,
         ["in"] = TokenType.In,
         ["while"] = TokenType.While,
+        ["do"] = TokenType.Do,
+        ["then"] = TokenType.Then,
 
         // IO
         ["println"] = TokenType.Println,

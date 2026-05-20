@@ -9,36 +9,42 @@ public class IfParser(Parser parser)
     {
         parser.Consume(TokenType.If);
 
-        var condition = new ExpressionParser(parser).Parse(); 
+        var condition = new ExpressionParser(parser).Parse();
 
-        var thenBody = ContentBody();
+        parser.Consume(TokenType.Then);
+
+        var thenBody = parser.Check(TokenType.Newline) ? BlockBody() : InlineBody();
 
         var elseBody = new List<Statement>();
 
-        if (!parser.Match(TokenType.Else)) return new IfStatement(condition, thenBody, elseBody);
-        var statements = ContentBody();
-        elseBody.AddRange(statements);
+        if (parser.Match(TokenType.Else))
+        {
+            var elseStatements = parser.Check(TokenType.Newline) ? BlockBody() : InlineBody();
+            elseBody.AddRange(elseStatements);
+        }
 
         return new IfStatement(condition, thenBody, elseBody);
     }
 
-    private List<Statement> ContentBody()
+    private List<Statement> BlockBody()
     {
-        parser.Consume(TokenType.LeftBrace);
+        parser.Match(TokenType.Newline);
+        parser.Consume(TokenType.Indent);
 
         var statements = new List<Statement>();
 
-        while (!parser.Check(TokenType.RightBrace))
+        while (!parser.Check(TokenType.Dedent))
         {
             if (parser.Match(TokenType.Newline))
                 continue;
 
-            var statement = parser.ParseNextStatement();
-            statements.Add(statement);
+            statements.Add(parser.ParseNextStatement());
         }
 
-        parser.Consume(TokenType.RightBrace);
+        parser.Consume(TokenType.Dedent);
 
         return statements;
     }
+
+    private List<Statement> InlineBody() => [parser.ParseNextStatement()];
 }

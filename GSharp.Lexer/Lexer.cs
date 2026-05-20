@@ -10,6 +10,8 @@ public class Lexer
     public char Current => !IsAtEnd() ? Code[Position] : '\0';
 
     private readonly List<Token> _tokens = [];
+    private bool _atStartOfLine = true;
+    private readonly Stack<int> _indentStack = new([0]);
 
     public Lexer(string code)
     {
@@ -24,6 +26,14 @@ public class Lexer
             if (IsNewLine())
             {
                 ConsumeNewLine();
+                _atStartOfLine = true;
+                continue;
+            }
+
+            if (_atStartOfLine)
+            {
+                _atStartOfLine = false;
+                HandleIndentationChange();
                 continue;
             }
 
@@ -37,8 +47,44 @@ public class Lexer
             _tokens.Add(token);
         }
 
+        while (_indentStack.Count > 1)
+        {
+            _indentStack.Pop();
+            _tokens.Add(new Token(TokenType.Dedent, ""));
+        }
+
         _tokens.Add(new Token(TokenType.EndOfFile, ""));
         return _tokens;
+    }
+
+    private void HandleIndentationChange()
+    {
+        var indent = 0;
+        while (!IsAtEnd() && Current == ' ')
+        {
+            indent++;
+            Advance();
+        }
+
+        // blank or whitespace-only line — skip, don't change indent level
+        if (IsAtEnd() || IsNewLine())
+            return;
+
+        var current = _indentStack.Peek();
+
+        if (indent > current)
+        {
+            _indentStack.Push(indent);
+            _tokens.Add(new Token(TokenType.Indent, ""));
+        }
+        else if (indent < current)
+        {
+            while (_indentStack.Count > 1 && _indentStack.Peek() > indent)
+            {
+                _indentStack.Pop();
+                _tokens.Add(new Token(TokenType.Dedent, ""));
+            }
+        }
     }
 
     private bool IsNewLine() => Current == '\n' || Current == '\r';

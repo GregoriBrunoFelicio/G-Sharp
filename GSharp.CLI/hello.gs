@@ -37,90 +37,51 @@ let nums = [1 2 3 4 5]
 let names = ["Alice" "Bob" "Carol"]
 let flags = [true false true]
 
-for item in nums {
+for item in nums do
     println item
-}
 
-for n in names {
+for n in names do
     println n
-}
 
-for flag in flags {
+for flag in flags do
     println flag
-}
 
 let a = 10
 let b = 20
 
-if a == 10 {
-    println"a == 10 ✅"
-} else {
-    println"a == 10 ❌"
-}
+if a == 10 then println "a == 10 ✅" else println "a == 10 ❌"
 
-if a != b {
-    println"a != b ✅"
-} else {
-    println"a != b ❌"
-}
+if a != b then println "a != b ✅" else println "a != b ❌"
 
-if b > a {
-    println"b > a ✅"
-} else {
-    println"b > a ❌"
-}
+if b > a then println "b > a ✅" else println "b > a ❌"
 
-if a < b {
-    println"a < b ✅"
-} else {
-    println"a < b ❌"
-}
+if a < b then println "a < b ✅" else println "a < b ❌"
 
-if a >= 10 {
-    println"a >= 10 ✅"
-} else {
-    println"a >= 10 ❌"
-}
+if a >= 10 then println "a >= 10 ✅" else println "a >= 10 ❌"
 
-if b <= 20 {
-    println"b <= 20 ✅"
-} else {
-    println"b <= 20 ❌"
-}
+if b <= 20 then println "b <= 20 ✅" else println "b <= 20 ❌"
 
 let isTrue = true
 let isFalse = false
 
-if isTrue {
-    println"isTrue ✅"
-} else {
-    println"isTrue ❌"
-}
+if isTrue then println "isTrue ✅" else println "isTrue ❌"
 
-if isFalse {
-    println"isFalse ❌"
-} else {
-    println"isFalse ✅"
-}
+if isFalse then println "isFalse ❌" else println "isFalse ✅"
 
 let c = 0
-while c < 5 {
+while c < 5 do
     println c
     c = c + 1
-}
 
 let step = 0
-while step < 5 and step != 3 {
+while step < 5 and step != 3 do
     println step
     step = step + 1
-}
 
 let running = true
 let attempts = 0
-while running {
+while running do
     println attempts
     attempts = attempts + 1
-    if attempts == 3 {
+    if attempts == 3 then
         running = false
-    }
-}

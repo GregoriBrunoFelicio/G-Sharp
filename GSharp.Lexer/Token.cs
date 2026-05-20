@@ -36,6 +36,14 @@ public enum TokenType
     For,
     In,
     While,
+    Do,
+
+    // Indentation
+    Indent,
+    Dedent,
+
+    // Block openers
+    Then,
 
     LeftBracket, // [
     RightBracket, // ]

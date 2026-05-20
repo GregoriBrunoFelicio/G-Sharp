@@ -15,11 +15,13 @@ public class ForParser(Parser parser)
 
         var iterable = new ExpressionParser(parser).Parse();
 
-        parser.Consume(TokenType.LeftBrace);
+        parser.Consume(TokenType.Do);
+        parser.Match(TokenType.Newline);
+        parser.Consume(TokenType.Indent);
 
         var body = new List<Statement>();
-        
-        while (!parser.Check(TokenType.RightBrace))
+
+        while (!parser.Check(TokenType.Dedent))
         {
             if (parser.Match(TokenType.Newline))
                 continue;
@@ -28,7 +30,7 @@ public class ForParser(Parser parser)
             body.Add(statement);
         }
 
-        parser.Consume(TokenType.RightBrace);
+        parser.Consume(TokenType.Dedent);
 
         return new ForStatement(loopVar, iterable, body);
     }

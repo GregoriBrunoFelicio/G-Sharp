@@ -8,6 +8,10 @@ public static class SymbolTokenMap
         { ':', TokenType.Colon },
         { '=', TokenType.Equals },
 
+        // Parentheses
+        { '(', TokenType.LeftParen },
+        { ')', TokenType.RightParen },
+
         // Brackets
         { '[', TokenType.LeftBracket },
         { ']', TokenType.RightBracket },

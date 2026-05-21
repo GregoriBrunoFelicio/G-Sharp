@@ -1,3 +1,4 @@
+using System.Globalization;
 using GSharp.AST;
 using GSharp.Lexer;
 using static GSharp.Parser.Validations;
@@ -13,7 +14,6 @@ public class ExpressionParser(Parser parser)
         while (TryGetOperator(out var op, out var precedence))
         {
             parser.Advance();
-
             var right = GetExpression();
 
             while (TryGetOperator(out var nextOp, out var nextPrecedence) &&
@@ -21,7 +21,6 @@ public class ExpressionParser(Parser parser)
             {
                 parser.Advance();
                 var nextRight = GetExpression();
-
                 right = new BinaryExpression(right, nextOp, nextRight);
                 precedence = nextPrecedence;
             }
@@ -55,31 +54,38 @@ public class ExpressionParser(Parser parser)
 
         if (parser.Match(TokenType.BooleanFalseLiteral))
             return new LiteralExpression(false);
-        
+
         if (parser.Match(TokenType.LeftBracket))
             return ParseArrayExpression(parser);
 
         if (parser.Match(TokenType.Identifier))
-            return new VariableExpression(parser.Previous().Value);
+        {
+            var name = parser.Previous().Value;
+
+            // Function call: nome(args)
+            if (parser.Match(TokenType.LeftParen))
+            {
+                var args = new List<Expression>();
+                while (!parser.Check(TokenType.RightParen))
+                    args.Add(new ExpressionParser(parser).Parse());
+                parser.Consume(TokenType.RightParen);
+                return new CallExpression(name, args);
+            }
+
+            return new VariableExpression(name);
+        }
 
         throw new Exception($"Unexpected token in expression: {parser.Current().Type}.");
     }
 
     private static object ParseNumber(string text)
     {
-        if (text.EndsWith('f'))
-            return float.Parse(text[..^1]);
-    
-        if (text.EndsWith('d'))
-            return double.Parse(text[..^1]);
-    
-        if (text.EndsWith('m'))
-            return decimal.Parse(text[..^1]);
-    
-        if (text.Contains('.'))
-            return double.Parse(text);
-    
-        return int.Parse(text);
+        var ic = CultureInfo.InvariantCulture;
+        if (text.EndsWith('f')) return float.Parse(text[..^1], ic);
+        if (text.EndsWith('d')) return double.Parse(text[..^1], ic);
+        if (text.EndsWith('m')) return decimal.Parse(text[..^1], ic);
+        if (text.Contains('.')) return double.Parse(text, ic);
+        return int.Parse(text, ic);
     }
 
     private static LiteralExpression ParseArrayExpression(Parser parser)
@@ -87,8 +93,8 @@ public class ExpressionParser(Parser parser)
         var elements = new List<object>();
 
         if (parser.Check(TokenType.RightBracket))
-            throw new Exception("Empty arrays are not supported."); // Maybe not..
-        
+            throw new Exception("Empty arrays are not supported.");
+
         Type? elementType = null;
 
         while (!parser.Check(TokenType.RightBracket))
@@ -97,20 +103,17 @@ public class ExpressionParser(Parser parser)
 
             if (expr is not LiteralExpression lit)
                 throw new Exception("Only literal expressions are supported in arrays for now.");
-            
-            var value = lit.Value;
 
+            var value = lit.Value;
             elementType ??= value?.GetType();
 
             if (value?.GetType() != elementType)
-                throw new Exception(
-                    "Array literals must contain elements of the same type."); // o___O
+                throw new Exception("Array literals must contain elements of the same type.");
 
             elements.Add(lit.Value);
         }
-        
-        parser.Consume(TokenType.RightBracket);
 
+        parser.Consume(TokenType.RightBracket);
         return new LiteralExpression(elements.ToArray());
     }
 }

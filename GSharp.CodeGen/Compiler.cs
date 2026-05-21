@@ -5,36 +5,53 @@ using Type = System.Type;
 
 namespace GSharp.CodeGen;
 
-// This class is the entry point of the compiler.
-
+// Entry point for the G# compiler.
+//
+// Receives a fully-parsed and validated AST and compiles it to .NET IL
+// using System.Reflection.Emit. The compiled code runs in-memory —
+// no files are written to disk.
+//
+// Compilation happens in three passes:
+//
+//   Pass 1 — Function registration:
+//     Define a MethodBuilder for every function declaration so that
+//     forward calls (calling a function before its definition) and
+//     recursive calls can be resolved. At this stage, only the method
+//     signatures are registered — no IL is emitted yet.
+//
+//   Pass 2 — Function body emission:
+//     Emit IL into each registered MethodBuilder. Because all functions
+//     are already registered from pass 1, calls between them resolve cleanly.
+//
+//   Pass 3 — Main emission:
+//     Emit IL for all top-level non-function statements into the Main method.
+//     This is the program's entry point.
+//
+// After all three passes, the TypeBuilder is finalized with CreateType(),
+// which locks it and makes the generated code invocable via reflection.
 public class Compiler
 {
-    // Stores all local variables for the current compilation.
-    // Variable names are mapped to IL locals.
-    private readonly Dictionary<string, LocalBuilder> _locals = new();
-
-    // Creates the dynamic assembly, module, type and Main method.
-    // This is very boilerplate-heavy and intentionally explicit,
-    // so it's easy to see what's going on.
-    // NOTE:
-    // A lot of things are hardcoded here for now (names, signatures).
+    // Creates the dynamic assembly infrastructure that hosts the compiled code.
+    //
+    // The hierarchy is: AssemblyBuilder → ModuleBuilder → TypeBuilder → MethodBuilder.
+    // We create one assembly, one module, one "Program" type, and one "Main" method.
+    // User-defined functions are added as additional static methods on the same type.
+    //
+    // AssemblyBuilderAccess.Run means the assembly exists only in memory.
+    // It cannot be saved to disk with this flag.
     private static (MethodBuilder, TypeBuilder) CreateBuilders()
     {
-        // Define a dynamic assembly that only exists in memory.
         var assemblyName = new AssemblyName("GSharpRuntimeAssembly");
         var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
             assemblyName, AssemblyBuilderAccess.Run);
 
-        // Define a single module.
         var moduleBuilder = assemblyBuilder.DefineDynamicModule("MainModule");
 
-        // Define a Program type to host the Main method.
-        var typeBuilder = moduleBuilder.DefineType(
-            "Program",
-            TypeAttributes.Public);
+        // Define a "Program" type to host all generated methods.
+        var typeBuilder = moduleBuilder.DefineType("Program", TypeAttributes.Public);
 
-        // Define the Main method:
-        //   public static void Main()
+        // Define the Main method: public static void Main()
+        // This is the program's entry point — top-level G# statements go here.
         var methodBuilder = typeBuilder.DefineMethod(
             "Main",
             MethodAttributes.Public | MethodAttributes.Static,
@@ -44,46 +61,66 @@ public class Compiler
         return (methodBuilder, typeBuilder);
     }
 
-    // Compiles the given statements and immediately runs them.
-    // This method assumes:
-    // - The AST is already valid
-    // - Parsing and validation already happened
     public void CompileAndRun(List<Statement> statements)
     {
         try
         {
-            // Create the IL builders.
             var (methodBuilder, typeBuilder) = CreateBuilders();
 
-            // Get the IL generator for the Main method.
+            // All function MethodBuilders are collected here.
+            // Populated in pass 1 so passes 2 and 3 can resolve calls.
+            var functions = new Dictionary<string, MethodBuilder>();
+
+            // ============================
+            // Pass 1 — Register all function signatures
+            // ============================
+            // We scan the entire statement list before emitting any IL.
+            // This means a function defined at line 100 can be called at line 5.
+            foreach (var fn in statements.OfType<FunctionDeclaration>())
+                FunctionEmitter.Define(typeBuilder, fn, functions);
+
+            // The EmitContext carries locals, parameters, and the functions map.
+            // It is shared across passes — functions added in pass 1 are visible in pass 2 and 3.
+            var ctx = new EmitContext(functions);
+
+            // ============================
+            // Pass 2 — Emit function bodies
+            // ============================
+            // Each function gets its own ILGenerator (from its MethodBuilder).
+            // FunctionEmitter creates a child EmitContext with the function's own
+            // locals and parameter bindings so they don't interfere with Main.
+            foreach (var fn in statements.OfType<FunctionDeclaration>())
+                FunctionEmitter.Emit(fn, ctx);
+
+            // ============================
+            // Pass 3 — Emit Main
+            // ============================
+            // Top-level statements that are not function declarations go into Main.
             var il = methodBuilder.GetILGenerator();
+            foreach (var stmt in statements.Where(s => s is not FunctionDeclaration))
+                StatementEmitter.Emit(il, stmt, ctx);
 
-            // Emit IL for each top-level statement.
-            foreach (var statement in statements)
-            {
-                StatementEmitter.Emit(il, statement, _locals);
-            }
-
-            // Finish the method.
+            // Every IL method must end with Ret.
+            // Main returns void so nothing is pushed before Ret.
             il.Emit(OpCodes.Ret);
 
-            // Finalize the Program type.
+            // ============================
+            // Finalize and invoke
+            // ============================
+            // CreateType() "seals" the type — no more methods or fields can be added.
+            // After this call, the generated IL is compiled to native code by the JIT
+            // the first time Main is invoked.
             var programType = typeBuilder.CreateType();
 
-            // Resolve the generated Main method.
-            var main = programType.GetMethod(
-                "Main",
-                BindingFlags.Public | BindingFlags.Static);
+            var main = programType.GetMethod("Main", BindingFlags.Public | BindingFlags.Static)
+                ?? throw new Exception("Method 'Main' was not found.");
 
-            if (main == null)
-                throw new Exception("Method 'Main' was not found.");
-
-            // Execute the generated code.
+            // Execute the compiled program.
             main.Invoke(null, null);
         }
         catch (Exception exception)
         {
-            Console.WriteLine(exception.InnerException?.Message);
+            Console.WriteLine(exception.InnerException?.Message ?? exception.Message);
             throw;
         }
     }

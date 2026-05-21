@@ -7,7 +7,7 @@ public class Parser(List<Token> tokens)
 {
     private int _current;
     public readonly HashSet<string> VariablesDeclared = [];
-    
+
     public List<Statement> Parse()
     {
         var statements = new List<Statement>();
@@ -26,8 +26,7 @@ public class Parser(List<Token> tokens)
 
     private bool IsNotEndOfFile() =>
         _current < tokens.Count
-        && tokens[_current].Type
-        != TokenType.EndOfFile;
+        && tokens[_current].Type != TokenType.EndOfFile;
 
     public Statement ParseNextStatement()
     {
@@ -46,14 +45,56 @@ public class Parser(List<Token> tokens)
         if (Check(TokenType.If))
             return new IfParser(this).Parse();
 
-        throw new Exception($"Invalid statement {tokens[_current].Type}");
+        if (Check(TokenType.Identifier))
+        {
+            // Function declaration: name(params) => expr  OR  name(params)\n    body
+            if (Peek() == TokenType.LeftParen && IsFunctionDeclaration())
+                return new FunctionParser(this).Parse();
+
+            // Bare expression as statement (e.g. function call, or return value in function body)
+            return new ExpressionStatement(new ExpressionParser(this).Parse());
+        }
+
+        // Bare literal as statement (e.g. implicit return value at end of function body)
+        if (Check(TokenType.NumberLiteral) || Check(TokenType.StringLiteral) ||
+            Check(TokenType.BooleanTrueLiteral) || Check(TokenType.BooleanFalseLiteral))
+        {
+            return new ExpressionStatement(new ExpressionParser(this).Parse());
+        }
+
+        throw new Exception($"Invalid statement: {tokens[_current].Type}");
+    }
+
+    // Look ahead past the parameter list to see if this is a declaration.
+    // A declaration ends with => or an indented block (BlockOpen).
+    private bool IsFunctionDeclaration()
+    {
+        var saved = _current;
+        try
+        {
+            Advance(); // name
+            Advance(); // (
+            while (!Check(TokenType.RightParen) && !IsAtEnd())
+                Advance();
+            if (!Match(TokenType.RightParen)) return false;
+            while (Match(TokenType.Newline)) { }
+            return Check(TokenType.Arrow) || Check(TokenType.BlockOpen);
+        }
+        finally
+        {
+            _current = saved;
+        }
+    }
+
+    public TokenType Peek(int ahead = 1)
+    {
+        var idx = _current + ahead;
+        return idx < tokens.Count ? tokens[idx].Type : TokenType.EndOfFile;
     }
 
     public Token Consume(TokenType type)
     {
-        if (Check(type))
-            return Advance();
-        
+        if (Check(type)) return Advance();
         throw new Exception($"Expected token {type}, got {tokens[_current].Type}");
     }
 
@@ -86,6 +127,14 @@ public class Parser(List<Token> tokens)
     {
         if (IsAtEnd()) throw new Exception("Unexpected end of input.");
         return tokens[_current];
+    }
+
+    public string ExpectDeclaredIdentifier()
+    {
+        var name = Identifier().Value;
+        if (!VariablesDeclared.Contains(name))
+            throw new Exception($"Variable '{name}' is not declared.");
+        return name;
     }
 
     private bool IsAtEnd() => _current >= tokens.Count;

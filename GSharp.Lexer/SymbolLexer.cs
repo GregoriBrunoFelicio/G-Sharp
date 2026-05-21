@@ -11,6 +11,10 @@ public static class SymbolLexer
 
         switch (current)
         {
+            case '=' when next == '>':
+                lexer.Advance();
+                lexer.Advance();
+                return new Token(TokenType.Arrow, "=>");
             case '>' when next == '=':
                 lexer.Advance();
                 lexer.Advance();

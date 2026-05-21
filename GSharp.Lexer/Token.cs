@@ -45,11 +45,16 @@ public enum TokenType
     // Block openers
     Then,
 
+    LeftParen,   // (
+    RightParen,  // )
+
     LeftBracket, // [
     RightBracket, // ]
 
     LeftBrace, // {
     RightBrace, // }
+
+    Arrow, // =>
 
     // Comparison
     GreaterThan, // >

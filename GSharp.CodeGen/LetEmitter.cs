@@ -3,26 +3,33 @@ using GSharp.AST;
 
 namespace GSharp.CodeGen;
 
-// This class is responsible for emitting IL for variable declarations.
+// Emits IL for 'let' variable declarations.
+//
+// Example:
+//   let x = a + 1
+//
+// The emitted IL:
+//   <emit expression>   ; leaves one object on the stack
+//   Stloc slot_N        ; pops the object and stores it in local variable N
+//
+// After this, 'x' is registered in ctx.Locals so that any later
+// VariableExpression("x") can emit Ldloc(slot_N) to retrieve the value.
 public static class LetEmitter
 {
-    public static void Emit(
-        ILGenerator il,
-        LetStatement statement,
-        Dictionary<string, LocalBuilder> locals)
+    public static void Emit(ILGenerator il, LetStatement statement, EmitContext ctx)
     {
-        // Emit the expression assigned to the variable.
-        // This leaves exactly one object on the stack.
-        ExpressionEmitter.EmitToStack(il, statement.Expression, locals);
+        // Emit the right-hand side expression.
+        // This must leave exactly one boxed object on the stack.
+        ExpressionEmitter.EmitToStack(il, statement.Expression, ctx);
 
-        // Declare a new local variable to hold the value.
-        // Since the language is dynamic, the local type is always object.
+        // Allocate a new local variable slot in the current method frame.
+        // Everything in G# is dynamically typed, so the slot type is always object.
         var local = il.DeclareLocal(typeof(object));
 
-        // Store the value from the stack into the local variable.
+        // Pop the value from the stack and store it in the newly allocated slot.
         il.Emit(OpCodes.Stloc, local);
 
-        // Register the variable name so it can be referenced later.
-        locals[statement.VariableName] = local;
+        // Register the variable name so subsequent statements can find it.
+        ctx.Locals[statement.VariableName] = local;
     }
 }

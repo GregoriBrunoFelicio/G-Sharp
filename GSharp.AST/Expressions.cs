@@ -9,3 +9,5 @@ public record LiteralExpression(object Value) : Expression;
 public record VariableExpression(string Name) : Expression;
 
 public record BinaryExpression(Expression Left, TokenType Operator, Expression Right) : Expression;
+
+public record CallExpression(string Callee, List<Expression> Arguments) : Expression;

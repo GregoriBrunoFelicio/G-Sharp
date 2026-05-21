@@ -13,10 +13,6 @@ public static class StatementEmitter
                 LetEmitter.Emit(il, letStmt, variables);
                 break;
 
-            case AssignmentStatement assignStmt:
-                AssignmentEmitter.Emit(il, assignStmt, variables);
-                break;
-
             case PrintStatement printStmt:
                 PrintEmitter.Emit(il, printStmt, variables);
                 break;

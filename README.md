@@ -1,6 +1,6 @@
 # G♯
 
-G♯ is a programming language that emits IL (Intermediate Language) and runs on the .NET runtime.
+G♯ is a purely functional programming language that emits IL (Intermediate Language) and runs on the .NET runtime.
 It's a challenging project, but I'm learning a lot from it. I'm not a language design expert (yet), so you'll likely
 find many rough edges and mistakes along the way, and that's totally fine.
 
@@ -29,7 +29,7 @@ flowchart TD
 
     subgraph PARSER["PARSER — Syntax Analysis"]
         direction TB
-        P1["LetParser / AssignmentParser — variable bindings"]
+        P1["LetParser — immutable variable bindings"]
         P2["IfParser — condition + then / else branches (inline or block)"]
         P3["ForParser / WhileParser — loop variable + body"]
         P4["ExpressionParser — arithmetic, comparisons, logical operators"]
@@ -42,7 +42,7 @@ flowchart TD
         C1["StatementEmitter — dispatches each node to the right emitter"]
         C2["ExpressionEmitter — pushes values onto the IL stack"]
         C3["IfEmitter / ForEmitter / WhileEmitter — control flow via IL labels"]
-        C4["LetEmitter / AssignmentEmitter — local variable slots"]
+        C4["LetEmitter — local variable slots (immutable bindings only)"]
         C5["RuntimeHelpers — numeric type promotion (int / long / double)"]
     end
 
@@ -71,7 +71,7 @@ flowchart TD
 - Lexer and tokenization
 - Parser for basic statements
 - `println` for printing values
-- Variable declarations using `let`
+- Immutable variable bindings using `let` (purely functional — no reassignment)
 - Dynamic type system
 - Conditionals (`if`, `else`) with `then` — inline or indented block
 - Loops (`for`, `while`) with `do` — indented block
@@ -91,7 +91,6 @@ This is the current plan for a first version of the language, a minimal but expr
 let num = 10
 let name = "Gregori"
 let isTrue = false
-num = 20
 println name
 ```
 
@@ -124,8 +123,10 @@ else
 ### While
 
 ```gsharp
+# while exists in the grammar but is deprecated — it requires mutable state.
+# It will be removed once recursion is implemented.
 while num < 20 do
-    num = num + 1
+    println num
 ```
 
 ### For

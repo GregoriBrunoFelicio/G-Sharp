@@ -43,9 +43,6 @@ public class Parser(List<Token> tokens)
         if (Check(TokenType.While))
             return new WhileParser(this).Parse();
 
-        if (Check(TokenType.Identifier))
-            return new AssignmentParser(this).Parse();
-
         if (Check(TokenType.If))
             return new IfParser(this).Parse();
 
@@ -89,16 +86,6 @@ public class Parser(List<Token> tokens)
     {
         if (IsAtEnd()) throw new Exception("Unexpected end of input.");
         return tokens[_current];
-    }
-    
-    public string ExpectDeclaredIdentifier()
-    {
-        var name = Identifier().Value;
-
-        if (!VariablesDeclared.Contains(name))
-            throw new Exception($"Variable '{name}' is not declared.");
-
-        return name;
     }
 
     private bool IsAtEnd() => _current >= tokens.Count;

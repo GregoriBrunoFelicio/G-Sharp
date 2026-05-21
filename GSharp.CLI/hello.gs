@@ -24,15 +24,6 @@ println x - y
 println x * y
 println x / y
 
-let firstName = "Greg"
-let lastName = "Felicio"
-println firstName + " " + lastName
-
-let counter = 0
-counter = counter + 1
-counter = counter + 1
-println counter
-
 let nums = [1 2 3 4 5]
 let names = ["Alice" "Bob" "Carol"]
 let flags = [true false true]
@@ -49,39 +40,21 @@ for flag in flags do
 let a = 10
 let b = 20
 
-if a == 10 then println "a == 10 ✅" else println "a == 10 ❌"
+if a == 10 then println "a == 10" else println "a != 10"
 
-if a != b then println "a != b ✅" else println "a != b ❌"
+if a != b then println "a != b" else println "a == b"
 
-if b > a then println "b > a ✅" else println "b > a ❌"
+if b > a then println "b > a" else println "b <= a"
 
-if a < b then println "a < b ✅" else println "a < b ❌"
+if a < b then println "a < b" else println "a >= b"
 
-if a >= 10 then println "a >= 10 ✅" else println "a >= 10 ❌"
+if a >= 10 then println "a >= 10" else println "a < 10"
 
-if b <= 20 then println "b <= 20 ✅" else println "b <= 20 ❌"
+if b <= 20 then println "b <= 20" else println "b > 20"
 
 let isTrue = true
 let isFalse = false
 
-if isTrue then println "isTrue ✅" else println "isTrue ❌"
+if isTrue then println "isTrue is true" else println "isTrue is false"
 
-if isFalse then println "isFalse ❌" else println "isFalse ✅"
-
-let c = 0
-while c < 5 do
-    println c
-    c = c + 1
-
-let step = 0
-while step < 5 and step != 3 do
-    println step
-    step = step + 1
-
-let running = true
-let attempts = 0
-while running do
-    println attempts
-    attempts = attempts + 1
-    if attempts == 3 then
-        running = false
+if isFalse then println "isFalse is true" else println "isFalse is false"

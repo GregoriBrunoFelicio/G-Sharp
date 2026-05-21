@@ -2,8 +2,6 @@ namespace GSharp.AST;
 
 public abstract record Statement;
 
-public record AssignmentStatement(string VariableName, Expression Expression) : Statement;
-
 public record LetStatement(string VariableName, Expression Expression) : Statement; 
 
 public record PrintStatement(Expression Expression) : Statement; 

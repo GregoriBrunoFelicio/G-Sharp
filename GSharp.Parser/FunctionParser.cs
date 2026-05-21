@@ -11,6 +11,7 @@ public class FunctionParser(Parser parser)
         parser.Consume(TokenType.LeftParen);
 
         var parameters = new List<string>();
+        
         while (!parser.Check(TokenType.RightParen))
             parameters.Add(parser.Identifier().Value);
 
@@ -20,11 +21,7 @@ public class FunctionParser(Parser parser)
 
         if (parser.Match(TokenType.Arrow))
         {
-            // Inline form: accepts any single statement after =>
-            //   soma(a b) => a + b            (expression → implicit return)
-            //   greet()   => println "hello"  (statement → void-like, returns null)
-            // Using ParseNextStatement instead of ExpressionParser so that statement
-            // keywords like println are valid inline bodies.
+            // Inline form: body is on the same line as the declaration
             body = [parser.ParseNextStatement()];
         }
         else

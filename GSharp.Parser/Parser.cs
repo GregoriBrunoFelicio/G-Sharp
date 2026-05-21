@@ -47,15 +47,12 @@ public class Parser(List<Token> tokens)
 
         if (Check(TokenType.Identifier))
         {
-            // Function declaration: name(params) => expr  OR  name(params)\n    body
             if (Peek() == TokenType.LeftParen && IsFunctionDeclaration())
                 return new FunctionParser(this).Parse();
 
-            // Bare expression as statement (e.g. function call, or return value in function body)
             return new ExpressionStatement(new ExpressionParser(this).Parse());
         }
 
-        // Bare literal as statement (e.g. implicit return value at end of function body)
         if (Check(TokenType.NumberLiteral) || Check(TokenType.StringLiteral) ||
             Check(TokenType.BooleanTrueLiteral) || Check(TokenType.BooleanFalseLiteral))
         {
@@ -65,8 +62,6 @@ public class Parser(List<Token> tokens)
         throw new Exception($"Invalid statement: {tokens[_current].Type}");
     }
 
-    // Look ahead past the parameter list to see if this is a declaration.
-    // A declaration ends with => or an indented block (BlockOpen).
     private bool IsFunctionDeclaration()
     {
         var saved = _current;
@@ -77,7 +72,7 @@ public class Parser(List<Token> tokens)
             while (!Check(TokenType.RightParen) && !IsAtEnd())
                 Advance();
             if (!Match(TokenType.RightParen)) return false;
-            while (Match(TokenType.Newline)) { }
+            while (Match(TokenType.Newline)) { } // skip over any newlines oO
             return Check(TokenType.Arrow) || Check(TokenType.BlockOpen);
         }
         finally

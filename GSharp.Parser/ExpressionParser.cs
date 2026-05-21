@@ -62,7 +62,7 @@ public class ExpressionParser(Parser parser)
         {
             var name = parser.Previous().Value;
 
-            // Function call: nome(args)
+            // Function call: name(args)
             if (parser.Match(TokenType.LeftParen))
             {
                 var args = new List<Expression>();

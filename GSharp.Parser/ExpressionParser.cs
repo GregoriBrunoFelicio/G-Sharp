@@ -72,7 +72,7 @@ public class ExpressionParser(Parser parser)
                 return new CallExpression(name, args);
             }
 
-            return new VariableExpression(name);
+            return new BindingExpression(name);
         }
 
         throw new Exception($"Unexpected token in expression: {parser.Current().Type}.");

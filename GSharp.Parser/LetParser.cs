@@ -9,32 +9,32 @@ public class LetParser(Parser parser)
     public LetStatement Parse()
     {
         parser.Consume(TokenType.Let);
-        var variableName = GetVariableName();
+        var bindingName = GetBindingName();
 
         parser.Equals();
         var expression = new ExpressionParser(parser).Parse();
 
-        parser.VariablesDeclared.Add(variableName);
+        parser.DeclaredBindings.Add(bindingName);
 
-        return new LetStatement(variableName, expression);
+        return new LetStatement(bindingName, expression);
     }
 
-    private string GetVariableName()
+    private string GetBindingName()
     {
         var name = parser.Identifier().Value;
-        ValidateVariableName(name);
+        ValidateBindingName(name);
         return name;
     }
 
-    private void ValidateVariableName(string variableName)
+    private void ValidateBindingName(string bindingName)
     {
-        if (parser.VariablesDeclared.Contains(variableName))
-            throw new Exception($"Variable {variableName} already declared.");
+        if (parser.DeclaredBindings.Contains(bindingName))
+            throw new Exception($"Binding '{bindingName}' already declared.");
 
-        if (!IsValidVariableName(variableName))
-            throw new Exception($"Invalid variable name: {variableName}");
+        if (!IsValidBindingName(bindingName))
+            throw new Exception($"Invalid binding name: {bindingName}");
 
-        if (IsReserved(variableName))
-            throw new Exception($"'{variableName}' is a reserved keyword.");
+        if (IsReserved(bindingName))
+            throw new Exception($"'{bindingName}' is a reserved keyword.");
     }
 }

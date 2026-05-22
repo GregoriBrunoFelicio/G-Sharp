@@ -96,7 +96,7 @@ flowchart TD
 
 ## Syntax
 
-### Variable Declarations
+### Let Bindings
 
 ```gs
 let num = 10

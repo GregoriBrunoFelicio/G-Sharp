@@ -5,15 +5,15 @@ namespace GSharp.CodeGen;
 // Carries all the state an emitter needs to emit IL for a given scope.
 //
 // Before EmitContext existed, emitters received a raw Dictionary<string, LocalBuilder>
-// and had no way to access function definitions or distinguish between local variables
+// and had no way to access function definitions or distinguish between local bindings
 // and function parameters. EmitContext bundles all of that together in one place.
 //
 // Each function body gets its own EmitContext so that its locals and parameters
 // are completely separate from Main's locals and from other functions.
 public class EmitContext(Dictionary<string, MethodBuilder> functions)
 {
-    // Maps variable names declared with 'let' to their IL local variable slots.
-    // When the emitter encounters a VariableExpression, it looks here first.
+    // Maps binding names declared with 'let' to their IL local slots.
+    // When the emitter encounters a BindingExpression, it looks here first.
     //
     // Example: 'let x = 10' adds "x" → LocalBuilder(slot 0).
     // Later, 'println x' emits Ldloc(slot 0) to push x onto the stack.

@@ -17,8 +17,8 @@ namespace GSharp.CodeGen;
 //       index++;
 //   }
 //
-// The loop variable (e.g. 'item') is registered in ctx.Locals so that
-// statements inside the body can reference it like any other variable.
+// The loop binding (e.g. 'item') is registered in ctx.Locals so that
+// statements inside the body can reference it like any other binding.
 public static class ForEmitter
 {
     public static void Emit(ILGenerator il, ForStatement statement, EmitContext ctx)
@@ -80,15 +80,15 @@ public static class ForEmitter
         il.Emit(OpCodes.Ldloc, indexLocal);   // push current index
         il.Emit(OpCodes.Ldelem_Ref);          // push array[index] (an object reference)
 
-        // Store the element in a new local variable.
-        // This is the loop variable (e.g. 'item' in 'for item in nums do').
+        // Store the element in a new local slot.
+        // This is the loop binding (e.g. 'item' in 'for item in nums do').
         var loopVar = il.DeclareLocal(typeof(object));
         il.Emit(OpCodes.Stloc, loopVar);
 
-        // Register the loop variable name so body statements can access it.
-        // From this point on, any VariableExpression with this name resolves
+        // Register the loop binding name so body statements can access it.
+        // From this point on, any BindingExpression with this name resolves
         // to Ldloc(loopVar).
-        ctx.Locals[statement.Variable] = loopVar;
+        ctx.Locals[statement.BindingName] = loopVar;
 
         // ============================
         // 6. Emit the loop body

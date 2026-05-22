@@ -6,10 +6,10 @@ namespace GSharp.Parser;
 public static partial class Validations
 {
     [GeneratedRegex("^[a-zA-Z_][a-zA-Z0-9_]*$")]
-    private static partial Regex ValidVariableRegex();
+    private static partial Regex ValidBindingNameRegex();
 
-    public static bool IsValidVariableName(string name) =>
-        ValidVariableRegex().IsMatch(name);
+    public static bool IsValidBindingName(string name) =>
+        ValidBindingNameRegex().IsMatch(name);
 
     public static bool IsReserved(string word)
     {

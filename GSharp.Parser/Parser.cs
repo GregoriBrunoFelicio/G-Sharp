@@ -6,7 +6,7 @@ namespace GSharp.Parser;
 public class Parser(List<Token> tokens)
 {
     private int _current;
-    public readonly HashSet<string> VariablesDeclared = [];
+    public readonly HashSet<string> DeclaredBindings = [];
 
     public List<Statement> Parse()
     {
@@ -81,17 +81,16 @@ public class Parser(List<Token> tokens)
         }
     }
 
-    public TokenType Peek(int ahead = 1)
+    private TokenType Peek(int ahead = 1)
     {
         var idx = _current + ahead;
         return idx < tokens.Count ? tokens[idx].Type : TokenType.EndOfFile;
     }
 
-    public Token Consume(TokenType type)
-    {
-        if (Check(type)) return Advance();
-        throw new Exception($"Expected token {type}, got {tokens[_current].Type}");
-    }
+    public Token Consume(TokenType type) =>
+        Check(type) ?
+            Advance() :
+            throw new Exception($"Expected token {type}, got {tokens[_current].Type}");
 
     public Token Advance()
     {
@@ -122,14 +121,6 @@ public class Parser(List<Token> tokens)
     {
         if (IsAtEnd()) throw new Exception("Unexpected end of input.");
         return tokens[_current];
-    }
-
-    public string ExpectDeclaredIdentifier()
-    {
-        var name = Identifier().Value;
-        if (!VariablesDeclared.Contains(name))
-            throw new Exception($"Variable '{name}' is not declared.");
-        return name;
     }
 
     private bool IsAtEnd() => _current >= tokens.Count;

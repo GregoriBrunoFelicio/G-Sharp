@@ -39,15 +39,15 @@ public static class ExpressionEmitter
                 break;
 
             // ============================
-            // Variable and parameter access
+            // Binding and parameter access
             // ============================
-            case VariableExpression v:
+            case BindingExpression v:
                 // Parameters (e.g. 'a' in 'soma(a b)') are in argument slots.
                 // Ldarg is cheaper than Ldloc and is how the CLR exposes them.
                 if (ctx.Parameters.TryGetValue(v.Name, out var paramIndex))
                     il.Emit(OpCodes.Ldarg, paramIndex);
                 else
-                    // Regular 'let' variables live in declared local slots.
+                    // Regular 'let' bindings live in declared local slots.
                     il.Emit(OpCodes.Ldloc, ctx.Locals[v.Name]);
                 break;
 

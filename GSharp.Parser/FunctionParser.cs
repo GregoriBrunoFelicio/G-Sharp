@@ -33,7 +33,7 @@ public class FunctionParser(Parser parser)
             parser.Consume(TokenType.BlockClose);
         }
 
-        parser.VariablesDeclared.Add(name);
+        parser.DeclaredBindings.Add(name);
         return new FunctionDeclaration(name, parameters, body);
     }
 

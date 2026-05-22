@@ -21,29 +21,32 @@ flowchart TD
         L1["IdentifierLexer — keywords and variable names"]
         L2["NumberLexer — integers, floats, decimals"]
         L3["StringLexer — string literals"]
-        L4["SymbolLexer — operators and punctuation"]
+        L4["SymbolLexer — operators, punctuation, parens, arrow (=>)"]
         L5["Indentation Tracking — BlockOpen / BlockClose tokens"]
     end
 
-    T["List&lt;Token&gt; — If, Identifier, Then, BlockOpen, Number, ..."]
+    T["List&lt;Token&gt; — If, Identifier, Then, BlockOpen, Number, LeftParen, Arrow, ..."]
 
     subgraph PARSER["PARSER — Syntax Analysis"]
         direction TB
         P1["LetParser — immutable variable bindings"]
         P2["IfParser — condition + then / else branches (inline or block)"]
         P3["ForParser / WhileParser — loop variable + body"]
-        P4["ExpressionParser — arithmetic, comparisons, logical operators"]
+        P4["FunctionParser — named functions (inline '=>' or indented block)"]
+        P5["ExpressionParser — arithmetic, comparisons, logical ops, call expressions"]
     end
 
-    AST["List&lt;Statement&gt; (AST) — IfStatement, ForStatement, LetStatement, ..."]
+    AST["List&lt;Statement&gt; (AST) — IfStatement, ForStatement, LetStatement, FunctionDeclaration, ..."]
 
     subgraph CODEGEN["CODE GEN — IL Emission"]
         direction TB
         C1["StatementEmitter — dispatches each node to the right emitter"]
-        C2["ExpressionEmitter — pushes values onto the IL stack"]
+        C2["ExpressionEmitter — pushes values onto the IL stack; handles CallExpression"]
         C3["IfEmitter / ForEmitter / WhileEmitter — control flow via IL labels"]
         C4["LetEmitter — local variable slots (immutable bindings only)"]
-        C5["RuntimeHelpers — numeric type promotion (int / long / double)"]
+        C5["FunctionEmitter — two-pass compilation (Define + Emit) via DynamicMethod"]
+        C6["EmitContext — bundles locals, params, and function registry for all emitters"]
+        C7["RuntimeHelpers — numeric type promotion (int / long / double)"]
     end
 
     IL["IL Bytecode — System.Reflection.Emit / ILGenerator"]
@@ -73,41 +76,60 @@ flowchart TD
 - `println` for printing values
 - Immutable variable bindings using `let` (purely functional — no reassignment)
 - Dynamic type system
+- Numeric literals: `int`, `long`, `double` (`d`), `float` (`f`), `decimal` (`m`)
 - Conditionals (`if`, `else`) with `then` — inline or indented block
-- Loops (`for`, `while`) with `do` — indented block
+- Loops (`for`) with `do` — indented block
+- Arrays (`[1 2 3]`) with `for` iteration
+- User-defined functions — inline (`=>`) and indented block forms
+- Function calls with arguments
 
-### In Progress / Not Implemented Yet
+### Planned / Not Implemented Yet
 
-- Functions with parameters and return types
-- Object types with constructor-based instantiation
+- Recursion
+- Higher-order functions (functions as arguments / return values)
+- String concatenation with `+`
+- Standard math functions (`abs`, `min`, `max`, `mod`)
+- Multiple files / imports
+- Error messages with line numbers
 
 ---
 
-This is the current plan for a first version of the language, a minimal but expressive set of features.
+## Syntax
 
 ### Variable Declarations
 
-```gsharp
+```gs
 let num = 10
-let name = "Gregori"
+let name = "greg"
 let isTrue = false
 println name
 ```
 
 ---
 
+### Numeric Literals
+
+```gs
+let i = 42
+let d = 3.14d
+let f = 2.5f
+let m = 9.99m
+```
+
+---
+
 ### Arrays
 
-```gsharp
-let array = [1 2 3 4 5 6 7 8 9 10]
-array[10] = 90
+```gs
+let nums = [1 2 3 4 5]
+let names = ["Alice" "Bob" "Carol"]
 ```
 
 ---
 
 ### Conditionals
 
-```gsharp
+```gs
 # inline
 if num >= 20 then println "X" else println "Y"
 
@@ -120,51 +142,45 @@ else
 
 ---
 
+### For
+
+```gs
+for item in nums do
+    println item
+```
+
+---
+
 ### While
 
-```gsharp
+```gs
 # while exists in the grammar but is deprecated — it requires mutable state.
 # It will be removed once recursion is implemented.
 while num < 20 do
     println num
 ```
 
-### For
-
-```gsharp
-for item in array do
-    println item
-```
-
-### Functions (planned)
-
-```gsharp
-function Sum(a b) {
-    return a + b
-}
-
-function Greet() {
-    println "Hello!"
-}
-```
-
 ---
 
-### Object with Constructor (planned)
+### Functions
 
-```gsharp
-object Person(name, age) {
-    function SayHello() {
-        println "Hello, my name is " + name
-    }
+Functions support two forms: **inline** (single expression after `=>`) and **block** (indented body).
 
-    function IsAdult() {
-        return age >= 18
-    }
-}
+```gs
+# inline — single statement after =>
+greet() => println "Hello!"
 
-let p = new Person("Gregori", 20)
-p.SayHello()
+# inline with parameters
+add(a b) => println a + b
+
+# block form
+greet()
+    println "Hello!"
+    println "How are you?"
+
+# calling a function
+greet()
+add(3 5)
 ```
 
 ## Contact

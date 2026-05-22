@@ -46,23 +46,34 @@ public static class ExpressionEmitter
                 // Ldarg is cheaper than Ldloc and is how the CLR exposes them.
                 if (ctx.Parameters.TryGetValue(v.Name, out var paramIndex))
                     il.Emit(OpCodes.Ldarg, paramIndex);
-                else
+                else if (ctx.Locals.TryGetValue(v.Name, out var local))
                     // Regular 'let' bindings live in declared local slots.
-                    il.Emit(OpCodes.Ldloc, ctx.Locals[v.Name]);
+                    il.Emit(OpCodes.Ldloc, local);
+                else if (ctx.FunctionAdapters.TryGetValue(v.Name, out var adapter))
+                    // Function used as a first-class value — wrap in GSharpFunction.
+                    EmitFunctionValue(il, adapter);
+                else
+                    throw new Exception($"Undefined binding: '{v.Name}'");
                 break;
 
             // ============================
-            // Function calls: nome(args)
+            // Function calls: name(args)
             // ============================
             case CallExpression call:
-                // Push each argument onto the stack in order.
-                // Each argument must satisfy the stack contract (one object each).
-                foreach (var arg in call.Arguments)
-                    EmitToStack(il, arg, ctx);
+                if (ctx.Functions.ContainsKey(call.Callee))
+                {
+                    // Direct call to a known static function — fast Call opcode.
+                    foreach (var arg in call.Arguments)
+                        EmitToStack(il, arg, ctx);
 
-                // Call the method. The CLR pops the arguments and pushes the return value.
-                // All G# functions return object, so the stack contract is maintained.
-                il.Emit(OpCodes.Call, ctx.Functions[call.Callee]);
+                    // The CLR pops the arguments and pushes the return value.
+                    il.Emit(OpCodes.Call, ctx.Functions[call.Callee]);
+                }
+                else
+                {
+                    // Higher-order call — callee is a GSharpFunction in a local or parameter.
+                    EmitDelegateCall(il, call, ctx);
+                }
                 break;
 
             // ============================
@@ -321,5 +332,68 @@ public static class ExpressionEmitter
 
         il.MarkLabel(end);
         return result;
+    }
+
+    // Wraps a static adapter method in a GSharpFunction so the function can be
+    // passed as a first-class value.
+    //
+    // IL emitted:
+    //   Ldnull                              ; null target (static method)
+    //   Ldftn  Name__adapter                ; function pointer to the adapter
+    //   Newobj Func<object[], object>::.ctor ; create the delegate
+    //   Newobj GSharpFunction::..ctor       ; wrap in GSharpFunction
+    private static void EmitFunctionValue(ILGenerator il, MethodBuilder adapter)
+    {
+        var funcType = typeof(Func<object[], object>);
+        var funcCtor = funcType.GetConstructors()[0]; // (object target, nativeint method)
+        var gsFuncCtor = typeof(GSharpFunction).GetConstructor([funcType])!;
+
+        il.Emit(OpCodes.Ldnull);
+        il.Emit(OpCodes.Ldftn, adapter);
+        il.Emit(OpCodes.Newobj, funcCtor);
+        il.Emit(OpCodes.Newobj, gsFuncCtor);
+    }
+
+    // Emits a call through a GSharpFunction value held in a local or parameter.
+    //
+    // The callee is cast to GSharpFunction, arguments are packed into object[],
+    // and GSharpFunction.Call(object[]) is invoked.
+    //
+    // IL structure:
+    //   <load callee>              ; parameter or local holding the GSharpFunction
+    //   Castclass GSharpFunction
+    //   Ldc_I4  argc
+    //   Newarr  object             ; new object[argc]
+    //   (for each arg:)
+    //     Dup
+    //     Ldc_I4  i
+    //     <emit arg>
+    //     Stelem_Ref               ; array[i] = arg
+    //   Callvirt GSharpFunction.Call(object[])
+    private static void EmitDelegateCall(ILGenerator il, CallExpression call, EmitContext ctx)
+    {
+        // Load the GSharpFunction value.
+        if (ctx.Parameters.TryGetValue(call.Callee, out var paramIdx))
+            il.Emit(OpCodes.Ldarg, paramIdx);
+        else if (ctx.Locals.TryGetValue(call.Callee, out var local))
+            il.Emit(OpCodes.Ldloc, local);
+        else
+            throw new Exception($"Undefined function or binding: '{call.Callee}'");
+
+        il.Emit(OpCodes.Castclass, typeof(GSharpFunction));
+
+        // Build the object[] argument array.
+        il.Emit(OpCodes.Ldc_I4, call.Arguments.Count);
+        il.Emit(OpCodes.Newarr, typeof(object));
+
+        for (var i = 0; i < call.Arguments.Count; i++)
+        {
+            il.Emit(OpCodes.Dup);          // keep array reference on stack
+            il.Emit(OpCodes.Ldc_I4, i);   // index
+            EmitToStack(il, call.Arguments[i], ctx);
+            il.Emit(OpCodes.Stelem_Ref);   // array[i] = value
+        }
+
+        il.Emit(OpCodes.Callvirt, typeof(GSharpFunction).GetMethod(nameof(GSharpFunction.Call))!);
     }
 }

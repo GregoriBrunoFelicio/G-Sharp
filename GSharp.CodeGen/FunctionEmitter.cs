@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using GSharp.AST;
+using GSharp.CodeGen.Helpers;
 
 namespace GSharp.CodeGen;
 
@@ -10,11 +11,16 @@ namespace GSharp.CodeGen;
 //
 //   Pass 1 (Define): register a MethodBuilder for each function so its
 //                    signature is known before any body is emitted.
+//                    Also registers an adapter method for higher-order use.
 //
-//   Pass 2 (Emit):   emit the actual IL into each MethodBuilder.
+//   Pass 2 (Emit):   emit the actual IL into each MethodBuilder and its adapter.
 //
 // All G# functions have the signature: static object Name(object p1, object p2, ...)
 // The dynamic type system lives entirely at runtime via RuntimeHelpers.
+//
+// For higher-order use, each function also gets an adapter:
+//   static object Name__adapter(object[] args) => Name(args[0], args[1], ...)
+// The adapter is wrapped in a GSharpFunction when the function is used as a value.
 //
 // Return value convention:
 //   - The last expression in the body is the implicit return value.
@@ -30,7 +36,11 @@ public static class FunctionEmitter
     //
     // All parameters are object because G# is dynamically typed.
     // Return type is always object for the same reason.
-    public static void Define(TypeBuilder typeBuilder, FunctionDeclaration fn, Dictionary<string, MethodBuilder> functions)
+    public static void Define(
+        TypeBuilder typeBuilder,
+        FunctionDeclaration fn,
+        Dictionary<string, MethodBuilder> functions,
+        Dictionary<string, MethodBuilder> adapters)
     {
         var paramTypes = Enumerable.Repeat(typeof(object), fn.Parameters.Count).ToArray();
 
@@ -41,6 +51,16 @@ public static class FunctionEmitter
             paramTypes);
 
         functions[fn.Name] = method;
+
+        // Define the adapter: static object Name__adapter(object[] args)
+        // The body is emitted in Pass 2 after the main method is defined.
+        var adapter = typeBuilder.DefineMethod(
+            fn.Name + "__adapter",
+            MethodAttributes.Public | MethodAttributes.Static,
+            typeof(object),
+            [typeof(object[])]);
+
+        adapters[fn.Name] = adapter;
     }
 
     // Pass 2: emit IL into the MethodBuilder registered in Pass 1.
@@ -51,10 +71,16 @@ public static class FunctionEmitter
     // instead of Ldloc for parameter names.
     public static void Emit(FunctionDeclaration fn, EmitContext ctx)
     {
+        EmitMainBody(fn, ctx);
+        EmitAdapter(fn, ctx);
+    }
+
+    private static void EmitMainBody(FunctionDeclaration fn, EmitContext ctx)
+    {
         var method = ctx.Functions[fn.Name];
         var il = method.GetILGenerator();
 
-        var fnCtx = new EmitContext(ctx.Functions);
+        var fnCtx = new EmitContext(ctx.Functions, ctx.FunctionAdapters);
 
         // Register each parameter name → argument index.
         // The CLR accesses arguments via Ldarg_0, Ldarg_1, etc. — not Ldloc.
@@ -77,6 +103,31 @@ public static class FunctionEmitter
             il.Emit(OpCodes.Ldnull);
 
         // Ret pops the top of the stack as the return value.
+        il.Emit(OpCodes.Ret);
+    }
+
+    // Emits the adapter body: unpacks object[] and calls the main static method.
+    //
+    //   static object Name__adapter(object[] args) => Name(args[0], args[1], ...)
+    //
+    // This adapter is used when the function is passed as a first-class value.
+    // It bridges the GSharpFunction(object[] args) calling convention with the
+    // strongly-typed static method signature.
+    private static void EmitAdapter(FunctionDeclaration fn, EmitContext ctx)
+    {
+        var adapter = ctx.FunctionAdapters[fn.Name];
+        var il = adapter.GetILGenerator();
+
+        // Unpack each argument from the args array: args[0], args[1], ...
+        for (var i = 0; i < fn.Parameters.Count; i++)
+        {
+            il.Emit(OpCodes.Ldarg_0);      // load args array
+            il.Emit(OpCodes.Ldc_I4, i);   // index
+            il.Emit(OpCodes.Ldelem_Ref);   // args[i]
+        }
+
+        // Call the main static method with the unpacked arguments.
+        il.Emit(OpCodes.Call, ctx.Functions[fn.Name]);
         il.Emit(OpCodes.Ret);
     }
 }

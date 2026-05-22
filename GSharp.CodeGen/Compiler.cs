@@ -50,14 +50,15 @@ public class Compiler
             var (methodBuilder, typeBuilder) = CreateBuilders();
 
             var functions = new Dictionary<string, MethodBuilder>();
+            var adapters  = new Dictionary<string, MethodBuilder>();
 
             // ============================
             // Pass 1 — Register all function signatures
             // ============================
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
-                FunctionEmitter.Define(typeBuilder, fn, functions);
+                FunctionEmitter.Define(typeBuilder, fn, functions, adapters);
 
-            var ctx = new EmitContext(functions);
+            var ctx = new EmitContext(functions, adapters);
 
             // ============================
             // Pass 2 — Emit function bodies

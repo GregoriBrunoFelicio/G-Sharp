@@ -58,3 +58,48 @@ let isFalse = false
 if isTrue then println "isTrue is true" else println "isTrue is false"
 
 if isFalse then println "isFalse is true" else println "isFalse is false"
+
+if a == 10 then
+    println "block: a is 10"
+else
+    println "block: a is not 10"
+
+if b > a then
+    println "block: b is greater"
+
+let label = if a > 5 then "big" else "small"
+println label
+
+add(a b) => a + b
+square(x) => x * x
+greet() => println "Hello from G#!"
+
+greet()
+println add(3 5)
+println square(4)
+
+max(a b)
+    if a >= b then a else b
+
+println max(10 7)
+println max(3 99)
+
+factorial(n)
+    if n == 0 then 1 else n * factorial(n - 1)
+
+fib(n)
+    if n <= 1 then n else fib(n - 1) + fib(n - 2)
+
+println factorial(5)
+println factorial(10)
+println fib(10)
+
+double(x) => x * 2
+apply(f x) => f(x)
+applyTwice(f x) => f(f(x))
+
+println apply(double 5)
+println applyTwice(double 3)
+
+let fn = double
+println fn(10)

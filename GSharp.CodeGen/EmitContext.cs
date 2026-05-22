@@ -10,7 +10,9 @@ namespace GSharp.CodeGen;
 //
 // Each function body gets its own EmitContext so that its locals and parameters
 // are completely separate from Main's locals and from other functions.
-public class EmitContext(Dictionary<string, MethodBuilder> functions)
+public class EmitContext(
+    Dictionary<string, MethodBuilder> functions,
+    Dictionary<string, MethodBuilder> functionAdapters)
 {
     // Maps binding names declared with 'let' to their IL local slots.
     // When the emitter encounters a BindingExpression, it looks here first.
@@ -29,10 +31,13 @@ public class EmitContext(Dictionary<string, MethodBuilder> functions)
     // This is empty for Main — Main has no parameters.
     public readonly Dictionary<string, int> Parameters = new();
 
-    // Maps function names to their MethodBuilder.
-    // Populated in pass 1 of the compiler before any IL is emitted,
-    // so that forward calls and recursive calls can be resolved.
-    //
-    // Example: 'soma(10 20)' emits Call(functions["soma"]).
+    // Maps function names to their MethodBuilder (direct call target).
+    // Populated in pass 1 so that forward calls and recursive calls resolve cleanly.
     public readonly Dictionary<string, MethodBuilder> Functions = functions;
+
+    // Maps function names to their adapter MethodBuilder.
+    // Adapters have signature: static object Name__adapter(object[] args)
+    // They unpack the object[] and delegate to the main static method.
+    // Used when a function is referenced as a value (higher-order use).
+    public readonly Dictionary<string, MethodBuilder> FunctionAdapters = functionAdapters;
 }

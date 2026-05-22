@@ -58,6 +58,9 @@ public class ExpressionParser(Parser parser)
         if (parser.Match(TokenType.LeftBracket))
             return ParseArrayExpression(parser);
 
+        if (parser.Check(TokenType.If))
+            return new IfParser(parser).Parse();
+
         if (parser.Match(TokenType.Identifier))
         {
             var name = parser.Previous().Value;

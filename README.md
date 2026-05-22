@@ -36,17 +36,17 @@ flowchart TD
         P5["ExpressionParser — arithmetic, comparisons, logical ops, call expressions"]
     end
 
-    AST["List&lt;Statement&gt; (AST) — IfStatement, ForStatement, LetStatement, FunctionDeclaration, ..."]
+    AST["List&lt;Expression&gt; (AST) — IfExpression, ForExpression, LetExpression, FunctionDeclaration, ..."]
 
     subgraph CODEGEN["CODE GEN — IL Emission"]
         direction TB
-        C1["StatementEmitter — dispatches each node to the right emitter"]
-        C2["ExpressionEmitter — pushes values onto the IL stack; handles CallExpression"]
-        C3["IfEmitter / ForEmitter / WhileEmitter — control flow via IL labels"]
-        C4["LetEmitter — local variable slots (immutable bindings only)"]
-        C5["FunctionEmitter — two-pass compilation (Define + Emit) via DynamicMethod"]
-        C6["EmitContext — bundles locals, params, and function registry for all emitters"]
-        C7["RuntimeHelpers — numeric type promotion (int / long / double)"]
+        C1["ExpressionEmitter — central dispatch; every node leaves one value on the IL stack"]
+        C2["IfEmitter / ForEmitter / WhileEmitter — control flow via IL labels"]
+        C3["LetEmitter — local slots (immutable bindings only)"]
+        C4["FunctionEmitter — two-pass compilation (Define + Emit); generates adapter methods"]
+        C5["EmitContext — bundles locals, params, functions and adapters for all emitters"]
+        C6["GSharpFunction — runtime wrapper for functions used as first-class values"]
+        C7["RuntimeHelpers — numeric type promotion (int / float / double / decimal)"]
     end
 
     IL["IL Bytecode — System.Reflection.Emit / ILGenerator"]
@@ -82,11 +82,11 @@ flowchart TD
 - Arrays (`[1 2 3]`) with `for` iteration
 - User-defined functions — inline (`=>`) and indented block forms
 - Function calls with arguments
+- Recursion — functions can call themselves
+- Higher-order functions — functions as first-class values (pass, store, return)
 
 ### Planned / Not Implemented Yet
 
-- Recursion
-- Higher-order functions (functions as arguments / return values)
 - String concatenation with `+`
 - Standard math functions (`abs`, `min`, `max`, `mod`)
 - Multiple files / imports
@@ -154,8 +154,8 @@ for item in nums do
 ### While
 
 ```gs
-# while exists in the grammar but is deprecated — it requires mutable state.
-# It will be removed once recursion is implemented.
+# while is deprecated — it requires mutable state and will be removed.
+# Use recursion instead.
 while num < 20 do
     println num
 ```
@@ -165,22 +165,57 @@ while num < 20 do
 ### Functions
 
 Functions support two forms: **inline** (single expression after `=>`) and **block** (indented body).
+The last expression in the body is the implicit return value.
 
 ```gs
-# inline — single statement after =>
+# inline — single expression after =>
+double(x) => x * 2
+
+# inline with no parameters
 greet() => println "Hello!"
 
-# inline with parameters
-add(a b) => println a + b
-
-# block form
-greet()
-    println "Hello!"
-    println "How are you?"
+# block form — last expression is the return value
+max(a b)
+    if a >= b then a else b
 
 # calling a function
+double(5)
 greet()
-add(3 5)
+max(3 7)
+```
+
+---
+
+### Recursion
+
+```gs
+factorial(n)
+    if n == 0 then 1 else n * factorial(n - 1)
+
+fib(n)
+    if n <= 1 then n else fib(n - 1) + fib(n - 2)
+
+println factorial(10)
+println fib(10)
+```
+
+---
+
+### Higher-order Functions
+
+Functions are first-class values — they can be passed as arguments and stored in bindings.
+
+```gs
+double(x) => x * 2
+apply(f x) => f(x)
+applyTwice(f x) => f(f(x))
+
+println apply(double 5)       # 10
+println applyTwice(double 3)  # 12
+
+# storing a function in a binding
+let fn = double
+println fn(5)                 # 10
 ```
 
 ## Contact

@@ -3,18 +3,13 @@ using GSharp.CodeGen;
 using GSharp.Lexer;
 using GSharp.Parser;
 
- var code = GsFileReader.ReadSource("E:/Projects/G-Sharp/GSharp.CLI/hello.gs");
+ var code = GsFileReader.ReadSource("E:/Projects/G-Sharp/GSharp.CLI/tests.gs");
 
 var lexer = new Lexer(code);
 var tokens = lexer.Tokenize();
 
 var parser = new Parser(tokens);
-var statements = parser.Parse();
+var expressions = parser.Parse();
 
 var compiler = new Compiler();
-// var count = 0;
-// while (count <= 10000)
-// {
-compiler.CompileAndRun(statements);
-//     count++;
-// }
+compiler.CompileAndRun(expressions);

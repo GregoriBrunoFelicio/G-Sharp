@@ -5,29 +5,28 @@ namespace GSharp.Parser;
 
 public class WhileParser(Parser parser)
 {
-    public WhileStatement Parse()
+    public WhileExpression Parse()
     {
         parser.Consume(TokenType.While);
-        
+
         var condition = new ExpressionParser(parser).Parse();
 
         parser.Consume(TokenType.Do);
         parser.Match(TokenType.Newline);
         parser.Consume(TokenType.BlockOpen);
 
-        var body = new List<Statement>();
+        var body = new List<Expression>();
 
         while (!parser.Check(TokenType.BlockClose))
         {
             if (parser.Match(TokenType.Newline))
                 continue;
 
-            var statement = parser.ParseNextStatement();
-            body.Add(statement);
+            body.Add(parser.ParseNext());
         }
 
         parser.Consume(TokenType.BlockClose);
 
-        return new WhileStatement(condition, body);
+        return new WhileExpression(condition, body);
     }
 }

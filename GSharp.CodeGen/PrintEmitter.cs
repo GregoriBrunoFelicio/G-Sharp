@@ -3,33 +3,32 @@ using GSharp.AST;
 
 namespace GSharp.CodeGen;
 
-// Emits IL for 'println' statements.
+// Emits IL for 'println' expressions.
 //
 // Example:
 //   println x + 1
 //
 // The emitted IL:
-//   <emit expression>            ; leaves one object on the stack
-//   Call Console.WriteLine(object)  ; pops the object and prints it
+//   <emit value>                     ; leaves one object on the stack
+//   Call Console.WriteLine(object)   ; pops the object and prints it
+//   Ldnull                           ; println evaluates to null (unit-like)
 //
-// We use the Console.WriteLine(object) overload specifically because
-// everything in G# is already boxed as object. This overload calls
-// ToString() internally, so any value type or reference type prints correctly.
+// We use the Console.WriteLine(object) overload because everything in G#
+// is already boxed as object. This overload calls ToString() internally.
 public static class PrintEmitter
 {
-    public static void Emit(ILGenerator il, PrintStatement statement, EmitContext ctx)
+    public static void Emit(ILGenerator il, PrintExpression expr, EmitContext ctx)
     {
-        // Emit the expression to be printed.
-        // This leaves exactly one object on the stack.
-        ExpressionEmitter.EmitToStack(il, statement.Expression, ctx);
+        ExpressionEmitter.EmitToStack(il, expr.Value, ctx);
 
-        // Resolve Console.WriteLine(object).
-        // Since everything in the language is an object,
-        // this overload fits perfectly.
+        // Console.WriteLine(object) — since everything in G# is boxed as object,
+        // this overload fits perfectly and calls ToString() internally.
         var method = typeof(Console)
             .GetMethod("WriteLine", [typeof(object)])!;
 
-        // Call Console.WriteLine with the value on the stack.
         il.Emit(OpCodes.Call, method);
+
+        // println returns null — it is a side-effecting expression.
+        il.Emit(OpCodes.Ldnull);
     }
 }

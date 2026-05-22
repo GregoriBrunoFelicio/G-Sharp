@@ -5,7 +5,7 @@ namespace GSharp.Parser;
 
 public class IfParser(Parser parser)
 {
-    public IfStatement Parse()
+    public IfExpression Parse()
     {
         parser.Consume(TokenType.If);
 
@@ -15,36 +15,33 @@ public class IfParser(Parser parser)
 
         var thenBody = parser.Check(TokenType.Newline) ? BlockBody() : InlineBody();
 
-        var elseBody = new List<Statement>();
+        List<Expression>? elseBody = null;
 
         if (parser.Match(TokenType.Else))
-        {
-            var elseStatements = parser.Check(TokenType.Newline) ? BlockBody() : InlineBody();
-            elseBody.AddRange(elseStatements);
-        }
+            elseBody = parser.Check(TokenType.Newline) ? BlockBody() : InlineBody();
 
-        return new IfStatement(condition, thenBody, elseBody);
+        return new IfExpression(condition, thenBody, elseBody);
     }
 
-    private List<Statement> BlockBody()
+    private List<Expression> BlockBody()
     {
         parser.Match(TokenType.Newline);
         parser.Consume(TokenType.BlockOpen);
 
-        var statements = new List<Statement>();
+        var expressions = new List<Expression>();
 
         while (!parser.Check(TokenType.BlockClose))
         {
             if (parser.Match(TokenType.Newline))
                 continue;
 
-            statements.Add(parser.ParseNextStatement());
+            expressions.Add(parser.ParseNext());
         }
 
         parser.Consume(TokenType.BlockClose);
 
-        return statements;
+        return expressions;
     }
 
-    private List<Statement> InlineBody() => [parser.ParseNextStatement()];
+    private List<Expression> InlineBody() => [parser.ParseNext()];
 }

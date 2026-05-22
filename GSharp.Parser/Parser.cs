@@ -8,27 +8,26 @@ public class Parser(List<Token> tokens)
     private int _current;
     public readonly HashSet<string> DeclaredBindings = [];
 
-    public List<Statement> Parse()
+    public List<Expression> Parse()
     {
-        var statements = new List<Statement>();
+        var expressions = new List<Expression>();
 
         while (IsNotEndOfFile())
         {
             if (Match(TokenType.Newline))
                 continue;
 
-            var statement = ParseNextStatement();
-            statements.Add(statement);
+            expressions.Add(ParseNext());
         }
 
-        return statements;
+        return expressions;
     }
 
     private bool IsNotEndOfFile() =>
         _current < tokens.Count
         && tokens[_current].Type != TokenType.EndOfFile;
 
-    public Statement ParseNextStatement()
+    public Expression ParseNext()
     {
         if (Check(TokenType.Let))
             return new LetParser(this).Parse();
@@ -50,16 +49,16 @@ public class Parser(List<Token> tokens)
             if (Peek() == TokenType.LeftParen && IsFunctionDeclaration())
                 return new FunctionParser(this).Parse();
 
-            return new ExpressionStatement(new ExpressionParser(this).Parse());
+            return new ExpressionParser(this).Parse();
         }
 
         if (Check(TokenType.NumberLiteral) || Check(TokenType.StringLiteral) ||
             Check(TokenType.BooleanTrueLiteral) || Check(TokenType.BooleanFalseLiteral))
         {
-            return new ExpressionStatement(new ExpressionParser(this).Parse());
+            return new ExpressionParser(this).Parse();
         }
 
-        throw new Exception($"Invalid statement: {tokens[_current].Type}");
+        throw new Exception($"Invalid expression: {tokens[_current].Type}");
     }
 
     private bool IsFunctionDeclaration()
@@ -72,7 +71,7 @@ public class Parser(List<Token> tokens)
             while (!Check(TokenType.RightParen) && !IsAtEnd())
                 Advance();
             if (!Match(TokenType.RightParen)) return false;
-            while (Match(TokenType.Newline)) { } // skip over any newlines oO
+            while (Match(TokenType.Newline)) { }
             return Check(TokenType.Arrow) || Check(TokenType.BlockOpen);
         }
         finally

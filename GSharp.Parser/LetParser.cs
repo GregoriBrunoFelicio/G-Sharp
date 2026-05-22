@@ -6,17 +6,17 @@ namespace GSharp.Parser;
 
 public class LetParser(Parser parser)
 {
-    public LetStatement Parse()
+    public LetExpression Parse()
     {
         parser.Consume(TokenType.Let);
         var bindingName = GetBindingName();
 
         parser.Equals();
-        var expression = new ExpressionParser(parser).Parse();
+        var value = new ExpressionParser(parser).Parse();
 
         parser.DeclaredBindings.Add(bindingName);
 
-        return new LetStatement(bindingName, expression);
+        return new LetExpression(bindingName, value);
     }
 
     private string GetBindingName()

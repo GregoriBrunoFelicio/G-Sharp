@@ -4,63 +4,67 @@ using GSharp.CodeGen.Helpers;
 
 namespace GSharp.CodeGen;
 
-// Emits IL for 'if/then/else' statements.
+// Emits IL for 'if/then/else' expressions.
 //
-// IL does not have a native "if" instruction. Conditional execution is
-// implemented using two primitives:
-//   - Brfalse: jump to a label if the top of the stack is false/zero/null
-//   - Br: unconditional jump
+// if is an expression — both branches must leave exactly one value on the stack.
+// When there is no else branch, the if evaluates to null when the condition is false.
 //
-// The structure emitted looks like this:
+// IL structure:
 //
-//   <emit condition>        ; leaves one object on stack
-//   Call RuntimeHelpers.IsTrue  ; converts object → bool, leaves bool on stack
-//   Brfalse elseLabel       ; jump to else if condition is false
-//   <emit then body>
-//   Br endLabel             ; skip the else block
+//   <emit condition>
+//   Call RuntimeHelpers.IsTrue
+//   Brfalse elseLabel
+//     <emit then body — discard all but last>
+//     <emit last of then body>          ; this is the expression value
+//   Br endLabel
 //   elseLabel:
-//   <emit else body>        ; only if an else branch exists
+//     <emit else body — discard all but last>
+//     <emit last of else body>          ; this is the expression value
+//     (if no else: Ldnull)
 //   endLabel:
-//   <continue>
+//   ; one value on the stack
 public static class IfEmitter
 {
-    public static void Emit(ILGenerator il, IfStatement ifStmt, EmitContext ctx)
+    public static void EmitToStack(ILGenerator il, IfExpression ifExpr, EmitContext ctx)
     {
-        // Labels used to control where execution jumps.
-        // elseLabel: where to jump when the condition is false.
-        // endLabel: where both branches converge after execution.
         var elseLabel = il.DefineLabel();
-        var endLabel = il.DefineLabel();
+        var endLabel  = il.DefineLabel();
 
-        // Emit the condition expression.
-        // This leaves exactly one object on the stack.
-        ExpressionEmitter.EmitToStack(il, ifStmt.Condition, ctx);
+        ExpressionEmitter.EmitToStack(il, ifExpr.Condition, ctx);
 
-        // Ask the runtime if this value should be treated as "true".
-        // IsTrue handles dynamic typing: it unboxes and checks the bool.
-        // Result: a bool is left on the stack (1 = true, 0 = false).
         il.Emit(OpCodes.Call,
             typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsTrue))!);
 
-        // If the result is false (0), jump past the then-body to elseLabel.
         il.Emit(OpCodes.Brfalse, elseLabel);
 
-        // Condition was true — emit all statements in the then-body.
-        foreach (var stmt in ifStmt.ThenBody)
-            StatementEmitter.Emit(il, stmt, ctx);
+        // Then branch — leave last expression's value on the stack.
+        EmitBody(il, ifExpr.ThenBody, ctx);
 
-        // Jump past the else-body so we don't fall through into it.
         il.Emit(OpCodes.Br, endLabel);
 
-        // Execution lands here when the condition was false.
         il.MarkLabel(elseLabel);
 
-        // Emit the else body, if one exists.
-        if (ifStmt.ElseBody != null)
-            foreach (var stmt in ifStmt.ElseBody)
-                StatementEmitter.Emit(il, stmt, ctx);
+        if (ifExpr.ElseBody is { Count: > 0 })
+            EmitBody(il, ifExpr.ElseBody, ctx);
+        else
+            il.Emit(OpCodes.Ldnull);
 
-        // Both branches merge here. Execution continues normally.
         il.MarkLabel(endLabel);
+    }
+
+    // Emits a body (list of expressions), discarding all values except the last.
+    // The last expression's value is left on the stack.
+    private static void EmitBody(ILGenerator il, List<Expression> body, EmitContext ctx)
+    {
+        for (var i = 0; i < body.Count - 1; i++)
+        {
+            ExpressionEmitter.EmitToStack(il, body[i], ctx);
+            il.Emit(OpCodes.Pop);
+        }
+
+        if (body.Count > 0)
+            ExpressionEmitter.EmitToStack(il, body[^1], ctx);
+        else
+            il.Emit(OpCodes.Ldnull);
     }
 }

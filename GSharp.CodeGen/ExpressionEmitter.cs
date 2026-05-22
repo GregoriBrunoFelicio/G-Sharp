@@ -90,6 +90,39 @@ public static class ExpressionEmitter
                 }
                 break;
 
+            // ============================
+            // Side-effecting expressions (evaluate to null)
+            // ============================
+            case LetExpression letExpr:
+                LetEmitter.Emit(il, letExpr, ctx);
+                break;
+
+            case PrintExpression printExpr:
+                PrintEmitter.Emit(il, printExpr, ctx);
+                break;
+
+            case ForExpression forExpr:
+                ForEmitter.Emit(il, forExpr, ctx);
+                break;
+
+            case WhileExpression whileExpr:
+                WhileEmitter.Emit(il, whileExpr, ctx);
+                break;
+
+            // ============================
+            // Conditional expression
+            // ============================
+            case IfExpression ifExpr:
+                IfEmitter.EmitToStack(il, ifExpr, ctx);
+                break;
+
+            // ============================
+            // Function declarations are handled by the compiler passes — no IL here.
+            // ============================
+            case FunctionDeclaration:
+                il.Emit(OpCodes.Ldnull);
+                break;
+
             default:
                 throw new NotSupportedException(
                     $"Unsupported expression: {expression.GetType().Name}");

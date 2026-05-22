@@ -11,22 +11,20 @@ public class FunctionParser(Parser parser)
         parser.Consume(TokenType.LeftParen);
 
         var parameters = new List<string>();
-        
+
         while (!parser.Check(TokenType.RightParen))
             parameters.Add(parser.Identifier().Value);
 
         parser.Consume(TokenType.RightParen);
 
-        List<Statement> body;
+        List<Expression> body;
 
         if (parser.Match(TokenType.Arrow))
         {
-            // Inline form: body is on the same line as the declaration
-            body = [parser.ParseNextStatement()];
+            body = [parser.ParseNext()];
         }
         else
         {
-            // Block form: body is indented under the declaration
             parser.Match(TokenType.Newline);
             parser.Consume(TokenType.BlockOpen);
             body = ParseBody();
@@ -37,14 +35,14 @@ public class FunctionParser(Parser parser)
         return new FunctionDeclaration(name, parameters, body);
     }
 
-    private List<Statement> ParseBody()
+    private List<Expression> ParseBody()
     {
-        var statements = new List<Statement>();
+        var expressions = new List<Expression>();
         while (!parser.Check(TokenType.BlockClose))
         {
             if (parser.Match(TokenType.Newline)) continue;
-            statements.Add(parser.ParseNextStatement());
+            expressions.Add(parser.ParseNext());
         }
-        return statements;
+        return expressions;
     }
 }

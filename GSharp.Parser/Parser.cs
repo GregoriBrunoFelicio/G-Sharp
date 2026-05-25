@@ -46,7 +46,7 @@ public class Parser(List<Token> tokens)
 
         if (Check(TokenType.Identifier))
         {
-            if (Peek() == TokenType.LeftParen && IsFunctionDeclaration())
+            if (IsFunctionDeclaration())
                 return new FunctionParser(this).Parse();
 
             return new ExpressionParser(this).Parse();
@@ -66,11 +66,9 @@ public class Parser(List<Token> tokens)
         var saved = _current;
         try
         {
-            Advance(); // name
-            Advance(); // (
-            while (!Check(TokenType.RightParen) && !IsAtEnd())
-                Advance();
-            if (!Match(TokenType.RightParen)) return false;
+            Advance(); // skip name
+            while (Check(TokenType.Identifier))
+                Advance(); // skip params
             while (Match(TokenType.Newline)) { }
             return Check(TokenType.Arrow) || Check(TokenType.BlockOpen);
         }

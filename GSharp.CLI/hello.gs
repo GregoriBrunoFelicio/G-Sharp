@@ -70,33 +70,33 @@ if b > a then
 let label = if a > 5 then "big" else "small"
 println label
 
-add(a b) => a + b
-square(x) => x * x
-greet() => println "Hello from G#!"
+add a b => a + b
+square x => x * x
+greet => println "Hello from G#!"
 
 greet()
 println add(3 5)
 println square(4)
 
-max(a b)
+max a b
     if a >= b then a else b
 
 println max(10 7)
 println max(3 99)
 
-factorial(n)
+factorial n
     if n == 0 then 1 else n * factorial(n - 1)
 
-fib(n)
+fib n
     if n <= 1 then n else fib(n - 1) + fib(n - 2)
 
 println factorial(5)
 println factorial(10)
 println fib(10)
 
-double(x) => x * 2
-apply(f x) => f(x)
-applyTwice(f x) => f(f(x))
+double x => x * 2
+apply f x => f(x)
+applyTwice f x => f(f(x))
 
 println apply(double 5)
 println applyTwice(double 3)

@@ -8,14 +8,10 @@ public class FunctionParser(Parser parser)
     public FunctionDeclaration Parse()
     {
         var name = parser.Identifier().Value;
-        parser.Consume(TokenType.LeftParen);
 
         var parameters = new List<string>();
-
-        while (!parser.Check(TokenType.RightParen))
+        while (parser.Check(TokenType.Identifier))
             parameters.Add(parser.Identifier().Value);
-
-        parser.Consume(TokenType.RightParen);
 
         List<Expression> body;
 

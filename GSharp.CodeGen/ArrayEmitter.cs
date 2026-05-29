@@ -90,7 +90,7 @@ public static class ArrayEmitter
                 //
                 // This is a language limitation, not an IL problem.
                 throw new NotSupportedException(
-                    $"Unsupported array literal element: {value?.GetType().Name}");
+                    $"internal error: no emitter for array element type '{value?.GetType().Name ?? "null"}'");
         }
     }
 }

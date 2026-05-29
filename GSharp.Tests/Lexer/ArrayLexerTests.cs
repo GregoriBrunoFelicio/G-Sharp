@@ -88,6 +88,6 @@ public class ArrayLexerTests
         var lexer = new GSharp.Lexer.Lexer(code);
 
         var act = () => lexer.Tokenize();
-        act.Should().Throw<Exception>().WithMessage("*Unexpected character*");
+        act.Should().Throw<Exception>().WithMessage("*unexpected '@'");
     }
 }

@@ -5,15 +5,16 @@ public static class IdentifierLexer
 {
     public static Token Read(Lexer lexer)
     {
+        var line = lexer.Line;
+        var col  = lexer.Column;
         var start = lexer.Position;
 
         lexer.AdvanceWhile(char.IsLetterOrDigit);
 
         var value = lexer.Code[start..lexer.Position];
-
         var tokenType = KeywordTokenMap.GetValueOrDefault(value, TokenType.Identifier);
 
-        return new Token(tokenType, value);
+        return new Token(tokenType, value, line, col);
     }
 
     private static readonly Dictionary<string, TokenType> KeywordTokenMap = new()

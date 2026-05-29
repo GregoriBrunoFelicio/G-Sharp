@@ -78,7 +78,7 @@ public class ExpressionParser(Parser parser)
             return new BindingExpression(name);
         }
 
-        throw new Exception($"Unexpected token in expression: {parser.Current().Type}.");
+        throw new Exception($"{parser.Current().Line}: unexpected '{parser.Current().Value}'");
     }
 
     private static object ParseNumber(string text)

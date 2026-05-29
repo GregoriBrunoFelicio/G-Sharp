@@ -1,6 +1,6 @@
 namespace GSharp.Lexer;
 
-public record Token(TokenType Type, string Value);
+public record Token(TokenType Type, string Value, int Line = 0, int Column = 0);
 
 public enum TokenType
 {

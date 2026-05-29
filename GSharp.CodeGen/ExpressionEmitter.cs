@@ -136,7 +136,7 @@ public static class ExpressionEmitter
 
             default:
                 throw new NotSupportedException(
-                    $"Unsupported expression: {expression.GetType().Name}");
+                    $"internal error: no emitter for expression '{expression.GetType().Name}'");
         }
     }
 
@@ -170,7 +170,7 @@ public static class ExpressionEmitter
             TokenType.Minus              => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Subtract)),
             TokenType.Multiply           => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Multiply)),
             TokenType.Divide             => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Divide)),
-            _ => throw new NotSupportedException(expr.Operator.ToString())
+            _ => throw new NotSupportedException($"internal error: no emitter for binary operator '{expr.Operator}'")
         };
 
         // Call the helper. It consumes [left, right] and leaves [result] on the stack.
@@ -227,7 +227,7 @@ public static class ExpressionEmitter
 
             default:
                 throw new NotSupportedException(
-                    $"Unsupported literal: {value?.GetType().Name}");
+                    $"internal error: no emitter for literal type '{value?.GetType().Name ?? "null"}'");
         }
     }
 

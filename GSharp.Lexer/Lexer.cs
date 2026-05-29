@@ -7,6 +7,8 @@ public class Lexer
 {
     public readonly string Code;
     public int Position;
+    public int Line { get; private set; } = 1;
+    public int Column { get; private set; } = 1;
     public char Current => !IsAtEnd() ? Code[Position] : '\0';
 
     private readonly List<Token> _tokens = [];
@@ -117,11 +119,23 @@ public class Lexer
         if (Symbols.ContainsKey(Current))
             return SymbolLexer.Read(this);
 
-        throw new Exception($"Unexpected character: '{Current}'");
+        throw new Exception($"{Line}: unexpected '{Current}'");
     }
 
-    public void Advance() => Position++;
-    
+    public void Advance()
+    {
+        if (!IsAtEnd() && Code[Position] == '\n')
+        {
+            Line++;
+            Column = 1;
+        }
+        else
+        {
+            Column++;
+        }
+        Position++;
+    }
+
     public char Next()
     {
         var next = Position + 1;

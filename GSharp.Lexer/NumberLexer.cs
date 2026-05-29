@@ -6,14 +6,15 @@ public static class NumberLexer
 
     public static Token Read(Lexer lexer)
     {
+        var line  = lexer.Line;
+        var col   = lexer.Column;
         var start = lexer.Position;
 
         lexer.AdvanceWhile(char.IsDigit);
-        
         ReadDecimalIfExists(lexer);
-        
+
         var number = lexer.Code[start..lexer.Position];
-        return new Token(TokenType.NumberLiteral, number);
+        return new Token(TokenType.NumberLiteral, number, line, col);
     }
     
     private static void ReadDecimalIfExists(Lexer lexer)

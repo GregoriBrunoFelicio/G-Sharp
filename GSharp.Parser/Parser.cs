@@ -58,7 +58,7 @@ public class Parser(List<Token> tokens)
             return new ExpressionParser(this).Parse();
         }
 
-        throw new Exception($"Invalid expression: {tokens[_current].Type}");
+        throw new Exception($"{tokens[_current].Line}: unexpected '{tokens[_current].Value}'");
     }
 
     private bool IsFunctionDeclaration()
@@ -78,16 +78,10 @@ public class Parser(List<Token> tokens)
         }
     }
 
-    private TokenType Peek(int ahead = 1)
-    {
-        var idx = _current + ahead;
-        return idx < tokens.Count ? tokens[idx].Type : TokenType.EndOfFile;
-    }
-
     public Token Consume(TokenType type) =>
         Check(type) ?
             Advance() :
-            throw new Exception($"Expected token {type}, got {tokens[_current].Type}");
+            throw new Exception($"{tokens[_current].Line}: expected '{type}', got '{tokens[_current].Value}'");
 
     public Token Advance()
     {
@@ -116,7 +110,7 @@ public class Parser(List<Token> tokens)
 
     public Token Current()
     {
-        if (IsAtEnd()) throw new Exception("Unexpected end of input.");
+        if (IsAtEnd()) throw new Exception("unexpected end of input");
         return tokens[_current];
     }
 

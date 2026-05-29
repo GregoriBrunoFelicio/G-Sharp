@@ -1,15 +1,25 @@
-﻿using G.Sharp.Compiler;
+using G.Sharp.Compiler;
 using GSharp.CodeGen;
 using GSharp.Lexer;
 using GSharp.Parser;
 
- var code = GsFileReader.ReadSource("E:/Projects/G-Sharp/GSharp.CLI/hello.gs");
+try
+{
+    var code = GsFileReader.ReadSource("E:/Projects/G-Sharp/GSharp.CLI/tests.gs");
 
-var lexer = new Lexer(code);
-var tokens = lexer.Tokenize();
+    var lexer = new Lexer(code);
+    var tokens = lexer.Tokenize();
 
-var parser = new Parser(tokens);
-var expressions = parser.Parse();
+    var parser = new Parser(tokens);
+    var expressions = parser.Parse();
 
-var compiler = new Compiler();
-compiler.CompileAndRun(expressions);
+    var compiler = new Compiler();
+    compiler.CompileAndRun(expressions);
+}
+catch (Exception ex)
+{
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.Error.WriteLine(ex.Message);
+    Console.ResetColor();
+    Environment.Exit(1);
+}

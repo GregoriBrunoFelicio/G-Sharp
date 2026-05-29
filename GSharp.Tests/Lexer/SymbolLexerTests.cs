@@ -45,6 +45,6 @@ public class SymbolLexerTests
         var act = () => SymbolLexer.Read(lexer);
 
         act.Should().Throw<Exception>()
-            .WithMessage("Unexpected symbol: '@'");
+            .WithMessage("1: unexpected '@'");
     }
 }

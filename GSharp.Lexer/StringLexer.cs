@@ -4,19 +4,20 @@ public static class StringLexer
 {
     public static Token Read(Lexer lexer)
     {
-        lexer.Advance();
+        var line = lexer.Line;
+        var col  = lexer.Column;
+
+        lexer.Advance(); // skip opening "
 
         var start = lexer.Position;
-        
-        lexer.AdvanceWhile(c => c != '"');   
+        lexer.AdvanceWhile(c => c != '"');
 
         if (lexer.IsAtEnd())
-            throw new Exception("Unterminated string literal. Expected closing '\"'.");
+            throw new Exception($"{line}: unterminated string literal");
 
         var word = lexer.Code[start..lexer.Position];
+        lexer.Advance(); // skip closing "
 
-        lexer.Advance();
-
-        return new Token(TokenType.StringLiteral, word);
+        return new Token(TokenType.StringLiteral, word, line, col);
     }
 }

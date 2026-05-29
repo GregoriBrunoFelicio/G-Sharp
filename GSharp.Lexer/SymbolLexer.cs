@@ -6,39 +6,36 @@ public static class SymbolLexer
 {
     public static Token Read(Lexer lexer)
     {
+        var line    = lexer.Line;
+        var col     = lexer.Column;
         var current = lexer.Current;
-        var next = lexer.Next();
+        var next    = lexer.Next();
 
         switch (current)
         {
             case '=' when next == '>':
-                lexer.Advance();
-                lexer.Advance();
-                return new Token(TokenType.Arrow, "=>");
+                lexer.Advance(); lexer.Advance();
+                return new Token(TokenType.Arrow, "=>", line, col);
             case '>' when next == '=':
-                lexer.Advance();
-                lexer.Advance();
-                return new Token(TokenType.GreaterThanOrEqual, ">=");
+                lexer.Advance(); lexer.Advance();
+                return new Token(TokenType.GreaterThanOrEqual, ">=", line, col);
             case '<' when next == '=':
-                lexer.Advance();
-                lexer.Advance();
-                return new Token(TokenType.LessThanOrEqual, "<=");
+                lexer.Advance(); lexer.Advance();
+                return new Token(TokenType.LessThanOrEqual, "<=", line, col);
             case '=' when next == '=':
-                lexer.Advance();
-                lexer.Advance();
-                return new Token(TokenType.EqualEqual, "==");
+                lexer.Advance(); lexer.Advance();
+                return new Token(TokenType.EqualEqual, "==", line, col);
             case '!' when next == '=':
-                lexer.Advance();
-                lexer.Advance();
-                return new Token(TokenType.NotEqual, "!=");
+                lexer.Advance(); lexer.Advance();
+                return new Token(TokenType.NotEqual, "!=", line, col);
         }
 
         if (Symbols.TryGetValue(current, out var tokenType))
         {
             lexer.Advance();
-            return new Token(tokenType, current.ToString());
+            return new Token(tokenType, current.ToString(), line, col);
         }
 
-        throw new Exception($"Unexpected symbol: '{current}'");
+        throw new Exception($"{line}: unexpected '{current}'");
     }
 }

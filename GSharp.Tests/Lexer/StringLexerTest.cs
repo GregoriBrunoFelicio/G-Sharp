@@ -34,7 +34,7 @@ public class StringLexerTest
 
         act.Should()
             .Throw<Exception>()
-            .WithMessage("Unterminated string literal. Expected closing '\"'.");
+            .WithMessage("*unterminated string literal");
     }
 
     [Fact]

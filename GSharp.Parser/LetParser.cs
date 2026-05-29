@@ -32,7 +32,10 @@ public class LetParser(Parser parser)
             throw new Exception($"Binding '{bindingName}' already declared.");
 
         if (!IsValidBindingName(bindingName))
-            throw new Exception($"Invalid binding name: {bindingName}");
+        {
+            var t = parser.Previous();
+            throw new Exception($"{t.Line}: invalid binding name '{bindingName}'");
+        }
 
         if (IsReserved(bindingName))
             throw new Exception($"'{bindingName}' is a reserved keyword.");

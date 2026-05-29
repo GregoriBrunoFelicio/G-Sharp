@@ -5,7 +5,8 @@ using GSharp.Parser;
 
 try
 {
-    var code = GsFileReader.ReadSource("E:/Projects/G-Sharp/GSharp.CLI/tests.gs");
+    var path = args.Length > 0 ? args[0] : "tests.gs";
+    var code = GsFileReader.ReadSource(path);
 
     var lexer = new Lexer(code);
     var tokens = lexer.Tokenize();

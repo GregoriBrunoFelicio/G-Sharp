@@ -45,6 +45,12 @@ public class Lexer
                 continue;
             }
 
+            if (IsLineComment())
+            {
+                SkipLineComment();
+                continue;
+            }
+
             var token = ReadNextToken();
             _tokens.Add(token);
         }
@@ -90,6 +96,10 @@ public class Lexer
     }
 
     private bool IsNewLine() => Current == '\n' || Current == '\r';
+
+    private bool IsLineComment() => Current == '/' && Next() == '/';
+
+    private void SkipLineComment() => AdvanceWhile(c => c != '\n' && c != '\r');
 
     private void ConsumeNewLine()
     {

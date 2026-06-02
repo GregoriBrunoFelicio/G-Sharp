@@ -103,3 +103,13 @@ println applyTwice(double 3)
 
 let fn = double
 println fn(10)
+
+// --- call syntax ---
+
+// without parentheses: works when arguments are simple values (literals or variable names)
+println add x y         // 13
+
+// parentheses are required when an argument is an expression, not a simple value
+// `add x + 1 y` parses as `(add x) + 1` — the `+ 1` falls outside the call
+// wrap the expression in parentheses to pass it as a single argument
+println add(x + 1 y)    // 14

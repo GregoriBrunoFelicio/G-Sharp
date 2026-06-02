@@ -5,7 +5,7 @@ using static GSharp.Parser.Validations;
 
 namespace GSharp.Parser;
 
-public class ExpressionParser(Parser parser)
+public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
 {
     public Expression Parse()
     {
@@ -65,14 +65,25 @@ public class ExpressionParser(Parser parser)
         {
             var name = parser.Previous().Value;
 
-            // Function call: name(args)
+            // Call with parens: sum(10 20) — args parsed without atom collection
+            // so that `apply(double 5)` stays as apply(double, 5), not apply(double(5)).
             if (parser.Match(TokenType.LeftParen))
             {
                 var args = new List<Expression>();
                 while (!parser.Check(TokenType.RightParen))
-                    args.Add(new ExpressionParser(parser).Parse());
+                    args.Add(new ExpressionParser(parser, allowAtomArgs: false).Parse());
                 parser.Consume(TokenType.RightParen);
                 return new CallExpression(name, args);
+            }
+
+            // Call without parens: sum 10 20
+            // Collects consecutive atoms as arguments until an operator or keyword.
+            // Disabled inside paren-style arg lists to preserve their old semantics.
+            if (allowAtomArgs)
+            {
+                var atomArgs = ParseAtomArgs();
+                if (atomArgs.Count > 0)
+                    return new CallExpression(name, atomArgs);
             }
 
             return new BindingExpression(name);
@@ -89,6 +100,33 @@ public class ExpressionParser(Parser parser)
         if (text.EndsWith('m')) return decimal.Parse(text[..^1], ic);
         if (text.Contains('.')) return double.Parse(text, ic);
         return int.Parse(text, ic);
+    }
+
+    private static bool IsAtom(TokenType type) => type is
+        TokenType.NumberLiteral or
+        TokenType.StringLiteral or
+        TokenType.BooleanTrueLiteral or
+        TokenType.BooleanFalseLiteral or
+        TokenType.Identifier;
+
+    private List<Expression> ParseAtomArgs()
+    {
+        var args = new List<Expression>();
+        while (IsAtom(parser.Current().Type))
+        {
+            var token = parser.Advance();
+            Expression arg = token.Type switch
+            {
+                TokenType.NumberLiteral       => new LiteralExpression(ParseNumber(token.Value)),
+                TokenType.StringLiteral       => new LiteralExpression(token.Value),
+                TokenType.BooleanTrueLiteral  => new LiteralExpression(true),
+                TokenType.BooleanFalseLiteral => new LiteralExpression(false),
+                TokenType.Identifier          => new BindingExpression(token.Value),
+                _ => throw new Exception("unreachable")
+            };
+            args.Add(arg);
+        }
+        return args;
     }
 
     private static LiteralExpression ParseArrayExpression(Parser parser)

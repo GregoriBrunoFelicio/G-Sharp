@@ -5,7 +5,21 @@ using GSharp.Parser;
 
 try
 {
-    var path = args.Length > 0 ? args[0] : "tests.gs";
+    string? path = args.Length switch
+    {
+        0 => null,
+        1 => args[0],
+        _ when args[0] == "run" => args[1],
+        _ => null
+    };
+
+    if (path is null)
+    {
+        Console.Error.WriteLine("usage: gs <file.gs>");
+        Console.Error.WriteLine("       gs run <file.gs>");
+        Environment.Exit(1);
+    }
+
     var code = GsFileReader.ReadSource(path);
 
     var lexer = new Lexer(code);

@@ -6,6 +6,10 @@
         <RootNamespace>G.Sharp.Compiler</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>gs</ToolCommandName>
+        <PackageId>GSharp.CLI</PackageId>
+        <Version>0.0.1</Version>
     </PropertyGroup>
 
     <ItemGroup>

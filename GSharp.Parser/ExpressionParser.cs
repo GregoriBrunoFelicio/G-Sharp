@@ -61,6 +61,9 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
         if (parser.Check(TokenType.If))
             return new IfParser(parser).Parse();
 
+        if (parser.Check(TokenType.For))
+            return new ForParser(parser).Parse();
+
         if (parser.Match(TokenType.Identifier))
         {
             var name = parser.Previous().Value;

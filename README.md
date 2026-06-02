@@ -1,12 +1,29 @@
 # G♯
 
-G♯ is a purely functional programming language that emits IL (Intermediate Language) and runs on the .NET runtime.
-It's a challenging project, but I'm learning a lot from it. I'm not a language design expert (yet), so you'll likely
-find many rough edges and mistakes along the way, and that's totally fine.
+G♯ is a purely functional programming language that compiles to .NET IL and runs on the .NET runtime.
+Everything is an expression, all bindings are immutable, and there is no reassignment.
 
-This whole thing is meant to be fun, experimental, and educational.
+This is an experimental, educational project. Expect rough edges.
 
-⚠️ This project is in early development. Contributions and feedback are welcome!
+⚠️ Early development — contributions and feedback welcome.
+
+---
+
+## Getting Started
+
+### Install the CLI
+
+```bash
+dotnet tool install -g --add-source ./nupkg GSharp.CLI
+```
+
+### Run a file
+
+```bash
+gs run main.gs     # explicit
+gs run             # auto-detects main.gs or the single .gs file in the directory
+gs hello.gs        # shorthand
+```
 
 ---
 
@@ -14,219 +31,232 @@ This whole thing is meant to be fun, experimental, and educational.
 
 ```mermaid
 flowchart TD
-    SRC["SOURCE FILE (.gs)\nHuman-readable G# code — keywords, operators, indentation, literals"]
+    SRC["SOURCE FILE (.gs)"]
 
-    subgraph LEXER["LEXER — Tokenization"]
-        direction TB
-        L1["IdentifierLexer — keywords and variable names"]
-        L2["NumberLexer — integers, floats, decimals"]
+    subgraph LEXER["LEXER"]
+        L1["IdentifierLexer — keywords and names"]
+        L2["NumberLexer — int, float, double, decimal"]
         L3["StringLexer — string literals"]
-        L4["SymbolLexer — operators, punctuation, parens, arrow (=>)"]
-        L5["Indentation Tracking — BlockOpen / BlockClose tokens"]
+        L4["SymbolLexer — operators, arrow (=>)"]
+        L5["Indentation — BlockOpen / BlockClose tokens"]
     end
 
-    T["List&lt;Token&gt; — If, Identifier, Then, BlockOpen, Number, LeftParen, Arrow, ..."]
+    T["List&lt;Token&gt;"]
 
-    subgraph PARSER["PARSER — Syntax Analysis"]
-        direction TB
-        P1["LetParser — immutable variable bindings"]
-        P2["IfParser — condition + then / else branches (inline or block)"]
-        P3["ForParser / WhileParser — loop variable + body"]
-        P4["FunctionParser — named functions (inline '=>' or indented block)"]
-        P5["ExpressionParser — arithmetic, comparisons, logical ops, call expressions"]
+    subgraph PARSER["PARSER"]
+        P1["LetParser — immutable bindings"]
+        P2["IfParser — inline or block conditionals"]
+        P3["ForParser — functional map over arrays"]
+        P4["FunctionParser — named functions"]
+        P5["ExpressionParser — arithmetic, calls, HOF"]
     end
 
-    AST["List&lt;Expression&gt; (AST) — IfExpression, ForExpression, LetExpression, FunctionDeclaration, ..."]
+    AST["List&lt;Expression&gt; (AST)"]
 
-    subgraph CODEGEN["CODE GEN — IL Emission"]
-        direction TB
-        C1["ExpressionEmitter — central dispatch; every node leaves one value on the IL stack"]
-        C2["IfEmitter / ForEmitter / WhileEmitter — control flow via IL labels"]
-        C3["LetEmitter — local slots (immutable bindings only)"]
-        C4["FunctionEmitter — two-pass compilation (Define + Emit); generates adapter methods"]
-        C5["EmitContext — bundles locals, params, functions and adapters for all emitters"]
-        C6["GSharpFunction — runtime wrapper for functions used as first-class values"]
-        C7["RuntimeHelpers — numeric type promotion (int / float / double / decimal)"]
+    subgraph CODEGEN["CODE GEN"]
+        C1["ExpressionEmitter — one boxed object per expression on IL stack"]
+        C2["IfEmitter / ForEmitter — control flow via IL labels"]
+        C3["LetEmitter — immutable local slots"]
+        C4["FunctionEmitter — two-pass (Define + Emit) with adapter methods"]
+        C5["EmitContext — locals, params, functions, adapters"]
+        C6["GSharpFunction — first-class function wrapper"]
+        C7["RuntimeHelpers — numeric type promotion"]
     end
 
-    IL["IL Bytecode — System.Reflection.Emit / ILGenerator"]
+    IL["IL — System.Reflection.Emit"]
+    RT[".NET Runtime"]
+    OUT["Output"]
 
-    RT[".NET RUNTIME — JIT compiles IL to native code and executes it in memory"]
-
-    OUT["OUTPUT"]
-
-    SRC --> LEXER
-    LEXER --> T
-    T --> PARSER
-    PARSER --> AST
-    AST --> CODEGEN
-    CODEGEN --> IL
-    IL --> RT
-    RT --> OUT
+    SRC --> LEXER --> T --> PARSER --> AST --> CODEGEN --> IL --> RT --> OUT
 ```
-
----
-
-## Current Features
-
-### Implemented
-
-- Lexer and tokenization
-- Parser for basic statements
-- `println` for printing values
-- Immutable variable bindings using `let` (purely functional — no reassignment)
-- Dynamic type system
-- Numeric literals: `int`, `long`, `double` (`d`), `float` (`f`), `decimal` (`m`)
-- Conditionals (`if`, `else`) with `then` — inline or indented block
-- Loops (`for`) with `do` — indented block
-- Arrays (`[1 2 3]`) with `for` iteration
-- User-defined functions — inline (`=>`) and indented block forms
-- Function calls with arguments
-- Recursion — functions can call themselves
-- Higher-order functions — functions as first-class values (pass, store, return)
-
-### Planned / Not Implemented Yet
-
-- String concatenation with `+`
-- Standard math functions (`abs`, `min`, `max`, `mod`)
-- Multiple files / imports
-- Error messages with line numbers
 
 ---
 
 ## Syntax
 
-### Let Bindings
+### Let bindings
+
+Bindings are immutable. There is no reassignment.
 
 ```gs
-let num = 10
-let name = "greg"
-let isTrue = false
+let name = "Alice"
+let age  = 30
+let pi   = 3.14d
 println name
 ```
 
----
-
-### Numeric Literals
+### Numeric types
 
 ```gs
-let i = 42
-let d = 3.14d
-let f = 2.5f
-let m = 9.99m
+let i = 42       // int
+let d = 3.14d    // double
+let f = 2.5f     // float
+let m = 9.99m    // decimal
 ```
-
----
 
 ### Arrays
 
 ```gs
-let nums = [1 2 3 4 5]
+let nums  = [1 2 3 4 5]
 let names = ["Alice" "Bob" "Carol"]
 ```
 
----
-
 ### Conditionals
 
-```gs
-# inline
-if num >= 20 then println "X" else println "Y"
+`if` is an expression — it can appear on the right side of `let`.
 
-# block
-if num >= 20 then
-    println "X"
+```gs
+// inline
+if age >= 18 then println "adult" else println "minor"
+
+// block
+if age >= 18 then
+    println "adult"
 else
-    println "Y"
+    println "minor"
+
+// as expression
+let label = if age >= 18 then "adult" else "minor"
+println label
 ```
 
----
+### For — functional map
 
-### For
+`for` transforms a collection and returns a new array.
+The last expression in the body is the value for each element.
 
 ```gs
-for item in nums do
-    println item
+let nums    = [1 2 3 4 5]
+let doubled = for item in nums do
+    item * 2
+
+for x in doubled do
+    println x    // 2 4 6 8 10
 ```
 
----
-
-### While
+### Comments
 
 ```gs
-# while is deprecated — it requires mutable state and will be removed.
-# Use recursion instead.
-while num < 20 do
-    println num
+// this is a comment
+let x = 10    // inline comment
 ```
 
 ---
 
 ### Functions
 
-Functions support two forms: **inline** (single expression after `=>`) and **block** (indented body).
-The last expression in the body is the implicit return value.
+No parentheses in definitions. Two forms: inline (`=>`) and block (indented body).
+The last expression in a block is the implicit return value.
 
 ```gs
-# inline — single expression after =>
-double(x) => x * 2
+// inline
+double x => x * 2
+add a b  => a + b
+greet    => println "Hello!"
 
-# inline with no parameters
-greet() => println "Hello!"
-
-# block form — last expression is the return value
-max(a b)
+// block — last expression is returned
+max a b
     if a >= b then a else b
-
-# calling a function
-double(5)
-greet()
-max(3 7)
 ```
 
----
+### Function calls
+
+No parentheses needed when arguments are simple values (literals or variable names).
+Parentheses are required when an argument is an expression.
+
+```gs
+println double 5        // 10
+println add 3 7         // 10
+println max 100 42      // 100
+
+// parentheses required for expression arguments
+// `factorial n - 1` would parse as `(factorial n) - 1` — wrong
+factorial n
+    if n == 0 then 1 else n * factorial(n - 1)
+
+println factorial 10    // 3628800
+```
 
 ### Recursion
 
 ```gs
-factorial(n)
-    if n == 0 then 1 else n * factorial(n - 1)
-
-fib(n)
+fib n
     if n <= 1 then n else fib(n - 1) + fib(n - 2)
 
-println factorial(10)
-println fib(10)
+println fib 10    // 55
+```
+
+### Higher-order functions
+
+Functions are first-class values — pass them, store them, return them.
+
+```gs
+double x    => x * 2
+apply f x   => f(x)
+applyTwice f x => f(f(x))
+
+println apply double 5        // 10
+println applyTwice double 3   // 12
+
+let fn = double
+println fn(10)                // 20
 ```
 
 ---
 
-### Higher-order Functions
+### Entry point
 
-Functions are first-class values — they can be passed as arguments and stored in bindings.
+For a single-file program, the file itself is the entry point — everything runs top-to-bottom.
+
+For multi-file programs (when imports arrive), declare `main` as the entry point.
+`main` is a reserved word.
 
 ```gs
-double(x) => x * 2
-apply(f x) => f(x)
-applyTwice(f x) => f(f(x))
+// main.gs
+add a b => a + b
 
-println apply(double 5)       # 10
-println applyTwice(double 3)  # 12
-
-# storing a function in a binding
-let fn = double
-println fn(5)                 # 10
+main
+    let result = add 10 20
+    println result
 ```
 
-## Contact
+---
 
-If you have questions, suggestions, or just want to talk about language design and .NET internals, feel free to reach
-out:
+## Current Features
+
+| Feature | Status |
+|---|---|
+| Immutable bindings (`let`) | ✅ |
+| Numeric types (int, float, double, decimal) | ✅ |
+| Strings | ✅ |
+| Arrays | ✅ |
+| `if/else` as expression (inline and block) | ✅ |
+| `for` as functional map (returns array) | ✅ |
+| Named functions (inline `=>` and block) | ✅ |
+| No-paren function calls | ✅ |
+| Recursion | ✅ |
+| Higher-order functions | ✅ |
+| Line comments (`//`) | ✅ |
+| Error messages with line numbers | ✅ |
+| `main` as entry point | ✅ |
+| `gs run` CLI with auto-detection | ✅ |
+| VS Code extension (highlight + run) | ✅ |
+| String concatenation (`+`) | ⏳ |
+| Lambda expressions | ⏳ |
+| `map` / `filter` / `fold` | ⏳ |
+| Built-in functions (`len`, `str`, `int`) | ⏳ |
+| Multiple files / imports | ⏳ |
+| Type system (Hindley-Milner inference) | ⏳ |
+| Pattern matching | ⏳ |
+
+---
+
+## Contact
 
 **gregory.wow@hotmail.com**
 
 ---
 
-## MIT License
+## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT](LICENSE)

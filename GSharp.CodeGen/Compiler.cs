@@ -24,6 +24,20 @@ namespace GSharp.CodeGen;
 //     Each expression's value is discarded — Main is void.
 public class Compiler
 {
+    private static void RegisterPrecompiledFunctions(EmitContext ctx)
+    {
+        var t = typeof(Helpers.PrecompiledFunctions);
+        ctx.PrecompiledFunctions["head"]    = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Head))!;
+        ctx.PrecompiledFunctions["tail"]    = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Tail))!;
+        ctx.PrecompiledFunctions["last"]    = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Last))!;
+        ctx.PrecompiledFunctions["len"]     = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Len))!;
+        ctx.PrecompiledFunctions["empty"]   = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Empty))!;
+        ctx.PrecompiledFunctions["nth"]     = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Nth))!;
+        ctx.PrecompiledFunctions["reverse"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Reverse))!;
+        ctx.PrecompiledFunctions["concat"]  = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Concat))!;
+        ctx.PrecompiledFunctions["str"]     = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Str))!;
+    }
+
     private static (MethodBuilder, TypeBuilder) CreateBuilders()
     {
         var assemblyName = new AssemblyName("GSharpRuntimeAssembly");
@@ -59,6 +73,7 @@ public class Compiler
                 FunctionEmitter.Define(typeBuilder, fn, functions, adapters);
 
             var ctx = new EmitContext(functions, adapters);
+            RegisterPrecompiledFunctions(ctx);
 
             // ============================
             // Pass 2 — Emit function bodies

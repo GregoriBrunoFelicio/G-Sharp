@@ -27,7 +27,7 @@ println x / y
 let nums = [1 2 3 4 5]
 let names = ["Alice" "Bob" "Carol"]
 let flags = [true false true]
-
+b
 for item in nums do
     println item
 

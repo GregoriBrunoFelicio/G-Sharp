@@ -38,6 +38,15 @@ public static partial class Validations
             "char",
             "void",
             "main",
+            "head",
+            "tail",
+            "last",
+            "len",
+            "empty",
+            "nth",
+            "reverse",
+            "concat",
+            "str",
         };
 
         return reserved.Contains(word);

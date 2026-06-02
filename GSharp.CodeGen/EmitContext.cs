@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Reflection.Emit;
 
 namespace GSharp.CodeGen;
@@ -40,4 +41,9 @@ public class EmitContext(
     // They unpack the object[] and delegate to the main static method.
     // Used when a function is referenced as a value (higher-order use).
     public readonly Dictionary<string, MethodBuilder> FunctionAdapters = functionAdapters;
+
+    // Maps G# function names to their pre-compiled MethodInfo in PrecompiledFunctions.
+    // Checked before ctx.Functions so they are always found regardless of user definitions
+    // (shadowing is blocked by Validations).
+    public readonly Dictionary<string, MethodInfo> PrecompiledFunctions = new();
 }

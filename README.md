@@ -143,6 +143,34 @@ let x = 10    // inline comment
 
 ---
 
+### Built-in functions
+
+#### Array operations
+
+```gs
+let nums = [1 2 3 4 5]
+
+println head nums        // 1
+println last nums        // 5
+println len nums         // 5
+println empty nums       // False
+println nth nums 2       // 3  (zero-indexed)
+
+let rest     = tail nums     // [2 3 4 5]
+let reversed = reverse nums  // [5 4 3 2 1]
+let more     = [6 7 8]
+let all      = concat nums more  // [1 2 3 4 5 6 7 8]
+```
+
+#### Type conversion
+
+```gs
+println str 42       // "42"
+println str 3.14d    // "3.14"
+```
+
+---
+
 ### Functions
 
 No parentheses in definitions. Two forms: inline (`=>`) and block (indented body).
@@ -241,11 +269,13 @@ main
 | `main` as entry point | ✅ |
 | `gs run` CLI with auto-detection | ✅ |
 | VS Code extension (highlight + run) | ✅ |
+| Built-in array functions (`head`, `tail`, `last`, `len`, `nth`, `reverse`, `concat`) | ✅ |
+| Type conversion (`str`) | ✅ |
 | String concatenation (`+`) | ⏳ |
 | Lambda expressions | ⏳ |
 | `map` / `filter` / `fold` | ⏳ |
-| Built-in functions (`len`, `str`, `int`) | ⏳ |
 | Multiple files / imports | ⏳ |
+| .NET interop (`import dotnet`) | ⏳ |
 | Type system (Hindley-Milner inference) | ⏳ |
 | Pattern matching | ⏳ |
 

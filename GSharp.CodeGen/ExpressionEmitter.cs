@@ -60,7 +60,14 @@ public static class ExpressionEmitter
             // Function calls: name(args)
             // ============================
             case CallExpression call:
-                if (ctx.Functions.ContainsKey(call.Callee))
+                if (ctx.PrecompiledFunctions.TryGetValue(call.Callee, out var precompiled))
+                {
+                    // Pre-compiled function — call PrecompiledFunctions method directly.
+                    foreach (var arg in call.Arguments)
+                        EmitToStack(il, arg, ctx);
+                    il.Emit(OpCodes.Call, precompiled);
+                }
+                else if (ctx.Functions.ContainsKey(call.Callee))
                 {
                     // Direct call to a known static function — fast Call opcode.
                     foreach (var arg in call.Arguments)

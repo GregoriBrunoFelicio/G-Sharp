@@ -37,6 +37,7 @@ public static partial class Validations
             "float",
             "char",
             "void",
+            "main",
         };
 
         return reserved.Contains(word);

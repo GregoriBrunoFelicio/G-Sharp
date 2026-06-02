@@ -77,6 +77,13 @@ public class Compiler
                 il.Emit(OpCodes.Pop);
             }
 
+            // If `main` is declared, call it as the entry point after all top-level expressions.
+            if (ctx.Functions.TryGetValue("main", out var userMain))
+            {
+                il.Emit(OpCodes.Call, userMain);
+                il.Emit(OpCodes.Pop);
+            }
+
             il.Emit(OpCodes.Ret);
 
             // ============================

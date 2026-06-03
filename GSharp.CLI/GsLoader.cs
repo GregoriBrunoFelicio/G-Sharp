@@ -10,6 +10,8 @@ internal static class GsLoader
     internal static List<Expression> ParseFile(string path)
     {
         var code = GsFileReader.ReadSource(path);
+        if (string.IsNullOrWhiteSpace(code))
+            return [];
         var tokens = new Lexer(code).Tokenize();
         return new Parser(tokens).Parse();
     }

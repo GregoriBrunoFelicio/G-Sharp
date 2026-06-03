@@ -16,10 +16,6 @@ public static class GsFileReader
             throw new InvalidOperationException($"Invalid file extension. Expected '.gs' but got '{Path.GetExtension(path)}'.");
 
         var source = File.ReadAllText(path, Encoding.UTF8);
-
-        if (string.IsNullOrWhiteSpace(source))
-            throw new InvalidDataException($"File '{path}' is empty or contains only whitespace.");
-
         return NormalizeLineEndings(source);
     }
 

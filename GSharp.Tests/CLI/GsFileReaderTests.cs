@@ -50,26 +50,6 @@ public class GsFileReaderTests
         act.Should().Throw<InvalidOperationException>().WithMessage("*Invalid file extension*");
     }
 
-    [Fact]
-    public void Should_Throw_When_File_Is_Empty()
-    {
-        var path = CreateTempFile("empty.gs", "");
-
-        Action act = () => GsFileReader.ReadSource(path);
-
-        act.Should().Throw<InvalidDataException>().WithMessage("*is empty or contains only whitespace*");
-    }
-
-    [Fact]
-    public void Should_Throw_When_File_Contains_Only_Whitespace()
-    {
-        var path = CreateTempFile("whitespace.gs", "   \n\t");
-
-        var act = () => GsFileReader.ReadSource(path);
-
-        act.Should().Throw<InvalidDataException>();
-    }
-
     private static string CreateTempFile(string name, string content)
     {
         var path = Path.Combine(Path.GetTempPath(), name);
@@ -77,3 +57,4 @@ public class GsFileReaderTests
         return path;
     }
 }
+

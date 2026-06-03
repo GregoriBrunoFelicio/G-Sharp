@@ -16,8 +16,10 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
             parser.Advance();
             var right = GetExpression();
 
-            while (TryGetOperator(out var nextOp, out var nextPrecedence) &&
-                   nextPrecedence > precedence)
+            while (
+                TryGetOperator(out var nextOp, out var nextPrecedence)
+                && nextPrecedence > precedence
+            )
             {
                 parser.Advance();
                 var nextRight = GetExpression();
@@ -121,19 +123,24 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
     private static object ParseNumber(string text)
     {
         var ic = CultureInfo.InvariantCulture;
-        if (text.EndsWith('f')) return float.Parse(text[..^1], ic);
-        if (text.EndsWith('d')) return double.Parse(text[..^1], ic);
-        if (text.EndsWith('m')) return decimal.Parse(text[..^1], ic);
-        if (text.Contains('.')) return double.Parse(text, ic);
+        if (text.EndsWith('f'))
+            return float.Parse(text[..^1], ic);
+        if (text.EndsWith('d'))
+            return double.Parse(text[..^1], ic);
+        if (text.EndsWith('m'))
+            return decimal.Parse(text[..^1], ic);
+        if (text.Contains('.'))
+            return double.Parse(text, ic);
         return int.Parse(text, ic);
     }
 
-    private static bool IsAtom(TokenType type) => type is
-        TokenType.NumberLiteral or
-        TokenType.StringLiteral or
-        TokenType.BooleanTrueLiteral or
-        TokenType.BooleanFalseLiteral or
-        TokenType.Identifier;
+    private static bool IsAtom(TokenType type) =>
+        type
+            is TokenType.NumberLiteral
+                or TokenType.StringLiteral
+                or TokenType.BooleanTrueLiteral
+                or TokenType.BooleanFalseLiteral
+                or TokenType.Identifier;
 
     private List<Expression> ParseAtomArgs()
     {
@@ -143,12 +150,12 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
             var token = parser.Advance();
             Expression arg = token.Type switch
             {
-                TokenType.NumberLiteral       => new LiteralExpression(ParseNumber(token.Value)),
-                TokenType.StringLiteral       => new LiteralExpression(token.Value),
-                TokenType.BooleanTrueLiteral  => new LiteralExpression(true),
+                TokenType.NumberLiteral => new LiteralExpression(ParseNumber(token.Value)),
+                TokenType.StringLiteral => new LiteralExpression(token.Value),
+                TokenType.BooleanTrueLiteral => new LiteralExpression(true),
                 TokenType.BooleanFalseLiteral => new LiteralExpression(false),
-                TokenType.Identifier          => new BindingExpression(token.Value),
-                _ => throw new Exception("unreachable")
+                TokenType.Identifier => new BindingExpression(token.Value),
+                _ => throw new Exception("unreachable"),
             };
             args.Add(arg);
         }
@@ -158,9 +165,6 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
     private static LiteralExpression ParseArrayExpression(Parser parser)
     {
         var elements = new List<object>();
-
-        if (parser.Check(TokenType.RightBracket))
-            throw new Exception("Empty arrays are not supported.");
 
         Type? elementType = null;
 

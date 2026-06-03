@@ -60,10 +60,32 @@ catch (Exception ex)
 static string FindEntryPoint()
 {
     var files = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.gs");
-    return files.Length switch
+
+    if (files.Length == 0)
+        throw new Exception("no .gs files found in current directory");
+
+    if (files.Length == 1)
+        return files[0];
+
+    var withMain = files.Where(FileHasMainDeclaration).ToArray();
+
+    return withMain.Length switch
     {
-        0 => throw new Exception("no .gs files found in current directory"),
-        1 => files[0],
-        _ => throw new Exception("multiple .gs files found — specify which to run: gs <file.gs>")
+        0 => throw new Exception("multiple .gs files found — declare a 'main' function in one of them or specify a file: gs <file.gs>"),
+        1 => withMain[0],
+        _ => throw new Exception($"multiple entry points found: {string.Join(", ", withMain.Select(Path.GetFileName))}")
     };
+}
+
+static bool FileHasMainDeclaration(string path)
+{
+    var tokens = new Lexer(GsFileReader.ReadSource(path)).Tokenize();
+    for (int i = 0; i < tokens.Count - 1; i++)
+    {
+        if (tokens[i].Type == TokenType.Identifier &&
+            tokens[i].Value == "main" &&
+            tokens[i + 1].Type == TokenType.BlockOpen)
+            return true;
+    }
+    return false;
 }

@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="*.gs">
+      <Content Include="tests\*.gs">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>

@@ -21,53 +21,8 @@ dotnet tool install -g --add-source ./nupkg GSharp.CLI
 
 ```bash
 gs run main.gs     # explicit
-gs run             # auto-detects main.gs or the single .gs file in the directory
+gs run             # auto-detects entry point in the current directory
 gs hello.gs        # shorthand
-```
-
----
-
-## Architecture
-
-```mermaid
-flowchart TD
-    SRC["SOURCE FILE (.gs)"]
-
-    subgraph LEXER["LEXER"]
-        L1["IdentifierLexer — keywords and names"]
-        L2["NumberLexer — int, float, double, decimal"]
-        L3["StringLexer — string literals"]
-        L4["SymbolLexer — operators, arrow (=>)"]
-        L5["Indentation — BlockOpen / BlockClose tokens"]
-    end
-
-    T["List&lt;Token&gt;"]
-
-    subgraph PARSER["PARSER"]
-        P1["LetParser — immutable bindings"]
-        P2["IfParser — inline or block conditionals"]
-        P3["ForParser — functional map over arrays"]
-        P4["FunctionParser — named functions"]
-        P5["ExpressionParser — arithmetic, calls, HOF"]
-    end
-
-    AST["List&lt;Expression&gt; (AST)"]
-
-    subgraph CODEGEN["CODE GEN"]
-        C1["ExpressionEmitter — one boxed object per expression on IL stack"]
-        C2["IfEmitter / ForEmitter — control flow via IL labels"]
-        C3["LetEmitter — immutable local slots"]
-        C4["FunctionEmitter — two-pass (Define + Emit) with adapter methods"]
-        C5["EmitContext — locals, params, functions, adapters"]
-        C6["GSharpFunction — first-class function wrapper"]
-        C7["RuntimeHelpers — numeric type promotion"]
-    end
-
-    IL["IL — System.Reflection.Emit"]
-    RT[".NET Runtime"]
-    OUT["Output"]
-
-    SRC --> LEXER --> T --> PARSER --> AST --> CODEGEN --> IL --> RT --> OUT
 ```
 
 ---
@@ -156,8 +111,8 @@ println len nums         // 5
 println empty nums       // False
 println nth nums 2       // 3  (zero-indexed)
 
-let rest     = tail nums     // [2 3 4 5]
-let reversed = reverse nums  // [5 4 3 2 1]
+let rest     = tail nums         // [2 3 4 5]
+let reversed = reverse nums      // [5 4 3 2 1]
 let more     = [6 7 8]
 let all      = concat nums more  // [1 2 3 4 5 6 7 8]
 ```
@@ -219,8 +174,8 @@ println fib 10    // 55
 Functions are first-class values — pass them, store them, return them.
 
 ```gs
-double x    => x * 2
-apply f x   => f(x)
+double x       => x * 2
+apply f x      => f(x)
 applyTwice f x => f(f(x))
 
 println apply double 5        // 10
@@ -236,17 +191,40 @@ println fn(10)                // 20
 
 For a single-file program, the file itself is the entry point — everything runs top-to-bottom.
 
-For multi-file programs (when imports arrive), declare `main` as the entry point.
-`main` is a reserved word.
+For multi-file programs, declare `main` as the entry point. Exactly one file must have `main`.
 
 ```gs
-// main.gs
 add a b => a + b
 
 main
     let result = add 10 20
     println result
 ```
+
+---
+
+### Modules and imports
+
+A module is any `.gs` file without a `main` declaration. Import it by name — no path needed.
+Module names must be unique across the project.
+
+```gs
+// mathutils.gs
+add a b => a + b
+square x => x * x
+```
+
+```gs
+// main.gs
+import mathutils
+
+main
+    println mathutils.add 3 5      // 8
+    println mathutils.square 4     // 16
+```
+
+Module files can be placed in any subdirectory. The compiler finds them by name.
+Modules can import other modules — circular imports are detected and reported as errors.
 
 ---
 
@@ -265,16 +243,16 @@ main
 | Recursion | ✅ |
 | Higher-order functions | ✅ |
 | Line comments (`//`) | ✅ |
-| Error messages with line numbers | ✅ |
 | `main` as entry point | ✅ |
 | `gs run` CLI with auto-detection | ✅ |
-| VS Code extension (highlight + run) | ✅ |
 | Built-in array functions (`head`, `tail`, `last`, `len`, `nth`, `reverse`, `concat`) | ✅ |
 | Type conversion (`str`) | ✅ |
+| Module import system (`import`, dot notation) | ✅ |
+| Multi-file projects with recursive module loading | ✅ |
+| Circular import detection | ✅ |
 | String concatenation (`+`) | ⏳ |
 | Lambda expressions | ⏳ |
 | `map` / `filter` / `fold` | ⏳ |
-| Multiple files / imports | ⏳ |
 | .NET interop (`import dotnet`) | ⏳ |
 | Type system (Hindley-Milner inference) | ⏳ |
 | Pattern matching | ⏳ |
@@ -290,3 +268,73 @@ main
 ## License
 
 [MIT](LICENSE)
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TD
+    SRC["SOURCE FILE (.gs)"]
+
+    subgraph LEXER["LEXER"]
+        L1["IdentifierLexer — keywords and names"]
+        L2["NumberLexer — int, float, double, decimal"]
+        L3["StringLexer — string literals"]
+        L4["SymbolLexer — operators, arrow (=>)"]
+        L5["Indentation — BlockOpen / BlockClose tokens"]
+    end
+
+    T["List&lt;Token&gt;"]
+
+    subgraph PARSER["PARSER"]
+        P1["LetParser — immutable bindings"]
+        P2["IfParser — inline or block conditionals"]
+        P3["ForParser — functional map over arrays"]
+        P4["FunctionParser — named functions"]
+        P5["ImportParser — module declarations"]
+        P6["ExpressionParser — arithmetic, calls, HOF"]
+    end
+
+    AST["List&lt;Expression&gt; (AST)"]
+
+    subgraph CLI["CLI"]
+        CL1["EntryResolver — detects entry point file"]
+        CL2["GsLoader — parses files, loads modules via queue"]
+    end
+
+    subgraph CODEGEN["CODE GEN"]
+        C1["ExpressionEmitter — one boxed object per expression on IL stack"]
+        C2["IfEmitter / ForEmitter — control flow via IL labels"]
+        C3["LetEmitter — immutable local slots"]
+        C4["FunctionEmitter — two-pass (Define + Emit) with adapter methods"]
+        C5["EmitContext — locals, params, functions, adapters"]
+        C6["GSharpFunction — first-class function wrapper"]
+        C7["RuntimeHelpers — numeric type promotion"]
+        C8["PrecompiledFunctions — built-in array and conversion functions"]
+    end
+
+    IL["IL — System.Reflection.Emit"]
+    RT[".NET Runtime"]
+    OUT["Output"]
+
+    SRC --> CLI --> LEXER --> T --> PARSER --> AST --> CODEGEN --> IL --> RT --> OUT
+```
+
+### Project structure
+
+```
+GSharp.Lexer/       — tokenizer (Lexer, sub-lexers, TokenType)
+GSharp.AST/         — immutable record types for all AST nodes
+  Expression.cs     — base + Literal, Binding, Binary
+  Declarations.cs   — FunctionDeclaration, ImportDeclaration
+  Calls.cs          — CallExpression, QualifiedCallExpression
+  Statements.cs     — Let, Print, If, For, While
+GSharp.Parser/      — recursive-descent parser (one class per statement type)
+GSharp.CodeGen/     — IL emitters (one class per statement type) + Compiler entry point
+GSharp.CLI/         — entry point resolver, file loader, program runner
+  EntryResolver.cs  — detects which file to run
+  GsLoader.cs       — parses files and resolves module imports
+  Program.cs        — main entry point
+GSharp.Tests/       — xUnit tests (FluentAssertions)
+```

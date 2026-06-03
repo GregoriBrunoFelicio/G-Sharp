@@ -38,6 +38,7 @@ public static partial class Validations
             "char",
             "void",
             "main",
+            "import",
             "head",
             "tail",
             "last",

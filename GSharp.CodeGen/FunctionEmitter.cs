@@ -40,27 +40,27 @@ public static class FunctionEmitter
         TypeBuilder typeBuilder,
         FunctionDeclaration fn,
         Dictionary<string, MethodBuilder> functions,
-        Dictionary<string, MethodBuilder> adapters)
+        Dictionary<string, MethodBuilder> adapters,
+        string prefix = "")
     {
+        var qualifiedName = prefix + fn.Name;
         var paramTypes = Enumerable.Repeat(typeof(object), fn.Parameters.Count).ToArray();
 
         var method = typeBuilder.DefineMethod(
-            fn.Name,
+            qualifiedName,
             MethodAttributes.Public | MethodAttributes.Static,
             typeof(object),
             paramTypes);
 
-        functions[fn.Name] = method;
+        functions[qualifiedName] = method;
 
-        // Define the adapter: static object Name__adapter(object[] args)
-        // The body is emitted in Pass 2 after the main method is defined.
         var adapter = typeBuilder.DefineMethod(
-            fn.Name + "__adapter",
+            qualifiedName + "__adapter",
             MethodAttributes.Public | MethodAttributes.Static,
             typeof(object),
             [typeof(object[])]);
 
-        adapters[fn.Name] = adapter;
+        adapters[qualifiedName] = adapter;
     }
 
     // Pass 2: emit IL into the MethodBuilder registered in Pass 1.
@@ -69,15 +69,16 @@ public static class FunctionEmitter
     // are separate from Main's locals and other functions' locals, and its
     // parameters are registered so that BindingExpression nodes emit Ldarg
     // instead of Ldloc for parameter names.
-    public static void Emit(FunctionDeclaration fn, EmitContext ctx)
+    public static void Emit(FunctionDeclaration fn, EmitContext ctx, string prefix = "")
     {
-        EmitMainBody(fn, ctx);
-        EmitAdapter(fn, ctx);
+        EmitMainBody(fn, ctx, prefix);
+        EmitAdapter(fn, ctx, prefix);
     }
 
-    private static void EmitMainBody(FunctionDeclaration fn, EmitContext ctx)
+    private static void EmitMainBody(FunctionDeclaration fn, EmitContext ctx, string prefix)
     {
-        var method = ctx.Functions[fn.Name];
+        var qualifiedName = prefix + fn.Name;
+        var method = ctx.Functions[qualifiedName];
         var il = method.GetILGenerator();
 
         var fnCtx = new EmitContext(ctx.Functions, ctx.FunctionAdapters);
@@ -115,21 +116,20 @@ public static class FunctionEmitter
     // This adapter is used when the function is passed as a first-class value.
     // It bridges the GSharpFunction(object[] args) calling convention with the
     // strongly-typed static method signature.
-    private static void EmitAdapter(FunctionDeclaration fn, EmitContext ctx)
+    private static void EmitAdapter(FunctionDeclaration fn, EmitContext ctx, string prefix)
     {
-        var adapter = ctx.FunctionAdapters[fn.Name];
+        var qualifiedName = prefix + fn.Name;
+        var adapter = ctx.FunctionAdapters[qualifiedName];
         var il = adapter.GetILGenerator();
 
-        // Unpack each argument from the args array: args[0], args[1], ...
         for (var i = 0; i < fn.Parameters.Count; i++)
         {
-            il.Emit(OpCodes.Ldarg_0);      // load args array
-            il.Emit(OpCodes.Ldc_I4, i);   // index
-            il.Emit(OpCodes.Ldelem_Ref);   // args[i]
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4, i);
+            il.Emit(OpCodes.Ldelem_Ref);
         }
 
-        // Call the main static method with the unpacked arguments.
-        il.Emit(OpCodes.Call, ctx.Functions[fn.Name]);
+        il.Emit(OpCodes.Call, ctx.Functions[qualifiedName]);
         il.Emit(OpCodes.Ret);
     }
 }

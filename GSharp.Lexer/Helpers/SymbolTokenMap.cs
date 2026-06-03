@@ -27,6 +27,9 @@ public static class SymbolTokenMap
         { '+', TokenType.Plus },
         { '-', TokenType.Minus },
         { '*', TokenType.Multiply },
-        { '/', TokenType.Divide }
+        { '/', TokenType.Divide },
+
+        // Module access
+        { '.', TokenType.Dot },
     };
 }

@@ -49,6 +49,9 @@ public static class IdentifierLexer
         ["not"] = TokenType.Not,
         
         // Functions
-        ["function"] = TokenType.Function
+        ["function"] = TokenType.Function,
+
+        // Imports
+        ["import"] = TokenType.Import,
     };
 }

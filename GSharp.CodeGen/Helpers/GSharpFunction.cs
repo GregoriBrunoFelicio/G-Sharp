@@ -12,13 +12,9 @@ namespace GSharp.CodeGen.Helpers;
 //
 // Direct calls (soma(3 5)) still use the fast Call opcode.
 // Higher-order calls (apply(f 5)) go through GSharpFunction.Call.
-public sealed class GSharpFunction
+public sealed class GSharpFunction(Func<object[], object> invoke)
 {
-    private readonly Func<object[], object> _invoke;
-
-    public GSharpFunction(Func<object[], object> invoke) => _invoke = invoke;
-
-    public object Call(object[] args) => _invoke(args);
+    public object Call(object[] args) => invoke(args);
 
     public override string ToString() => "<function>";
 }

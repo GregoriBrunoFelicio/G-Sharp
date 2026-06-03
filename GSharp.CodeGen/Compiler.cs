@@ -57,7 +57,9 @@ public class Compiler
         return (methodBuilder, typeBuilder);
     }
 
-    public void CompileAndRun(List<Expression> expressions)
+    public void CompileAndRun(
+        List<Expression> expressions,
+        Dictionary<string, List<Expression>>? modules = null)
     {
         try
         {
@@ -67,7 +69,14 @@ public class Compiler
             var adapters  = new Dictionary<string, MethodBuilder>();
 
             // ============================
-            // Pass 1 — Register all function signatures
+            // Pass 1 — Register module function signatures (prefixed)
+            // ============================
+            foreach (var (moduleName, moduleExprs) in modules ?? [])
+                foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
+                    FunctionEmitter.Define(typeBuilder, fn, functions, adapters, prefix: moduleName + ".");
+
+            // ============================
+            // Pass 1 — Register main function signatures
             // ============================
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
                 FunctionEmitter.Define(typeBuilder, fn, functions, adapters);
@@ -76,7 +85,14 @@ public class Compiler
             RegisterPrecompiledFunctions(ctx);
 
             // ============================
-            // Pass 2 — Emit function bodies
+            // Pass 2 — Emit module function bodies
+            // ============================
+            foreach (var (moduleName, moduleExprs) in modules ?? [])
+                foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
+                    FunctionEmitter.Emit(fn, ctx, prefix: moduleName + ".");
+
+            // ============================
+            // Pass 2 — Emit main function bodies
             // ============================
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
                 FunctionEmitter.Emit(fn, ctx);
@@ -86,7 +102,7 @@ public class Compiler
             // ============================
             var il = methodBuilder.GetILGenerator();
 
-            foreach (var expr in expressions.Where(e => e is not FunctionDeclaration))
+            foreach (var expr in expressions.Where(e => e is not FunctionDeclaration and not ImportDeclaration))
             {
                 ExpressionEmitter.EmitToStack(il, expr, ctx);
                 il.Emit(OpCodes.Pop);

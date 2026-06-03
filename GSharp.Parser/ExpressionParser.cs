@@ -68,6 +68,29 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
         {
             var name = parser.Previous().Value;
 
+            // Qualified call: module.function — e.g. math.add 10 20
+            if (parser.Match(TokenType.Dot))
+            {
+                var functionName = parser.Consume(TokenType.Identifier).Value;
+
+                if (parser.Match(TokenType.LeftParen))
+                {
+                    var args = new List<Expression>();
+                    while (!parser.Check(TokenType.RightParen))
+                        args.Add(new ExpressionParser(parser, allowAtomArgs: false).Parse());
+                    parser.Consume(TokenType.RightParen);
+                    return new QualifiedCallExpression(name, functionName, args);
+                }
+
+                if (allowAtomArgs)
+                {
+                    var atomArgs = ParseAtomArgs();
+                    return new QualifiedCallExpression(name, functionName, atomArgs);
+                }
+
+                return new QualifiedCallExpression(name, functionName, []);
+            }
+
             // Call with parens: sum(10 20) — args parsed without atom collection
             // so that `apply(double 5)` stays as apply(double, 5), not apply(double(5)).
             if (parser.Match(TokenType.LeftParen))

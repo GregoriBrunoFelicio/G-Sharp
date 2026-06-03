@@ -23,3 +23,7 @@ public record ForExpression(string BindingName, Expression Iterable, List<Expres
 public record WhileExpression(Expression Condition, List<Expression> Body) : Expression;
 
 public record FunctionDeclaration(string Name, List<string> Parameters, List<Expression> Body) : Expression;
+
+public record ImportDeclaration(string ModuleName) : Expression;
+
+public record QualifiedCallExpression(string Module, string Function, List<Expression> Arguments) : Expression;

@@ -77,5 +77,9 @@ public enum TokenType
     
     
     // Function
-    Function
+    Function,
+
+    // Imports
+    Import,
+    Dot
 }

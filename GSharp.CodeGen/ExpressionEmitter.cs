@@ -84,6 +84,29 @@ public static class ExpressionEmitter
                 break;
 
             // ============================
+            // Qualified calls: module.function args
+            // ============================
+            case QualifiedCallExpression qCall:
+            {
+                var key = $"{qCall.Module}.{qCall.Function}";
+                if (ctx.PrecompiledFunctions.TryGetValue(key, out var precompiledQ))
+                {
+                    foreach (var arg in qCall.Arguments)
+                        EmitToStack(il, arg, ctx);
+                    il.Emit(OpCodes.Call, precompiledQ);
+                }
+                else if (ctx.Functions.TryGetValue(key, out var moduleMethod))
+                {
+                    foreach (var arg in qCall.Arguments)
+                        EmitToStack(il, arg, ctx);
+                    il.Emit(OpCodes.Call, moduleMethod);
+                }
+                else
+                    throw new Exception($"Undefined function: '{key}'");
+                break;
+            }
+
+            // ============================
             // Binary expressions (a + b, a == b, a and b, etc.)
             // ============================
             case BinaryExpression b:

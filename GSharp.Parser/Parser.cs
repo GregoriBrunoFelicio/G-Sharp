@@ -29,6 +29,9 @@ public class Parser(List<Token> tokens)
 
     public Expression ParseNext()
     {
+        if (Check(TokenType.Import))
+            return new ImportParser(this).Parse();
+
         if (Check(TokenType.Let))
             return new LetParser(this).Parse();
 

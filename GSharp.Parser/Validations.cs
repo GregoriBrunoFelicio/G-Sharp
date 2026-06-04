@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using GSharp.AST;
 using GSharp.Lexer;
 
 namespace GSharp.Parser;
@@ -11,46 +12,18 @@ public static partial class Validations
     public static bool IsValidBindingName(string name) =>
         ValidBindingNameRegex().IsMatch(name);
 
-    public static bool IsReserved(string word)
-    {
-        var reserved = new HashSet<string>
-        {
-            "let",
-            "if",
-            "else",
-            "for",
-            "return",
-            "true",
-            "false",
-            "null",
-            "function",
-            "print",
-            "printf",
-            "println",
-            "string",
-            "number",
-            "boolean",
-            "bool",
-            "in",
-            "int",
-            "float",
-            "char",
-            "void",
-            "main",
-            "import",
-            "head",
-            "tail",
-            "last",
-            "len",
-            "empty",
-            "nth",
-            "reverse",
-            "concat",
-            "str",
-        };
+    private static readonly HashSet<string> ReservedKeywords =
+    [
+        "let", "if", "else", "for", "return",
+        "true", "false", "null",
+        "function", "print", "printf", "println",
+        "string", "number", "boolean", "bool",
+        "in", "int", "float", "char", "void",
+        "main", "import",
+        .. PrecompiledCatalog.Functions.Keys,
+    ];
 
-        return reserved.Contains(word);
-    }
+    public static bool IsReserved(string word) => ReservedKeywords.Contains(word);
     
     public static readonly Dictionary<TokenType, int> OperatorPrecedence = new()
     {

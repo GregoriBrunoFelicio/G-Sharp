@@ -48,12 +48,12 @@ public static class PrecompiledFunctions
 
     public static object Concat(object a, object b)
     {
-        var arr1 = (object[])a;
-        var arr2 = (object[])b;
-        var result = new object[arr1.Length + arr2.Length];
-        Array.Copy(arr1, result, arr1.Length);
-        Array.Copy(arr2, 0, result, arr1.Length, arr2.Length);
-        return result;
+        var left   = a is object[] leftArr  ? leftArr  : new[] { a };
+        var right  = b is object[] rightArr ? rightArr : new[] { b };
+        var merged = new object[left.Length + right.Length];
+        Array.Copy(left,  merged, left.Length);
+        Array.Copy(right, 0, merged, left.Length, right.Length);
+        return merged;
     }
 
     public static object Str(object arg) => arg?.ToString() ?? "";

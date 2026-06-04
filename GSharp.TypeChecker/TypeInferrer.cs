@@ -231,7 +231,7 @@ public class TypeInferrer
 
     private GsType InferCall(CallExpression call, TypeEnvironment environment)
     {
-        if (IsBuiltIn(call.Callee))
+        if (IsPrecompiled(call.Callee))
             return InferBuiltInCall(call, environment);
 
         if (!environment.TryLookup(call.Callee, out var calleeType))
@@ -277,15 +277,25 @@ public class TypeInferrer
     // Built-in functions
     // -------------------------------------------------------------------------
 
-    private static readonly HashSet<string> BuiltInNames =
-    [
-        "head", "tail", "last", "len", "empty", "nth", "reverse", "concat", "str"
-    ];
+    private static bool IsPrecompiled(string name) => PrecompiledCatalog.Functions.ContainsKey(name);
 
-    private static bool IsBuiltIn(string name) => BuiltInNames.Contains(name);
+    private static void ValidatePrecompiledArguments(CallExpression call)
+    {
+        if (!PrecompiledCatalog.Functions.TryGetValue(call.Callee, out var expected))
+            return;
+
+        var got = call.Arguments.Count;
+        if (got != expected)
+        {
+            var argWord = expected == 1 ? "argument" : "arguments";
+            throw new Exception($"'{call.Callee}' expects {expected} {argWord} but got {got}");
+        }
+    }
 
     private GsType InferBuiltInCall(CallExpression call, TypeEnvironment environment)
     {
+        ValidatePrecompiledArguments(call);
+
         var elementTypeVar = FreshTypeVar();
         var arrayType      = new ArrayType(elementTypeVar);
 
@@ -335,11 +345,9 @@ public class TypeInferrer
     private GsType InferConcat(CallExpression call, ArrayType arrayType, TypeEnvironment environment)
     {
         foreach (var argument in call.Arguments)
-        {
-            var argType = InferExpression(argument, environment);
-            _constraints.Add(new TypeConstraint(argType, arrayType));
-        }
-        return arrayType;
+            InferExpression(argument, environment);
+
+        return new ArrayType(FreshTypeVar());
     }
 
     private GsType InferStr(CallExpression call, TypeEnvironment environment)
@@ -412,8 +420,8 @@ public class TypeInferrer
     {
         var globalEnvironment = new TypeEnvironment();
 
-        foreach (var builtInName in BuiltInNames)
-            globalEnvironment.Register(builtInName, FreshTypeVar());
+        foreach (var name in PrecompiledCatalog.Functions.Keys)
+            globalEnvironment.Register(name, FreshTypeVar());
 
         return globalEnvironment;
     }

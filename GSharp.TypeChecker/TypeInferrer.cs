@@ -76,7 +76,6 @@ public class TypeInferrer
             PrintExpression print              => InferPrint(print, environment),
             IfExpression ifExpression          => InferIf(ifExpression, environment),
             ForExpression forExpression        => InferFor(forExpression, environment),
-            WhileExpression whileExpression    => InferWhile(whileExpression, environment),
             FunctionDeclaration fn             => InferFunctionBody(fn, environment),
             CallExpression call                => InferCall(call, environment),
             QualifiedCallExpression qualified  => InferQualifiedCall(qualified, environment),
@@ -202,14 +201,6 @@ public class TypeInferrer
 
         var bodyResultType = InferBody(forExpression.Body, bodyEnvironment);
         return new ArrayType(bodyResultType);
-    }
-
-    private GsType InferWhile(WhileExpression whileExpression, TypeEnvironment environment)
-    {
-        var conditionType = InferExpression(whileExpression.Condition, environment);
-        _constraints.Add(new TypeConstraint(conditionType, new BoolType()));
-        InferBody(whileExpression.Body, environment);
-        return new UnitType();
     }
 
     // -------------------------------------------------------------------------

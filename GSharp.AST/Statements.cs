@@ -8,4 +8,3 @@ public record IfExpression(Expression Condition, List<Expression> ThenBody, List
 
 public record ForExpression(string BindingName, Expression Iterable, List<Expression> Body) : Expression;
 
-public record WhileExpression(Expression Condition, List<Expression> Body) : Expression;

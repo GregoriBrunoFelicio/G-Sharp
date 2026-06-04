@@ -70,10 +70,6 @@ public static class ExpressionEmitter
                 ForEmitter.Emit(il, forExpr, ctx);
                 return typeof(object[]);
 
-            case WhileExpression whileExpr:
-                WhileEmitter.Emit(il, whileExpr, ctx);
-                return typeof(object);
-
             case IfExpression ifExpr:
                 IfEmitter.EmitToStack(il, ifExpr, ctx);
                 return typeof(object);

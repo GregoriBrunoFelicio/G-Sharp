@@ -36,7 +36,6 @@ public static class IdentifierLexer
         // Loops
         ["for"] = TokenType.For,
         ["in"] = TokenType.In,
-        ["while"] = TokenType.While,
         ["do"] = TokenType.Do,
         ["then"] = TokenType.Then,
 

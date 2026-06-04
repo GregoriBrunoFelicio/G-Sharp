@@ -41,9 +41,6 @@ public class Parser(List<Token> tokens)
         if (Check(TokenType.For))
             return new ForParser(this).Parse();
 
-        if (Check(TokenType.While))
-            return new WhileParser(this).Parse();
-
         if (Check(TokenType.If))
             return new IfParser(this).Parse();
 

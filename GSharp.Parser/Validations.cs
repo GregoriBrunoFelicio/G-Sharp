@@ -18,7 +18,6 @@ public static partial class Validations
             "let",
             "if",
             "else",
-            "while",
             "for",
             "return",
             "true",

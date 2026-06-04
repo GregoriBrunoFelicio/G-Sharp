@@ -337,7 +337,7 @@ GSharp.AST/           — immutable record types for all AST nodes
   Expression.cs       — base + Literal, Binding, Binary
   Declarations.cs     — FunctionDeclaration, ImportDeclaration
   Calls.cs            — CallExpression, QualifiedCallExpression
-  Statements.cs       — Let, Print, If, For, While
+  Statements.cs       — Let, Print, If, For
 GSharp.Parser/        — recursive-descent parser (one class per statement type)
 GSharp.TypeChecker/   — Hindley-Milner type inference
   GsType.cs           — type hierarchy (IntType, FunctionType, TypeVar, ...)

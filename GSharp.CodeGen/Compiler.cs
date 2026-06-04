@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using GSharp.AST;
+using GSharp.TypeChecker;
 using Type = System.Type;
 
 namespace GSharp.CodeGen;
@@ -59,7 +60,8 @@ public class Compiler
 
     public void CompileAndRun(
         List<Expression> expressions,
-        Dictionary<string, List<Expression>>? modules = null)
+        Dictionary<string, List<Expression>>? modules = null,
+        Dictionary<Expression, GsType>? typeMap = null)
     {
         try
         {
@@ -81,7 +83,7 @@ public class Compiler
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
                 FunctionEmitter.Define(typeBuilder, fn, functions, adapters);
 
-            var ctx = new EmitContext(functions, adapters);
+            var ctx = new EmitContext(functions, adapters, typeMap);
             RegisterPrecompiledFunctions(ctx);
 
             // ============================

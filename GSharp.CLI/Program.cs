@@ -8,13 +8,10 @@ try
     var expressions = GsLoader.ParseFile(path);
     var modules     = GsLoader.LoadModules(path, expressions);
 
-    // Type-check the program — throws on type errors before any IL is emitted.
-    // The returned type map (expression → resolved type) will be passed to the
-    // CodeGen once it is updated to emit typed IL instead of object-based IL.
-    var _ = new TypeInferrer().Infer(expressions);
+    var typeMap = new TypeInferrer().Infer(expressions);
 
     var compiler = new Compiler();
-    compiler.CompileAndRun(expressions, modules);
+    compiler.CompileAndRun(expressions, modules, typeMap);
 }
 catch (Exception ex)
 {

@@ -5,25 +5,22 @@ namespace GSharp.CodeGen;
 
 // Emits IL for 'let' bindings.
 //
-// Example:
-//   let x = a + 1
+// Uses ExpressionEmitter.Emit (not EmitToStack) to get the value without unnecessary
+// boxing. The declared local has the actual CLR type of the value:
+//   let x = 10      → local is int32    (no heap allocation)
+//   let d = 3.14d   → local is float64  (no heap allocation)
+//   let s = "hello" → local is string   (reference, no boxing)
+//   let r = f x     → local is object   (function return, fallback)
 //
-// The emitted IL:
-//   <emit value>        ; leaves one object on the stack
-//   Stloc slot_N        ; pops the object and stores it in local slot N
-//   Ldnull              ; let-binding evaluates to null (unit-like)
-//
-// After this, 'x' is registered in ctx.Locals so that any later
-// BindingExpression("x") can emit Ldloc(slot_N) to retrieve the value.
+// When the binding is later loaded (BindingExpression), EmitBinding returns the local's
+// actual type. EmitToStack then boxes it only if a boxed object is required by the consumer.
 public static class LetEmitter
 {
     public static void Emit(ILGenerator il, LetExpression expr, EmitContext ctx)
     {
-        ExpressionEmitter.EmitToStack(il, expr.Value, ctx);
+        var clrType = ExpressionEmitter.Emit(il, expr.Value, ctx);
 
-        // Allocate a new local slot. Everything in G# is dynamically typed,
-        // so the slot type is always object.
-        var local = il.DeclareLocal(typeof(object));
+        var local = il.DeclareLocal(clrType);
         il.Emit(OpCodes.Stloc, local);
 
         ctx.Locals[expr.BindingName] = local;

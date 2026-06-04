@@ -23,6 +23,10 @@
     "hello": {
       "commandName": "Project",
       "commandLineArgs": "tests\\hello.gs"
+    },
+    "greg": {
+      "commandName": "Project",
+      "commandLineArgs": "tests\\greg.gs"
     }
   }
 }

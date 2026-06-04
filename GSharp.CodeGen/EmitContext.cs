@@ -1,5 +1,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
+using GSharp.AST;
+using GSharp.TypeChecker;
 
 namespace GSharp.CodeGen;
 
@@ -13,7 +15,8 @@ namespace GSharp.CodeGen;
 // are completely separate from Main's locals and from other functions.
 public class EmitContext(
     Dictionary<string, MethodBuilder> functions,
-    Dictionary<string, MethodBuilder> functionAdapters)
+    Dictionary<string, MethodBuilder> functionAdapters,
+    Dictionary<Expression, GsType>? typeMap = null)
 {
     // Maps binding names declared with 'let' to their IL local slots.
     // When the emitter encounters a BindingExpression, it looks here first.
@@ -46,4 +49,10 @@ public class EmitContext(
     // Checked before ctx.Functions so they are always found regardless of user definitions
     // (shadowing is blocked by Validations).
     public readonly Dictionary<string, MethodInfo> PrecompiledFunctions = new();
+
+    // Maps every Expression node (by reference) to its resolved GsType from H-M inference.
+    // Used by ExpressionEmitter to emit typed IL (direct int/float/double opcodes) instead
+    // of always going through RuntimeHelpers with boxed objects.
+    public readonly Dictionary<Expression, GsType> TypeMap =
+        typeMap ?? new Dictionary<Expression, GsType>(ReferenceEqualityComparer.Instance);
 }

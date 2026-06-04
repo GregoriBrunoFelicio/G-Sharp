@@ -81,7 +81,7 @@ public static class FunctionEmitter
         var method = ctx.Functions[qualifiedName];
         var il = method.GetILGenerator();
 
-        var fnCtx = new EmitContext(ctx.Functions, ctx.FunctionAdapters);
+        var fnCtx = new EmitContext(ctx.Functions, ctx.FunctionAdapters, ctx.TypeMap);
         foreach (var (k, v) in ctx.PrecompiledFunctions)
             fnCtx.PrecompiledFunctions[k] = v;
 

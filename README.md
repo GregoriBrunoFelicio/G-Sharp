@@ -254,7 +254,7 @@ Modules can import other modules — circular imports are detected and reported 
 | Lambda expressions | ⏳ |
 | `map` / `filter` / `fold` | ⏳ |
 | .NET interop (`import dotnet`) | ⏳ |
-| Type system (Hindley-Milner inference) | ⏳ |
+| Hindley-Milner type inference | ✅ |
 | Pattern matching | ⏳ |
 
 ---
@@ -303,14 +303,22 @@ flowchart TD
         CL2["GsLoader — parses files, loads modules via queue"]
     end
 
+    subgraph TYPECHECKER["TYPE CHECKER"]
+        TC1["TypeInferrer — walks AST, assigns TypeVars, generates constraints"]
+        TC2["Unifier — solves constraints via Robinson unification"]
+        TC3["Substitution — maps TypeVar ids to resolved concrete types"]
+    end
+
+    TMAP["Dictionary&lt;Expression, GsType&gt; (type map)"]
+
     subgraph CODEGEN["CODE GEN"]
-        C1["ExpressionEmitter — one boxed object per expression on IL stack"]
+        C1["ExpressionEmitter — typed IL (native int/double) or boxed object fallback"]
         C2["IfEmitter / ForEmitter — control flow via IL labels"]
-        C3["LetEmitter — immutable local slots"]
+        C3["LetEmitter — typed local slots (int, double, etc.)"]
         C4["FunctionEmitter — two-pass (Define + Emit) with adapter methods"]
-        C5["EmitContext — locals, params, functions, adapters"]
+        C5["EmitContext — locals, params, functions, adapters, type map"]
         C6["GSharpFunction — first-class function wrapper"]
-        C7["RuntimeHelpers — numeric type promotion"]
+        C7["RuntimeHelpers — numeric type promotion (fallback)"]
         C8["PrecompiledFunctions — built-in array and conversion functions"]
     end
 
@@ -318,23 +326,133 @@ flowchart TD
     RT[".NET Runtime"]
     OUT["Output"]
 
-    SRC --> CLI --> LEXER --> T --> PARSER --> AST --> CODEGEN --> IL --> RT --> OUT
+    SRC --> CLI --> LEXER --> T --> PARSER --> AST --> TYPECHECKER --> TMAP --> CODEGEN --> IL --> RT --> OUT
 ```
 
 ### Project structure
 
 ```
-GSharp.Lexer/       — tokenizer (Lexer, sub-lexers, TokenType)
-GSharp.AST/         — immutable record types for all AST nodes
-  Expression.cs     — base + Literal, Binding, Binary
-  Declarations.cs   — FunctionDeclaration, ImportDeclaration
-  Calls.cs          — CallExpression, QualifiedCallExpression
-  Statements.cs     — Let, Print, If, For, While
-GSharp.Parser/      — recursive-descent parser (one class per statement type)
-GSharp.CodeGen/     — IL emitters (one class per statement type) + Compiler entry point
-GSharp.CLI/         — entry point resolver, file loader, program runner
-  EntryResolver.cs  — detects which file to run
-  GsLoader.cs       — parses files and resolves module imports
-  Program.cs        — main entry point
-GSharp.Tests/       — xUnit tests (FluentAssertions)
+GSharp.Lexer/         — tokenizer (Lexer, sub-lexers, TokenType)
+GSharp.AST/           — immutable record types for all AST nodes
+  Expression.cs       — base + Literal, Binding, Binary
+  Declarations.cs     — FunctionDeclaration, ImportDeclaration
+  Calls.cs            — CallExpression, QualifiedCallExpression
+  Statements.cs       — Let, Print, If, For, While
+GSharp.Parser/        — recursive-descent parser (one class per statement type)
+GSharp.TypeChecker/   — Hindley-Milner type inference
+  GsType.cs           — type hierarchy (IntType, FunctionType, TypeVar, ...)
+  TypeInferrer.cs     — walks AST, assigns TypeVars, collects constraints
+  Unifier.cs          — Robinson unification algorithm
+  Substitution.cs     — TypeVar → GsType mapping produced by the Unifier
+  TypeEnvironment.cs  — scoped variable → type bindings
+  TypeConstraint.cs   — equality constraint (A must equal B)
+GSharp.CodeGen/       — IL emitters (one class per statement type) + Compiler entry point
+GSharp.CLI/           — entry point resolver, file loader, program runner
+  EntryResolver.cs    — detects which file to run
+  GsLoader.cs         — parses files and resolves module imports
+  Program.cs          — main entry point
+GSharp.Tests/         — xUnit tests (FluentAssertions)
 ```
+
+---
+
+## Type System
+
+G# uses **Hindley-Milner type inference** — the compiler infers the type of every expression
+without requiring annotations. Type errors are caught before any IL is emitted.
+
+### Types
+
+| G# type | Example |
+|---|---|
+| `int` | `42` |
+| `float` | `2.5f` |
+| `double` | `3.14d` |
+| `decimal` | `9.99m` |
+| `string` | `"hello"` |
+| `bool` | `true` |
+| `unit` | result of `println`, `for`, `let` |
+| `[int]` | `[1 2 3]` |
+| `(int → int)` | `double x => x * 2` |
+
+### Compile-time errors
+
+The type checker runs before the compiler emits any IL. If the program is ill-typed,
+it fails with an error and no code is generated.
+
+```gs
+// int + string — caught at compile time
+let x = 10 + "hello"
+// → type mismatch: expected 'int', got 'string'
+
+// if branches return different types
+let flag = true
+let result = if flag then 1 else "text"
+// → type mismatch: expected 'int', got 'string'
+```
+
+### How it works
+
+The type checker runs in three phases.
+
+**Phase 1 — Inference.** The `TypeInferrer` walks the AST and assigns a type to every
+expression. When the type is not yet known (e.g. the result of `a + b` before the
+operands are resolved), a fresh _type variable_ is created as a placeholder (`?0`, `?1`, …).
+As sub-expressions are visited, _constraints_ are collected — equality requirements
+between types.
+
+```
+let x = 10          →  x : IntType
+let y = x + 5       →  resultType = ?0
+                        constraints: [ IntType == IntType,  ?0 == IntType ]
+println y           →  UnitType
+```
+
+**Phase 2 — Unification.** The `Unifier` solves all constraints using Robinson's
+unification algorithm. It processes each constraint in a queue:
+
+- If both sides are equal → discard (nothing to do).
+- If one side is a type variable → bind it: `?0 → IntType`.
+- If both sides are `FunctionType` → decompose into two smaller constraints.
+- If both sides are incompatible concrete types (`int` vs `string`) → **type error**.
+
+```
+Constraint: ?0 == IntType
+Action:     bind ?0 → IntType
+Result:     Substitution { "0" → IntType }
+```
+
+**Phase 3 — Resolution.** The `Substitution` is applied to every expression in the map.
+Any `?0` that was a placeholder becomes its resolved type. The result is a
+`Dictionary<Expression, GsType>` that maps every AST node to its final concrete type.
+
+```
+BinaryExpression(x + 5)  →  was ?0,  now IntType
+LetExpression("y")        →  was ?0,  now IntType
+```
+
+### Typed code generation
+
+The resolved type map is passed to the `Compiler`. The `ExpressionEmitter` uses it to
+emit more efficient IL for expressions with known types.
+
+```
+// let x = 10 — typed local, no heap allocation
+Ldc_I4   10       // push int32 literal
+Stloc    x        // store in int32 local slot  (no boxing)
+
+// let z = x + y — direct Add opcode, no RuntimeHelpers
+Ldloc    x        // push int32
+Ldloc    y        // push int32
+Add               // native integer add
+Stloc    z        // store in int32 local slot
+
+// println z — box only when required by the consumer
+Ldloc    z
+Box      int32
+Call     Console.WriteLine(object)
+```
+
+When types are not known statically (function parameters, loop variables, dynamic calls),
+the emitter falls back to `RuntimeHelpers` with boxed `object` values — the same
+behavior as before the type checker was introduced.

@@ -58,10 +58,10 @@ public class Lexer
         while (_blockLevelStack.Count > 1)
         {
             _blockLevelStack.Pop();
-            _tokens.Add(new Token(TokenType.BlockClose, ""));
+            _tokens.Add(new Token(TokenType.BlockClose, "", Line, Column));
         }
 
-        _tokens.Add(new Token(TokenType.EndOfFile, ""));
+        _tokens.Add(new Token(TokenType.EndOfFile, "", Line, Column));
         return _tokens;
     }
 
@@ -74,8 +74,8 @@ public class Lexer
             Advance();
         }
 
-        // blank or whitespace-only line — skip, don't change block level
-        if (IsAtEnd() || IsNewLine())
+        // blank, whitespace-only, or comment-only line — skip, don't change block level
+        if (IsAtEnd() || IsNewLine() || IsLineComment())
             return;
 
         var currentLevel = _blockLevelStack.Peek();
@@ -83,14 +83,14 @@ public class Lexer
         if (spaces > currentLevel)
         {
             _blockLevelStack.Push(spaces);
-            _tokens.Add(new Token(TokenType.BlockOpen, ""));
+            _tokens.Add(new Token(TokenType.BlockOpen, "", Line, Column));
         }
         else if (spaces < currentLevel)
         {
             while (_blockLevelStack.Count > 1 && _blockLevelStack.Peek() > spaces)
             {
                 _blockLevelStack.Pop();
-                _tokens.Add(new Token(TokenType.BlockClose, ""));
+                _tokens.Add(new Token(TokenType.BlockClose, "", Line, Column));
             }
         }
     }

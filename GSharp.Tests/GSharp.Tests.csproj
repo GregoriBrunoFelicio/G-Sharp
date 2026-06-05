@@ -23,6 +23,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\GSharp.CLI\GSharp.CLI.csproj" />
+      <ProjectReference Include="..\GSharp.LanguageServer\GSharp.LanguageServer.csproj" />
     </ItemGroup>
 
 </Project>

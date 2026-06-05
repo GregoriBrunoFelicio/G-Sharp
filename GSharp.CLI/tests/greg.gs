@@ -1,20 +1,23 @@
-﻿map list fn aux
+﻿sum list aux
     if len list > 0 then
         let h = head list
-        let r = fn h
-        let n = concat aux r
+        let r = h + aux
+        println r
         let t = tail list
-        map t fn n
+        sum t aux
     else
         aux
-        
+
 let arr = [1 2 3 4 5 6 7]
 
-double x => x * 2
+// double x => x * 2
 
-let e = []
+// let e = []
 
-let blabla = map arr double e
+// let blabla = map arr double e
 
-for a in blabla do
-    println a
+// for a in blabla do
+    // println a
+let g = sum arr 0
+
+println g

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>gsharp-lsp</ToolCommandName>
+    <PackageId>GSharp.LanguageServer</PackageId>
+    <Version>0.0.1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OmniSharp.Extensions.LanguageServer" Version="0.19.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GSharp.AST\GSharp.AST.csproj" />
+    <ProjectReference Include="..\GSharp.Lexer\GSharp.Lexer.csproj" />
+    <ProjectReference Include="..\GSharp.Parser\GSharp.Parser.csproj" />
+    <ProjectReference Include="..\GSharp.TypeChecker\GSharp.TypeChecker.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -61,14 +61,41 @@ public class DocumentAnalyzerTests
     }
 
     [Fact]
-    public void Type_Error_Falls_Back_To_First_Line()
+    public void Undefined_Variable_Maps_To_Its_Line()
+    {
+        // 'y' is never bound; the type inferrer now reports it (with its source line)
+        // instead of letting it slip through to CodeGen.
+        var source = "let x = 1\nlet z = y";
+
+        var diagnostics = DocumentAnalyzer.Analyze(source);
+
+        diagnostics.Should().ContainSingle();
+        diagnostics[0].Line.Should().Be(1); // 0-based -> second line
+        diagnostics[0].Message.Should().Contain("'y' is not defined");
+    }
+
+    [Fact]
+    public void Type_Error_Maps_To_Its_Line()
     {
         // Mixing int and string in arithmetic — the unifier reports a type mismatch
-        // with no source position, so it lands on the first line.
+        // carrying the offending expression's source line.
         var diagnostics = DocumentAnalyzer.Analyze("let x = 1 + \"a\"");
 
         diagnostics.Should().ContainSingle();
-        diagnostics[0].Line.Should().Be(0);
+        diagnostics[0].Line.Should().Be(0); // 0-based -> first line
+        diagnostics[0].Message.Should().Contain("type mismatch");
+    }
+
+    [Fact]
+    public void Type_Error_On_Later_Line_Maps_To_That_Line()
+    {
+        // The mismatch is on the third line; the diagnostic must land there, not on line 1.
+        var source = "let a = 1\nlet b = 2\nlet c = a + \"x\"";
+
+        var diagnostics = DocumentAnalyzer.Analyze(source);
+
+        diagnostics.Should().ContainSingle();
+        diagnostics[0].Line.Should().Be(2); // 0-based -> third line
         diagnostics[0].Message.Should().Contain("type mismatch");
     }
 }

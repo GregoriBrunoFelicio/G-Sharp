@@ -131,11 +131,11 @@ public class TypeInferrer
         if (environment.TryLookup(binding.Name, out var resolvedType))
             return resolvedType;
 
-        // Unbound name — create a fresh TypeVar so inference can continue.
-        // The Unifier will either resolve it or leave it as-is.
-        var freshType = FreshTypeVar();
-        environment.Register(binding.Name, freshType);
-        return freshType;
+        // Unbound name. Previously this invented a fresh TypeVar so inference could
+        // continue, which pushed "undefined name" detection all the way to CodeGen —
+        // out of reach of the LSP. Reporting it here (with the binding's source line)
+        // lets the language server surface it as a diagnostic on the right line.
+        throw new Exception($"{binding.Line}: '{binding.Name}' is not defined");
     }
 
     private GsType InferBinary(BinaryExpression binary, TypeEnvironment environment)
@@ -150,13 +150,13 @@ public class TypeInferrer
 
         if (isComparisonOperator)
         {
-            _constraints.Add(new TypeConstraint(leftType, rightType));
+            _constraints.Add(new TypeConstraint(leftType, rightType, binary.Line, binary.Column));
             return new BoolType();
         }
 
         // Arithmetic: both sides must be the same numeric type, result is that type
         var resultType = FreshTypeVar();
-        _constraints.Add(new TypeConstraint(leftType, rightType));
+        _constraints.Add(new TypeConstraint(leftType, rightType, binary.Line, binary.Column));
         _constraints.Add(new TypeConstraint(resultType, leftType));
         return resultType;
     }
@@ -177,7 +177,8 @@ public class TypeInferrer
     private GsType InferIf(IfExpression ifExpression, TypeEnvironment environment)
     {
         var conditionType = InferExpression(ifExpression.Condition, environment);
-        _constraints.Add(new TypeConstraint(conditionType, new BoolType()));
+        _constraints.Add(new TypeConstraint(
+            conditionType, new BoolType(), ifExpression.Condition.Line, ifExpression.Condition.Column));
 
         var thenType = InferBody(ifExpression.ThenBody, environment);
 
@@ -185,7 +186,10 @@ public class TypeInferrer
             return new UnitType();
 
         var elseType = InferBody(ifExpression.ElseBody, environment);
-        _constraints.Add(new TypeConstraint(thenType, elseType));
+
+        // Point a branch mismatch at the else branch's value (where the divergence shows up).
+        var (line, column) = BodySpan(ifExpression.ElseBody);
+        _constraints.Add(new TypeConstraint(thenType, elseType, line, column));
         return thenType;
     }
 
@@ -375,6 +379,11 @@ public class TypeInferrer
 
         return lastType;
     }
+
+    // Source position of a body's value (its last expression), used to anchor branch
+    // mismatch errors. Falls back to (0, 0) — "unknown" — for an empty body.
+    private static (int Line, int Column) BodySpan(List<Expression> body) =>
+        body.Count > 0 ? (body[^1].Line, body[^1].Column) : (0, 0);
 
     // Builds a curried FunctionType from a list of parameter TypeVars and a return TypeVar.
     // [?a, ?b] with return ?r → FunctionType(?a, FunctionType(?b, ?r))

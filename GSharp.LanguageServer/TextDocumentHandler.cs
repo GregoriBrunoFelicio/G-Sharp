@@ -17,7 +17,7 @@ namespace GSharp.LanguageServer;
 /// open/change, publishing the resulting diagnostics back to the editor.
 /// Uses full-text sync (TextDocumentSyncKind.Full), so each change carries the whole buffer.
 /// </summary>
-public class TextDocumentHandler(ILanguageServerFacade server) : TextDocumentSyncHandlerBase
+public class TextDocumentHandler(ILanguageServerFacade server, DocumentStore store) : TextDocumentSyncHandlerBase
 {
     private const string LanguageId = "gsharp";
 
@@ -52,6 +52,7 @@ public class TextDocumentHandler(ILanguageServerFacade server) : TextDocumentSyn
     public override Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken)
     {
         _documents.TryRemove(request.TextDocument.Uri, out _);
+        store.Remove(request.TextDocument.Uri);
         return Unit.Task;
     }
 
@@ -62,7 +63,10 @@ public class TextDocumentHandler(ILanguageServerFacade server) : TextDocumentSyn
     {
         _documents[uri] = text;
 
-        var diagnostics = DocumentAnalyzer.Analyze(text)
+        var analysis = DocumentAnalyzer.AnalyzeDocument(text);
+        store.Set(uri, analysis);
+
+        var diagnostics = analysis.Diagnostics
             .Select(diagnostic => ToLspDiagnostic(diagnostic, text))
             .ToArray();
 

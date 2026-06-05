@@ -17,24 +17,32 @@ public static class DocumentAnalyzer
     // Lexer and Parser prefix their error messages with the 1-based line, e.g. "5: unexpected 'x'".
     private static readonly Regex LinePrefix = new(@"^(\d+):\s*", RegexOptions.Compiled);
 
-    public static IReadOnlyList<AnalyzerDiagnostic> Analyze(string source)
+    /// <summary>Diagnostics only — kept for callers that don't need the typed AST.</summary>
+    public static IReadOnlyList<AnalyzerDiagnostic> Analyze(string source) =>
+        AnalyzeDocument(source).Diagnostics;
+
+    /// <summary>
+    /// Runs the full pipeline and returns diagnostics together with the parsed expressions
+    /// and their inferred types, so the language server can answer hover requests.
+    /// </summary>
+    public static AnalysisResult AnalyzeDocument(string source)
     {
         // Empty or whitespace-only documents are valid (mirrors GsLoader.ParseFile and the
         // "allow empty .gs files" behaviour). The Lexer constructor throws on empty input,
         // so this must short-circuit before the pipeline runs.
         if (string.IsNullOrWhiteSpace(source))
-            return [];
+            return AnalysisResult.Empty;
 
         try
         {
             var tokens      = new Lexer.Lexer(source).Tokenize();
             var expressions = new Parser.Parser(tokens).Parse();
-            _ = new TypeInferrer().Infer(expressions);
-            return [];
+            var types       = new TypeInferrer().Infer(expressions);
+            return new AnalysisResult([], expressions, types);
         }
         catch (Exception exception)
         {
-            return [ToDiagnostic(exception.Message)];
+            return AnalysisResult.Empty with { Diagnostics = [ToDiagnostic(exception.Message)] };
         }
     }
 

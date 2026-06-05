@@ -34,36 +34,42 @@ public static class Unifier
                 // Left side is a TypeVar — bind it to the right side
                 case (TypeVar tv, GsType resolvedType):
                     if (OccursIn(tv.Id, resolvedType))
-                        throw new Exception($"type error: infinite type — '{tv.Id}' occurs in '{resolvedType}'");
+                        throw new Exception($"{Position(constraint)}type error: infinite type — '{tv.Id}' occurs in '{resolvedType}'");
                     substitution.Bind(tv.Id, resolvedType);
                     break;
 
                 // Right side is a TypeVar — bind it to the left side
                 case (GsType resolvedType, TypeVar tv):
                     if (OccursIn(tv.Id, resolvedType))
-                        throw new Exception($"type error: infinite type — '{tv.Id}' occurs in '{resolvedType}'");
+                        throw new Exception($"{Position(constraint)}type error: infinite type — '{tv.Id}' occurs in '{resolvedType}'");
                     substitution.Bind(tv.Id, resolvedType);
                     break;
 
-                // Both are function types — decompose into two smaller constraints
+                // Both are function types — decompose into two smaller constraints,
+                // carrying the source position forward so a deep mismatch still has a line.
                 case (FunctionType leftFunction, FunctionType rightFunction):
-                    constraintQueue.Enqueue(new TypeConstraint(leftFunction.ParameterType, rightFunction.ParameterType));
-                    constraintQueue.Enqueue(new TypeConstraint(leftFunction.ReturnType,    rightFunction.ReturnType));
+                    constraintQueue.Enqueue(new TypeConstraint(leftFunction.ParameterType, rightFunction.ParameterType, constraint.Line, constraint.Column));
+                    constraintQueue.Enqueue(new TypeConstraint(leftFunction.ReturnType,    rightFunction.ReturnType,    constraint.Line, constraint.Column));
                     break;
 
                 // Both are array types — constrain their element types
                 case (ArrayType leftArray, ArrayType rightArray):
-                    constraintQueue.Enqueue(new TypeConstraint(leftArray.ElementType, rightArray.ElementType));
+                    constraintQueue.Enqueue(new TypeConstraint(leftArray.ElementType, rightArray.ElementType, constraint.Line, constraint.Column));
                     break;
 
                 // Two different concrete types — impossible to unify
                 default:
-                    throw new Exception($"type mismatch: expected '{leftType}', got '{rightType}'");
+                    throw new Exception($"{Position(constraint)}type mismatch: expected '{leftType}', got '{rightType}'");
             }
         }
 
         return substitution;
     }
+
+    // Prefixes the 1-based source line (matching the lexer/parser error format "N: ...")
+    // when known, so DocumentAnalyzer can map the diagnostic onto the right line.
+    private static string Position(TypeConstraint constraint) =>
+        constraint.Line > 0 ? $"{constraint.Line}: " : "";
 
     /// <summary>
     /// Checks whether a TypeVar appears anywhere inside a type.

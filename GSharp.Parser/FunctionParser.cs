@@ -7,7 +7,8 @@ public class FunctionParser(Parser parser)
 {
     public FunctionDeclaration Parse()
     {
-        var name = parser.Identifier().Value;
+        var nameToken = parser.Identifier();
+        var name      = nameToken.Value;
 
         var parameters = new List<string>();
         while (parser.Check(TokenType.Identifier))
@@ -28,7 +29,9 @@ public class FunctionParser(Parser parser)
         }
 
         parser.DeclaredBindings.Add(name);
-        return new FunctionDeclaration(name, parameters, body);
+
+        // Span points at the function name so hovering it reports the full signature.
+        return new FunctionDeclaration(name, parameters, body) { Line = nameToken.Line, Column = nameToken.Column };
     }
 
     private List<Expression> ParseBody()

@@ -27,7 +27,8 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
                 precedence = nextPrecedence;
             }
 
-            left = new BinaryExpression(left, op, right);
+            // A binary node starts where its left operand starts.
+            left = new BinaryExpression(left, op, right) { Line = left.Line, Column = left.Column };
         }
 
         return left;
@@ -46,16 +47,28 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
     private Expression GetExpression()
     {
         if (parser.Match(TokenType.NumberLiteral))
-            return new LiteralExpression(ParseNumber(parser.Previous().Value));
+        {
+            var token = parser.Previous();
+            return new LiteralExpression(ParseNumber(token.Value)) { Line = token.Line, Column = token.Column };
+        }
 
         if (parser.Match(TokenType.StringLiteral))
-            return new LiteralExpression(parser.Previous().Value);
+        {
+            var token = parser.Previous();
+            return new LiteralExpression(token.Value) { Line = token.Line, Column = token.Column };
+        }
 
         if (parser.Match(TokenType.BooleanTrueLiteral))
-            return new LiteralExpression(true);
+        {
+            var token = parser.Previous();
+            return new LiteralExpression(true) { Line = token.Line, Column = token.Column };
+        }
 
         if (parser.Match(TokenType.BooleanFalseLiteral))
-            return new LiteralExpression(false);
+        {
+            var token = parser.Previous();
+            return new LiteralExpression(false) { Line = token.Line, Column = token.Column };
+        }
 
         if (parser.Match(TokenType.LeftBracket))
             return ParseArrayExpression(parser);
@@ -68,7 +81,10 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
 
         if (parser.Match(TokenType.Identifier))
         {
-            var name = parser.Previous().Value;
+            var nameToken = parser.Previous();
+            var name      = nameToken.Value;
+            var line      = nameToken.Line;
+            var column    = nameToken.Column;
 
             // Qualified call: module.function — e.g. math.add 10 20
             if (parser.Match(TokenType.Dot))
@@ -81,16 +97,16 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
                     while (!parser.Check(TokenType.RightParen))
                         args.Add(new ExpressionParser(parser, allowAtomArgs: false).Parse());
                     parser.Consume(TokenType.RightParen);
-                    return new QualifiedCallExpression(name, functionName, args);
+                    return new QualifiedCallExpression(name, functionName, args) { Line = line, Column = column };
                 }
 
                 if (allowAtomArgs)
                 {
                     var atomArgs = ParseAtomArgs();
-                    return new QualifiedCallExpression(name, functionName, atomArgs);
+                    return new QualifiedCallExpression(name, functionName, atomArgs) { Line = line, Column = column };
                 }
 
-                return new QualifiedCallExpression(name, functionName, []);
+                return new QualifiedCallExpression(name, functionName, []) { Line = line, Column = column };
             }
 
             // Call with parens: sum(10 20) — args parsed without atom collection
@@ -101,7 +117,7 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
                 while (!parser.Check(TokenType.RightParen))
                     args.Add(new ExpressionParser(parser, allowAtomArgs: false).Parse());
                 parser.Consume(TokenType.RightParen);
-                return new CallExpression(name, args);
+                return new CallExpression(name, args) { Line = line, Column = column };
             }
 
             // Call without parens: sum 10 20
@@ -111,10 +127,10 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
             {
                 var atomArgs = ParseAtomArgs();
                 if (atomArgs.Count > 0)
-                    return new CallExpression(name, atomArgs);
+                    return new CallExpression(name, atomArgs) { Line = line, Column = column };
             }
 
-            return new BindingExpression(name);
+            return new BindingExpression(name) { Line = line, Column = column };
         }
 
         throw new Exception($"{parser.Current().Line}: unexpected '{parser.Current().Value}'");
@@ -157,7 +173,7 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
                 TokenType.Identifier => new BindingExpression(token.Value),
                 _ => throw new Exception("unreachable"),
             };
-            args.Add(arg);
+            args.Add(arg with { Line = token.Line, Column = token.Column });
         }
         return args;
     }

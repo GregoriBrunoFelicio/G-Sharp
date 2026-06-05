@@ -9,21 +9,23 @@ public class LetParser(Parser parser)
     public LetExpression Parse()
     {
         parser.Consume(TokenType.Let);
-        var bindingName = GetBindingName();
+        var nameToken   = GetBindingNameToken();
+        var bindingName = nameToken.Value;
 
         parser.Equals();
         var value = new ExpressionParser(parser).Parse();
 
         parser.DeclaredBindings.Add(bindingName);
 
-        return new LetExpression(bindingName, value);
+        // Span points at the bound name so hovering it reports the binding's type.
+        return new LetExpression(bindingName, value) { Line = nameToken.Line, Column = nameToken.Column };
     }
 
-    private string GetBindingName()
+    private Token GetBindingNameToken()
     {
-        var name = parser.Identifier().Value;
-        ValidateBindingName(name);
-        return name;
+        var token = parser.Identifier();
+        ValidateBindingName(token.Value);
+        return token;
     }
 
     private void ValidateBindingName(string bindingName)

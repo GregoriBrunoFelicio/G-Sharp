@@ -15,7 +15,7 @@ public class LetParser(Parser parser)
         parser.Equals();
         var value = new ExpressionParser(parser).Parse();
 
-        parser.DeclaredBindings.Add(bindingName);
+        parser.DeclareBinding(bindingName);
 
         // Span points at the bound name so hovering it reports the binding's type.
         return new LetExpression(bindingName, value) { Line = nameToken.Line, Column = nameToken.Column };
@@ -30,7 +30,7 @@ public class LetParser(Parser parser)
 
     private void ValidateBindingName(string bindingName)
     {
-        if (parser.DeclaredBindings.Contains(bindingName))
+        if (parser.IsDeclaredInCurrentScope(bindingName))
             throw new Exception($"Binding '{bindingName}' already declared.");
 
         if (!IsValidBindingName(bindingName))

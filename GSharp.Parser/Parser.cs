@@ -6,7 +6,36 @@ namespace GSharp.Parser;
 public class Parser(List<Token> tokens)
 {
     private int _current;
-    public readonly HashSet<string> DeclaredBindings = [];
+
+    // Lexical scopes for the "already declared" check. The bottom of the stack is the
+    // top-level scope; FunctionParser pushes a new scope for each function body. Granularity
+    // is per-function — `if`/`for` do NOT open scopes (the codegen stores locals flat per
+    // function), so a name declared in one function never collides with the same name at the
+    // top level or in another function.
+    private readonly Stack<HashSet<string>> _scopes = new([[]]);
+
+    public void EnterScope() => _scopes.Push([]);
+
+    public void ExitScope() => _scopes.Pop();
+
+    public bool IsDeclaredInCurrentScope(string name)
+    {
+        var currentScope = _scopes.Peek();
+        return currentScope.Contains(name);
+    }
+
+    // Declares a name in the current scope, rejecting a duplicate in that same scope
+    // (let is immutable — no reassignment, no same-scope shadowing).
+    public void DeclareBinding(string name)
+    {
+        var currentScope = _scopes.Peek();
+        var alreadyDeclared = currentScope.Contains(name);
+
+        if (alreadyDeclared)
+            throw new Exception($"Binding '{name}' already declared.");
+
+        currentScope.Add(name);
+    }
 
     public List<Expression> Parse()
     {

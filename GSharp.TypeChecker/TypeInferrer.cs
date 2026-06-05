@@ -80,6 +80,7 @@ public class TypeInferrer
             CallExpression call                => InferCall(call, environment),
             QualifiedCallExpression qualified  => InferQualifiedCall(qualified, environment),
             ImportDeclaration                  => new UnitType(),
+            DotnetImportDeclaration            => new UnitType(),
             _                                  => FreshTypeVar()
         };
 

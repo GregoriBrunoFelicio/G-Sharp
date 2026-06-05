@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Reflection.Emit;
 using GSharp.AST;
 using GSharp.CodeGen.Helpers;
@@ -322,8 +323,119 @@ public static class ExpressionEmitter
                 EmitToStack(il, arg, ctx);
             il.Emit(OpCodes.Call, moduleMethod);
         }
+        else if (ctx.DotnetTypes.TryGetValue(qCall.Module, out var dotnetType))
+        {
+            EmitDotnetCall(il, qCall, dotnetType, ctx);
+        }
         else
             throw new Exception($"Undefined function: '{key}'");
+    }
+
+    // -------------------------------------------------------------------------
+    // .NET interop — calls a static method on an imported .NET type
+    // (e.g. `import system.math` then `math.sqrt 16.0d` → System.Math.Sqrt).
+    // -------------------------------------------------------------------------
+
+    private static void EmitDotnetCall(ILGenerator il, QualifiedCallExpression qCall, Type dotnetType, EmitContext ctx)
+    {
+        var method     = ResolveDotnetMethod(dotnetType, qCall, ctx);
+        var parameters = method.GetParameters();
+
+        for (var i = 0; i < qCall.Arguments.Count; i++)
+            EmitCoercedArgument(il, qCall.Arguments[i], parameters[i].ParameterType, ctx);
+
+        il.Emit(OpCodes.Call, method);
+
+        NormalizeDotnetReturn(il, method.ReturnType);
+    }
+
+    // Picks the static method to call. Prefers an exact overload match using the inferred
+    // argument types (from the H-M TypeMap); falls back to matching by name and argument count.
+    private static MethodInfo ResolveDotnetMethod(Type type, QualifiedCallExpression qCall, EmitContext ctx)
+    {
+        const BindingFlags flags = BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase;
+
+        var argumentTypes = TryMapArgumentTypes(qCall.Arguments, ctx);
+        if (argumentTypes is not null)
+        {
+            var exactMatch = type.GetMethod(qCall.Function, flags, binder: null, argumentTypes, modifiers: null);
+            if (exactMatch is not null)
+                return exactMatch;
+        }
+
+        var matchesByName = type.GetMethods(flags)
+            .Where(m => string.Equals(m.Name, qCall.Function, StringComparison.OrdinalIgnoreCase)
+                        && m.GetParameters().Length == qCall.Arguments.Count)
+            .ToArray();
+
+        if (matchesByName.Length == 1)
+            return matchesByName[0];
+
+        if (matchesByName.Length == 0)
+            throw new Exception(
+                $"no static method '{qCall.Function}' taking {qCall.Arguments.Count} argument(s) on '{type.FullName}'");
+
+        throw new Exception(
+            $"ambiguous call to '{qCall.Function}' on '{type.FullName}' — could not resolve the overload");
+    }
+
+    // Maps each argument's inferred GsType to a CLR type for overload resolution.
+    // Returns null if any argument's type is unknown, so the caller falls back to name+arity.
+    private static Type[]? TryMapArgumentTypes(List<Expression> arguments, EmitContext ctx)
+    {
+        var clrTypes = new Type[arguments.Count];
+
+        for (var i = 0; i < arguments.Count; i++)
+        {
+            if (!ctx.TypeMap.TryGetValue(arguments[i], out var gsType))
+                return null;
+
+            var clrType = MapGsTypeToClr(gsType);
+            if (clrType is null)
+                return null;
+
+            clrTypes[i] = clrType;
+        }
+
+        return clrTypes;
+    }
+
+    private static Type? MapGsTypeToClr(GsType gsType) => gsType switch
+    {
+        IntType     => typeof(int),
+        FloatType   => typeof(float),
+        DoubleType  => typeof(double),
+        DecimalType => typeof(decimal),
+        StringType  => typeof(string),
+        BoolType    => typeof(bool),
+        ArrayType   => typeof(object[]),
+        _           => null
+    };
+
+    // Emits an argument, then coerces the boxed value to the exact CLR type the parameter wants
+    // (RuntimeHelpers.CoerceTo handles int→double and friends), leaving it ready for the call.
+    private static void EmitCoercedArgument(ILGenerator il, Expression argument, Type targetType, EmitContext ctx)
+    {
+        EmitToStack(il, argument, ctx); // boxed object
+
+        il.Emit(OpCodes.Ldtoken, targetType);
+        il.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!);
+        il.Emit(OpCodes.Call, typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.CoerceTo))!);
+
+        if (targetType.IsValueType)
+            il.Emit(OpCodes.Unbox_Any, targetType);
+        else
+            il.Emit(OpCodes.Castclass, targetType);
+    }
+
+    // Leaves exactly one boxed object on the stack (the expression contract):
+    // void → null; value type → boxed; reference type → already an object.
+    private static void NormalizeDotnetReturn(ILGenerator il, Type returnType)
+    {
+        if (returnType == typeof(void))
+            il.Emit(OpCodes.Ldnull);
+        else if (returnType.IsValueType)
+            il.Emit(OpCodes.Box, returnType);
     }
 
     // -------------------------------------------------------------------------

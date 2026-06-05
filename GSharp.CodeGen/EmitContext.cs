@@ -50,6 +50,11 @@ public class EmitContext(
     // (shadowing is blocked by Validations).
     public readonly Dictionary<string, MethodInfo> PrecompiledFunctions = new();
 
+    // Maps the alias of a `import system.math` to the resolved .NET type (System.Math).
+    // Keyed by the lowercased alias used at call sites (math.sqrt → key "math").
+    // Used by ExpressionEmitter to emit calls to static .NET methods (interop).
+    public readonly Dictionary<string, Type> DotnetTypes = new();
+
     // Maps every Expression node (by reference) to its resolved GsType from H-M inference.
     // Used by ExpressionEmitter to emit typed IL (direct int/float/double opcodes) instead
     // of always going through RuntimeHelpers with boxed objects.

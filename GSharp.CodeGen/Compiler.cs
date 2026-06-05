@@ -39,6 +39,46 @@ public class Compiler
         ctx.PrecompiledFunctions["str"]     = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Str))!;
     }
 
+    // Resolves each `import system.math` to a concrete .NET type and registers it under its
+    // alias, so ExpressionEmitter can emit interop calls (math.sqrt → System.Math.Sqrt).
+    private static void RegisterDotnetTypes(EmitContext ctx, List<Expression> expressions)
+    {
+        foreach (var import in expressions.OfType<DotnetImportDeclaration>())
+            ctx.DotnetTypes[import.Alias] = ResolveDotnetType(import.TypeName);
+    }
+
+    // Looks up a .NET type by its dotted name, ignoring case (G# uses lowercase names).
+    // Tries the runtime's direct lookup first, then scans loaded assemblies as a fallback.
+    private static Type ResolveDotnetType(string typeName)
+    {
+        var directMatch = Type.GetType(typeName, throwOnError: false, ignoreCase: true);
+        if (directMatch is not null)
+            return directMatch;
+
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var match = FindTypeIgnoringCase(assembly, typeName);
+            if (match is not null)
+                return match;
+        }
+
+        throw new Exception($"unknown .NET type '{typeName}'");
+    }
+
+    private static Type? FindTypeIgnoringCase(Assembly assembly, string typeName)
+    {
+        try
+        {
+            return assembly.GetTypes()
+                .FirstOrDefault(t => string.Equals(t.FullName, typeName, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (ReflectionTypeLoadException)
+        {
+            // Some assemblies fail to fully load their types — skip them rather than crash.
+            return null;
+        }
+    }
+
     private static (MethodBuilder, TypeBuilder) CreateBuilders()
     {
         var assemblyName = new AssemblyName("GSharpRuntimeAssembly");
@@ -85,6 +125,7 @@ public class Compiler
 
             var ctx = new EmitContext(functions, adapters, typeMap);
             RegisterPrecompiledFunctions(ctx);
+            RegisterDotnetTypes(ctx, expressions);
 
             // ============================
             // Pass 2 — Emit module function bodies
@@ -104,7 +145,8 @@ public class Compiler
             // ============================
             var il = methodBuilder.GetILGenerator();
 
-            foreach (var expr in expressions.Where(e => e is not FunctionDeclaration and not ImportDeclaration))
+            foreach (var expr in expressions.Where(e =>
+                         e is not FunctionDeclaration and not ImportDeclaration and not DotnetImportDeclaration))
             {
                 ExpressionEmitter.EmitToStack(il, expr, ctx);
                 il.Emit(OpCodes.Pop);

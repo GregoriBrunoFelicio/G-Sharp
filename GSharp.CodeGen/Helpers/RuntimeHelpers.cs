@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace GSharp.CodeGen.Helpers;
 
 /// <summary>
@@ -5,6 +7,17 @@ namespace GSharp.CodeGen.Helpers;
 /// </summary>
 public static class RuntimeHelpers
 {
+    /// <summary>
+    /// Converts a G# runtime value to the CLR type a .NET method parameter expects.
+    /// Already-compatible values pass through; numerics are widened/narrowed via
+    /// <see cref="Convert.ChangeType(object, Type, IFormatProvider)"/> (e.g. int → double).
+    /// Used by the interop call path to bridge G#'s boxed values to typed .NET signatures.
+    /// </summary>
+    public static object CoerceTo(object value, Type target) =>
+        value is null || target.IsInstanceOfType(value)
+            ? value
+            : Convert.ChangeType(value, target, CultureInfo.InvariantCulture);
+
     /// <summary>
     /// Promotes two numeric values to a common type before an operation.
     /// Hierarchy: int &lt; float &lt; double &lt; decimal.

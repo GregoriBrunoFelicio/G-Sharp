@@ -5,7 +5,6 @@ public record Token(TokenType Type, string Value, int Line = 0, int Column = 0);
 public enum TokenType
 {
     // Keywords
-    Colon,
     Equals,
     Newline,
     Println,
@@ -20,22 +19,18 @@ public enum TokenType
     Identifier,
 
     // Number
-    Number,
     NumberLiteral,
 
     //String
-    String,
     StringLiteral,
 
     //Boolean
-    Boolean,
     BooleanTrueLiteral,
     BooleanFalseLiteral,
 
     //Loop
     For,
     In,
-    While,
     Do,
 
     // Indentation

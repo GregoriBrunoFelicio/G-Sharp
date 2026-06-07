@@ -17,9 +17,7 @@ public static partial class Validations
         "let", "if", "else", "for", "return",
         "true", "false", "null",
         "function", "print", "printf", "println",
-        "string", "number", "boolean", "bool",
-        "in", "int", "float", "char", "void",
-        "main", "import",
+        "in", "main", "import",
         .. PrecompiledCatalog.Functions.Keys,
     ];
 

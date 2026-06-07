@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using GSharp.AST;
-using GSharp.CodeGen.Helpers;
 
 namespace GSharp.CodeGen;
 

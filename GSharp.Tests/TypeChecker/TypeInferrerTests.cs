@@ -1,6 +1,4 @@
 using FluentAssertions;
-using GSharp.Lexer;
-using GSharp.Parser;
 using GSharp.TypeChecker;
 
 namespace G.Sharp.Compiler.Tests.TypeChecker;
@@ -10,7 +8,7 @@ public class TypeInferrerTests
     private static Dictionary<GSharp.AST.Expression, GsType> Infer(string source)
     {
         var tokens = new GSharp.Lexer.Lexer(source).Tokenize();
-        var expressions = new Parser(tokens).Parse();
+        var expressions = new GSharp.Parser.Parser(tokens).Parse();
         return new TypeInferrer().Infer(expressions);
     }
 

@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-namespace G.Sharp.Compiler.Tests.Scoping;
+namespace G.Sharp.Compiler.Tests.Parser;
 
 // Bindings are scoped per function: a name declared inside a function never collides with the
 // same name at the top level or in another function. Redeclaring a name within the same scope

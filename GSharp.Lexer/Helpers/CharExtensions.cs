@@ -2,8 +2,11 @@
 namespace GSharp.Lexer.Helpers;
 public static class CharExtensions
 {
-    public static bool IsOnlyQuotes(this char c) => c == '"';
-    public static bool IsLetter(this char c) => char.IsLetter(c);
-    public static bool IsNumber(this char c) => char.IsDigit(c);
-    public static bool IsWhitespace(this char c) => c == ' ' || c == '\t';
+    extension(char c)
+    {
+        public bool IsOnlyQuotes() => c == '"';
+        public bool IsLetter() => char.IsLetter(c);
+        public bool IsNumber() => char.IsDigit(c);
+        public bool IsWhitespace() => c is ' ' or '\t';
+    }
 }

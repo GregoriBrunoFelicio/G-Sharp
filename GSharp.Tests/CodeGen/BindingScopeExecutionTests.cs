@@ -1,7 +1,7 @@
 using FluentAssertions;
 using GSharp.TypeChecker;
 
-namespace G.Sharp.Compiler.Tests.Scoping;
+namespace G.Sharp.Compiler.Tests.CodeGen;
 
 // End-to-end: a name reused inside a function and at the top level compiles and runs with each
 // scope keeping its own value.

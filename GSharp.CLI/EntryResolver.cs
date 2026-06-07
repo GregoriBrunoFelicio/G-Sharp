@@ -1,5 +1,4 @@
 using GSharp.Lexer;
-using G.Sharp.Compiler;
 
 namespace G.Sharp.Compiler;
 

@@ -1,5 +1,5 @@
 
-namespace GSharp.Lexer.Helpers;
+namespace GSharp.Lexer;
 
 public static class IdentifierLexer
 {
@@ -21,9 +21,6 @@ public static class IdentifierLexer
     {
         // Declarations
         ["let"] = TokenType.Let,
-        ["number"] = TokenType.Number,
-        ["string"] = TokenType.String,
-        ["bool"] = TokenType.Boolean,
 
         // Booleans
         ["true"] = TokenType.BooleanTrueLiteral,

@@ -1,7 +1,7 @@
 using FluentAssertions;
 using GSharp.AST;
 
-namespace G.Sharp.Compiler.Tests.Interop;
+namespace G.Sharp.Compiler.Tests.Parser;
 
 // The dot in an import marks it as .NET interop: `import system.math` resolves a .NET type,
 // while `import math` (no dot) stays a G# module import.

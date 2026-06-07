@@ -1,6 +1,5 @@
 using GSharp.LanguageServer;
 using Microsoft.Extensions.DependencyInjection;
-using OmniSharp.Extensions.LanguageServer.Server;
 
 // The OmniSharp server type shares the simple name "LanguageServer" with this project's
 // namespace, so alias it to keep the bootstrap unambiguous.

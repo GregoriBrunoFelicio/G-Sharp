@@ -1,7 +1,6 @@
 using GSharp.AST;
 using GSharp.Lexer;
 using GSharp.Parser;
-using G.Sharp.Compiler;
 
 namespace G.Sharp.Compiler;
 

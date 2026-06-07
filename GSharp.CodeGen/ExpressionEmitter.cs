@@ -332,13 +332,46 @@ public static class ExpressionEmitter
     }
 
     // -------------------------------------------------------------------------
-    // .NET interop — calls a static method on an imported .NET type
-    // (e.g. `import system.math` then `math.sqrt 16.0d` → System.Math.Sqrt).
+    // .NET interop — accesses a static member on an imported .NET type:
+    //   method   — `import system.math` then `math.sqrt 16.0d` → System.Math.Sqrt(16.0)
+    //   property — `import system.datetime` then `datetime.now` → System.DateTime.Now
+    //   field    — `import system.math` then `math.pi`         → System.Math.PI
     // -------------------------------------------------------------------------
 
     private static void EmitDotnetCall(ILGenerator il, QualifiedCallExpression qCall, Type dotnetType, EmitContext ctx)
     {
-        var method     = ResolveDotnetMethod(dotnetType, qCall, ctx);
+        var method = TryResolveDotnetMethod(dotnetType, qCall, ctx);
+        if (method is not null)
+        {
+            EmitMethodCall(il, method, qCall, ctx);
+            return;
+        }
+
+        // No method matched. A bare `type.name` (no arguments) may be a static property or field.
+        if (qCall.Arguments.Count == 0)
+        {
+            var property = FindStaticProperty(dotnetType, qCall.Function);
+            if (property is not null)
+            {
+                il.Emit(OpCodes.Call, property.GetGetMethod()!);
+                NormalizeDotnetReturn(il, property.PropertyType);
+                return;
+            }
+
+            var field = FindStaticField(dotnetType, qCall.Function);
+            if (field is not null)
+            {
+                EmitStaticField(il, field);
+                return;
+            }
+        }
+
+        throw new Exception(
+            $"no static method, property or field '{qCall.Function}' on '{dotnetType.FullName}'");
+    }
+
+    private static void EmitMethodCall(ILGenerator il, MethodInfo method, QualifiedCallExpression qCall, EmitContext ctx)
+    {
         var parameters = method.GetParameters();
 
         for (var i = 0; i < qCall.Arguments.Count; i++)
@@ -351,7 +384,9 @@ public static class ExpressionEmitter
 
     // Picks the static method to call. Prefers an exact overload match using the inferred
     // argument types (from the H-M TypeMap); falls back to matching by name and argument count.
-    private static MethodInfo ResolveDotnetMethod(Type type, QualifiedCallExpression qCall, EmitContext ctx)
+    // Returns null when no method matches (so the caller can try a property/field instead);
+    // throws only when several overloads match and the types can't disambiguate them.
+    private static MethodInfo? TryResolveDotnetMethod(Type type, QualifiedCallExpression qCall, EmitContext ctx)
     {
         const BindingFlags flags = BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase;
 
@@ -372,11 +407,35 @@ public static class ExpressionEmitter
             return matchesByName[0];
 
         if (matchesByName.Length == 0)
-            throw new Exception(
-                $"no static method '{qCall.Function}' taking {qCall.Arguments.Count} argument(s) on '{type.FullName}'");
+            return null;
 
         throw new Exception(
             $"ambiguous call to '{qCall.Function}' on '{type.FullName}' — could not resolve the overload");
+    }
+
+    private static PropertyInfo? FindStaticProperty(Type type, string name) =>
+        type.GetProperty(name, BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase) is { CanRead: true } p
+            ? p
+            : null;
+
+    private static FieldInfo? FindStaticField(Type type, string name) =>
+        type.GetField(name, BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase);
+
+    // Loads a static field, leaving one boxed object on the stack.
+    // A const field (IsLiteral) has no storage — emit its compile-time value directly;
+    // a static readonly field is a real slot read with Ldsfld.
+    private static void EmitStaticField(ILGenerator il, FieldInfo field)
+    {
+        if (field.IsLiteral)
+        {
+            var constantType = EmitLiteral(il, field.GetRawConstantValue()!);
+            if (constantType.IsValueType)
+                il.Emit(OpCodes.Box, constantType);
+            return;
+        }
+
+        il.Emit(OpCodes.Ldsfld, field);
+        NormalizeDotnetReturn(il, field.FieldType);
     }
 
     // Maps each argument's inferred GsType to a CLR type for overload resolution.

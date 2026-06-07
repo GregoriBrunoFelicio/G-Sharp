@@ -5,7 +5,6 @@ public static class SymbolTokenMap
     public static readonly Dictionary<char, TokenType> Symbols = new()
     {
         // Separators
-        { ':', TokenType.Colon },
         { '=', TokenType.Equals },
 
         // Parentheses

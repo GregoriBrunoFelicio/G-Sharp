@@ -23,7 +23,6 @@ public class SymbolLexerTests
     [InlineData(">", TokenType.GreaterThan)]
     [InlineData("<", TokenType.LessThan)]
     [InlineData("=", TokenType.Equals)]
-    [InlineData(":", TokenType.Colon)]
     [InlineData("+", TokenType.Plus)]
     [InlineData("-", TokenType.Minus)]
     [InlineData("*", TokenType.Multiply)]

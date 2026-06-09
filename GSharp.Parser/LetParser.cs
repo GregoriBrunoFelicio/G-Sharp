@@ -17,7 +17,6 @@ public class LetParser(Parser parser)
 
         parser.DeclareBinding(bindingName);
 
-        // Span points at the bound name so hovering it reports the binding's type.
         return new LetExpression(bindingName, value) { Line = nameToken.Line, Column = nameToken.Column };
     }
 

@@ -76,5 +76,6 @@ public enum TokenType
 
     // Imports
     Import,
-    Dot
+    Dot,
+    As
 }

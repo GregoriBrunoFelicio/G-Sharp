@@ -37,7 +37,7 @@ public class ImportParser(Parser parser)
     // An alias must be a plain identifier so it never clashes with a reserved word at call sites.
     private string ReadAliasOrDefault(string lastSegment)
     {
-        var hasAlias = parser.Check(TokenType.Identifier) && parser.Current().Value == "as";
+        var hasAlias = parser.Check(TokenType.As);
         if (!hasAlias)
             return lastSegment.ToLowerInvariant();
 

@@ -49,5 +49,6 @@ public static class IdentifierLexer
 
         // Imports
         ["import"] = TokenType.Import,
+        ["as"] = TokenType.As
     };
 }

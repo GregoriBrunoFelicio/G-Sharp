@@ -28,15 +28,16 @@ public class Compiler
     private static void RegisterPrecompiledFunctions(EmitContext ctx)
     {
         var t = typeof(Helpers.PrecompiledFunctions);
-        ctx.PrecompiledFunctions["head"]    = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Head))!;
-        ctx.PrecompiledFunctions["tail"]    = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Tail))!;
-        ctx.PrecompiledFunctions["last"]    = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Last))!;
-        ctx.PrecompiledFunctions["len"]     = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Len))!;
-        ctx.PrecompiledFunctions["empty"]   = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Empty))!;
-        ctx.PrecompiledFunctions["nth"]     = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Nth))!;
+        ctx.PrecompiledFunctions["head"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Head))!;
+        ctx.PrecompiledFunctions["tail"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Tail))!;
+        ctx.PrecompiledFunctions["last"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Last))!;
+        ctx.PrecompiledFunctions["len"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Len))!;
+        ctx.PrecompiledFunctions["empty"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Empty))!;
+        ctx.PrecompiledFunctions["nth"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Nth))!;
         ctx.PrecompiledFunctions["reverse"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Reverse))!;
-        ctx.PrecompiledFunctions["concat"]  = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Concat))!;
-        ctx.PrecompiledFunctions["str"]     = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Str))!;
+        ctx.PrecompiledFunctions["concat"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Concat))!;
+        ctx.PrecompiledFunctions["str"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Str))!;
+        ctx.PrecompiledFunctions["sort"] = t.GetMethod(nameof(Helpers.PrecompiledFunctions.Sort))!;
     }
 
     // Resolves each `import system.math` to a concrete .NET type and registers it under its
@@ -108,7 +109,7 @@ public class Compiler
             var (methodBuilder, typeBuilder) = CreateBuilders();
 
             var functions = new Dictionary<string, MethodBuilder>();
-            var adapters  = new Dictionary<string, MethodBuilder>();
+            var adapters = new Dictionary<string, MethodBuilder>();
 
             // ============================
             // Pass 1 — Register module function signatures (prefixed)

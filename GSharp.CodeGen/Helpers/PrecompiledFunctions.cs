@@ -25,7 +25,7 @@ public static class PrecompiledFunctions
         return arr[^1];
     }
 
-    public static object Len(object arg)   => ((object[])arg).Length;
+    public static object Len(object arg) => ((object[])arg).Length;
     public static object Empty(object arg) => ((object[])arg).Length == 0;
 
     public static object Nth(object arrArg, object idxArg)
@@ -48,12 +48,19 @@ public static class PrecompiledFunctions
 
     public static object Concat(object a, object b)
     {
-        var left   = a is object[] leftArr  ? leftArr  : new[] { a };
-        var right  = b is object[] rightArr ? rightArr : new[] { b };
+        var left = a as object[] ?? [a];
+        var right = b as object[] ?? [b];
         var merged = new object[left.Length + right.Length];
-        Array.Copy(left,  merged, left.Length);
+        Array.Copy(left, merged, left.Length);
         Array.Copy(right, 0, merged, left.Length, right.Length);
         return merged;
+    }
+
+    public static object Sort(object arg)
+    {
+        var arr = (object[])arg;
+        Array.Sort(arr);
+        return arr;
     }
 
     public static object Str(object arg) => arg?.ToString() ?? "";

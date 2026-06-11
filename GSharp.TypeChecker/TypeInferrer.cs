@@ -26,7 +26,7 @@ namespace GSharp.TypeChecker;
 public class TypeInferrer
 {
     private int _freshTypeVarCounter = 0;
-    private readonly List<TypeConstraint> _constraints = new();
+    private readonly List<TypeConstraint> _constraints = [];
     private readonly Dictionary<Expression, GsType> _expressionTypes =
         new(ReferenceEqualityComparer.Instance);
 
@@ -44,7 +44,7 @@ public class TypeInferrer
         foreach (var expression in expressions)
             InferExpression(expression, globalEnvironment);
 
-        var substitution  = Unifier.Unify(_constraints);
+        var substitution = Unifier.Unify(_constraints);
         var resolvedTypes = new Dictionary<Expression, GsType>(ReferenceEqualityComparer.Instance);
 
         foreach (var (expression, inferredType) in _expressionTypes)
@@ -58,7 +58,7 @@ public class TypeInferrer
     private void RegisterFunctionSignature(FunctionDeclaration fn, TypeEnvironment environment)
     {
         var parameterTypeVars = fn.Parameters.Select(_ => FreshTypeVar()).ToList();
-        var returnTypeVar     = FreshTypeVar();
+        var returnTypeVar = FreshTypeVar();
 
         var functionType = BuildCurriedFunctionType(parameterTypeVars, returnTypeVar);
         environment.Register(fn.Name, functionType);
@@ -69,19 +69,19 @@ public class TypeInferrer
     {
         var inferredType = expression switch
         {
-            LiteralExpression literal          => InferLiteral(literal),
-            BindingExpression binding          => InferBinding(binding, environment),
-            BinaryExpression binary            => InferBinary(binary, environment),
-            LetExpression let                  => InferLet(let, environment),
-            PrintExpression print              => InferPrint(print, environment),
-            IfExpression ifExpression          => InferIf(ifExpression, environment),
-            ForExpression forExpression        => InferFor(forExpression, environment),
-            FunctionDeclaration fn             => InferFunctionBody(fn, environment),
-            CallExpression call                => InferCall(call, environment),
-            QualifiedCallExpression qualified  => InferQualifiedCall(qualified, environment),
-            ImportDeclaration                  => new UnitType(),
-            DotnetImportDeclaration            => new UnitType(),
-            _                                  => FreshTypeVar()
+            LiteralExpression literal => InferLiteral(literal),
+            BindingExpression binding => InferBinding(binding, environment),
+            BinaryExpression binary => InferBinary(binary, environment),
+            LetExpression let => InferLet(let, environment),
+            PrintExpression print => InferPrint(print, environment),
+            IfExpression ifExpression => InferIf(ifExpression, environment),
+            ForExpression forExpression => InferFor(forExpression, environment),
+            FunctionDeclaration fn => InferFunctionBody(fn, environment),
+            CallExpression call => InferCall(call, environment),
+            QualifiedCallExpression qualified => InferQualifiedCall(qualified, environment),
+            ImportDeclaration => new UnitType(),
+            DotnetImportDeclaration => new UnitType(),
+            _ => FreshTypeVar()
         };
 
         _expressionTypes[expression] = inferredType;
@@ -94,14 +94,14 @@ public class TypeInferrer
 
     private GsType InferLiteral(LiteralExpression literal) => literal.Value switch
     {
-        int     => new IntType(),
-        float   => new FloatType(),
-        double  => new DoubleType(),
+        int => new IntType(),
+        float => new FloatType(),
+        double => new DoubleType(),
         decimal => new DecimalType(),
-        string  => new StringType(),
-        bool    => new BoolType(),
+        string => new StringType(),
+        bool => new BoolType(),
         object[] elements => InferArrayLiteral(elements),
-        _       => FreshTypeVar()
+        _ => FreshTypeVar()
     };
 
     private GsType InferArrayLiteral(object[] elements)
@@ -111,13 +111,13 @@ public class TypeInferrer
 
         var elementType = elements[0] switch
         {
-            int     => (GsType)new IntType(),
-            float   => new FloatType(),
-            double  => new DoubleType(),
+            int => (GsType)new IntType(),
+            float => new FloatType(),
+            double => new DoubleType(),
             decimal => new DecimalType(),
-            string  => new StringType(),
-            bool    => new BoolType(),
-            _       => FreshTypeVar()
+            string => new StringType(),
+            bool => new BoolType(),
+            _ => FreshTypeVar()
         };
 
         return new ArrayType(elementType);
@@ -141,12 +141,12 @@ public class TypeInferrer
 
     private GsType InferBinary(BinaryExpression binary, TypeEnvironment environment)
     {
-        var leftType  = InferExpression(binary.Left,  environment);
+        var leftType = InferExpression(binary.Left, environment);
         var rightType = InferExpression(binary.Right, environment);
 
         var isComparisonOperator = binary.Operator is
             TokenType.EqualEqual or TokenType.NotEqual or
-            TokenType.LessThan   or TokenType.GreaterThan or
+            TokenType.LessThan or TokenType.GreaterThan or
             TokenType.LessThanOrEqual or TokenType.GreaterThanOrEqual;
 
         if (isComparisonOperator)
@@ -196,8 +196,8 @@ public class TypeInferrer
 
     private GsType InferFor(ForExpression forExpression, TypeEnvironment environment)
     {
-        var iterableType    = InferExpression(forExpression.Iterable, environment);
-        var elementTypeVar  = FreshTypeVar();
+        var iterableType = InferExpression(forExpression.Iterable, environment);
+        var elementTypeVar = FreshTypeVar();
 
         _constraints.Add(new TypeConstraint(iterableType, new ArrayType(elementTypeVar)));
 
@@ -218,8 +218,8 @@ public class TypeInferrer
         var registeredFunctionType = environment.Lookup(fn.Name);
 
         // Create a child scope with each parameter bound to its TypeVar
-        var bodyEnvironment    = environment.CreateChildScope();
-        var parameterTypeVars  = ExtractParameterTypeVars(registeredFunctionType, fn.Parameters.Count);
+        var bodyEnvironment = environment.CreateChildScope();
+        var parameterTypeVars = ExtractParameterTypeVars(registeredFunctionType, fn.Parameters.Count);
 
         for (var i = 0; i < fn.Parameters.Count; i++)
             bodyEnvironment.Register(fn.Parameters[i], parameterTypeVars[i]);
@@ -268,7 +268,7 @@ public class TypeInferrer
 
         foreach (var argument in arguments)
         {
-            var argumentType  = InferExpression(argument, environment);
+            var argumentType = InferExpression(argument, environment);
             var returnTypeVar = FreshTypeVar();
 
             _constraints.Add(new TypeConstraint(currentType, new FunctionType(argumentType, returnTypeVar)));
@@ -302,19 +302,20 @@ public class TypeInferrer
         ValidatePrecompiledArguments(call);
 
         var elementTypeVar = FreshTypeVar();
-        var arrayType      = new ArrayType(elementTypeVar);
+        var arrayType = new ArrayType(elementTypeVar);
 
         return call.Callee switch
         {
             "head" or "last" => InferSingleArrayArg(call, arrayType, elementTypeVar, environment),
-            "tail"           => InferSingleArrayArg(call, arrayType, arrayType,      environment),
-            "reverse"        => InferSingleArrayArg(call, arrayType, arrayType,      environment),
-            "len"            => InferSingleArrayArg(call, arrayType, new IntType(),  environment),
-            "empty"          => InferSingleArrayArg(call, arrayType, new BoolType(), environment),
-            "nth"            => InferNth(call, arrayType, elementTypeVar, environment),
-            "concat"         => InferConcat(call, arrayType, environment),
-            "str"            => InferStr(call, environment),
-            _                => FreshTypeVar()
+            "tail" => InferSingleArrayArg(call, arrayType, arrayType, environment),
+            "reverse" => InferSingleArrayArg(call, arrayType, arrayType, environment),
+            "len" => InferSingleArrayArg(call, arrayType, new IntType(), environment),
+            "empty" => InferSingleArrayArg(call, arrayType, new BoolType(), environment),
+            "nth" => InferNth(call, arrayType, elementTypeVar, environment),
+            "concat" => InferConcat(call, arrayType, environment),
+            "sort" => InferSingleArrayArg(call, arrayType, arrayType, environment),
+            "str" => InferStr(call, environment),
+            _ => FreshTypeVar()
         };
     }
 
@@ -400,7 +401,7 @@ public class TypeInferrer
     private static List<GsType> ExtractParameterTypeVars(GsType functionType, int parameterCount)
     {
         var parameterTypes = new List<GsType>();
-        var currentType    = functionType;
+        var currentType = functionType;
 
         for (var i = 0; i < parameterCount; i++)
         {

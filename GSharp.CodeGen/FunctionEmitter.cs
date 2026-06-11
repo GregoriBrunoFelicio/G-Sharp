@@ -81,8 +81,8 @@ public static class FunctionEmitter
         var il = method.GetILGenerator();
 
         var fnCtx = new EmitContext(ctx.Functions, ctx.FunctionAdapters, ctx.TypeMap);
-        foreach (var (k, v) in ctx.PrecompiledFunctions)
-            fnCtx.PrecompiledFunctions[k] = v;
+        foreach (var (k, v) in ctx.Builtins)
+            fnCtx.Builtins[k] = v;
 
         // Register each parameter name → argument index.
         // The CLR accesses arguments via Ldarg_0, Ldarg_1, etc. — not Ldloc.

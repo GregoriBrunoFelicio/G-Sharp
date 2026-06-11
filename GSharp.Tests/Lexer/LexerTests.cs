@@ -78,7 +78,7 @@ public class LexerTests
         yield return ["""if n != 10 then println "x" else println "y" """];
         yield return ["add a b => a + b"];
         yield return ["square x => x * x"];
-        yield return ["import system.math\nprintln math.sqrt 16.0d"];
+        yield return ["import mymodule"];
         yield return ["let empty = []"];
         yield return ["""if isTrue and 1 == 1 then println "compound" """];
         yield return ["""if not isFalse then println "negated" """];

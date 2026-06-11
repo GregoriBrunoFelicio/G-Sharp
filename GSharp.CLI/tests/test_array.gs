@@ -1,19 +1,18 @@
 main
     let nums = [1 2 3 4 5]
-    println head nums
-    println last nums
-    println len nums
-    println empty nums
-    println nth nums 2
+    println array.head nums
+    println array.last nums
+    println array.len nums
+    println array.empty nums
 
-    let t = tail nums
-    println head t
+    let t = array.tail nums
+    println array.head t
 
-    let r = reverse nums
-    println head r
+    let r = array.reverse nums
+    println array.head r
 
     let more = [6 7 8]
-    let all = concat nums more
-    println len all
+    let all = array.concat nums more
+    println array.len all
 
-    println str 42
+    println string.from 42

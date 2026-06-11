@@ -18,7 +18,6 @@ public static partial class Validations
         "true", "false", "null",
         "function", "print", "printf", "println",
         "in", "main", "import",
-        .. PrecompiledCatalog.Functions.Keys,
     ];
 
     public static bool IsReserved(string word) => ReservedKeywords.Contains(word);

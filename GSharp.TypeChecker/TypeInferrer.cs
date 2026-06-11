@@ -1,28 +1,9 @@
 using GSharp.AST;
 using GSharp.Lexer;
+using GSharp.Stdlib;
 
 namespace GSharp.TypeChecker;
 
-/// <summary>
-/// Walks the AST, assigns a type to each expression, generates equality constraints,
-/// and returns the resolved types after unification.
-///
-/// The inference works in two passes (mirrors the FunctionEmitter two-pass approach):
-///   Pass 1 — register all function declarations with fresh TypeVars.
-///            This allows recursive calls to resolve: factorial can reference itself
-///            before its body is fully inferred.
-///   Pass 2 — infer each top-level expression, generating constraints along the way.
-///
-/// After both passes, all collected constraints are sent to the Unifier.
-/// The Unifier resolves all TypeVars to concrete types and returns a Substitution.
-/// The Substitution is applied to every expression's type to produce the final result.
-///
-/// Current limitation — monomorphic functions:
-///   A function like `identity x => x` gets one concrete type per program.
-///   If called with both Int and String, it fails with a type mismatch.
-///   Full let-polymorphism (∀a. a → a) where each call site gets a fresh type
-///   is the next step in the H-M implementation.
-/// </summary>
 public class TypeInferrer
 {
     private int _freshTypeVarCounter = 0;
@@ -36,11 +17,9 @@ public class TypeInferrer
     {
         var globalEnvironment = CreateGlobalEnvironment();
 
-        // Pass 1 — register function names before inferring bodies (supports recursion)
         foreach (var fn in expressions.OfType<FunctionDeclaration>())
             RegisterFunctionSignature(fn, globalEnvironment);
 
-        // Pass 2 — infer all top-level expressions
         foreach (var expression in expressions)
             InferExpression(expression, globalEnvironment);
 
@@ -53,18 +32,14 @@ public class TypeInferrer
         return resolvedTypes;
     }
 
-    // Registers a function's type signature using fresh TypeVars for each parameter.
-    // Builds a curried FunctionType: param1 → param2 → ... → returnType.
     private void RegisterFunctionSignature(FunctionDeclaration fn, TypeEnvironment environment)
     {
         var parameterTypeVars = fn.Parameters.Select(_ => FreshTypeVar()).ToList();
         var returnTypeVar = FreshTypeVar();
-
         var functionType = BuildCurriedFunctionType(parameterTypeVars, returnTypeVar);
         environment.Register(fn.Name, functionType);
     }
 
-    // Infers the type of a single expression and records it in _expressionTypes.
     private GsType InferExpression(Expression expression, TypeEnvironment environment)
     {
         var inferredType = expression switch
@@ -80,7 +55,6 @@ public class TypeInferrer
             CallExpression call => InferCall(call, environment),
             QualifiedCallExpression qualified => InferQualifiedCall(qualified, environment),
             ImportDeclaration => new UnitType(),
-            DotnetImportDeclaration => new UnitType(),
             _ => FreshTypeVar()
         };
 
@@ -132,10 +106,6 @@ public class TypeInferrer
         if (environment.TryLookup(binding.Name, out var resolvedType))
             return resolvedType;
 
-        // Unbound name. Previously this invented a fresh TypeVar so inference could
-        // continue, which pushed "undefined name" detection all the way to CodeGen —
-        // out of reach of the LSP. Reporting it here (with the binding's source line)
-        // lets the language server surface it as a diagnostic on the right line.
         throw new Exception($"{binding.Line}: '{binding.Name}' is not defined");
     }
 
@@ -155,7 +125,6 @@ public class TypeInferrer
             return new BoolType();
         }
 
-        // Arithmetic: both sides must be the same numeric type, result is that type
         var resultType = FreshTypeVar();
         _constraints.Add(new TypeConstraint(leftType, rightType, binary.Line, binary.Column));
         _constraints.Add(new TypeConstraint(resultType, leftType));
@@ -187,8 +156,6 @@ public class TypeInferrer
             return new UnitType();
 
         var elseType = InferBody(ifExpression.ElseBody, environment);
-
-        // Point a branch mismatch at the else branch's value (where the divergence shows up).
         var (line, column) = BodySpan(ifExpression.ElseBody);
         _constraints.Add(new TypeConstraint(thenType, elseType, line, column));
         return thenType;
@@ -214,20 +181,15 @@ public class TypeInferrer
 
     private GsType InferFunctionBody(FunctionDeclaration fn, TypeEnvironment environment)
     {
-        // Retrieve the already-registered function type from Pass 1
         var registeredFunctionType = environment.Lookup(fn.Name);
 
-        // Create a child scope with each parameter bound to its TypeVar
         var bodyEnvironment = environment.CreateChildScope();
         var parameterTypeVars = ExtractParameterTypeVars(registeredFunctionType, fn.Parameters.Count);
 
         for (var i = 0; i < fn.Parameters.Count; i++)
             bodyEnvironment.Register(fn.Parameters[i], parameterTypeVars[i]);
 
-        // Infer the body — the last expression is the return value
         var bodyResultType = InferBody(fn.Body, bodyEnvironment);
-
-        // Constrain the return TypeVar to the inferred body type
         var returnTypeVar = ExtractReturnTypeVar(registeredFunctionType, fn.Parameters.Count);
         _constraints.Add(new TypeConstraint(returnTypeVar, bodyResultType));
 
@@ -236,9 +198,6 @@ public class TypeInferrer
 
     private GsType InferCall(CallExpression call, TypeEnvironment environment)
     {
-        if (IsPrecompiled(call.Callee))
-            return InferBuiltInCall(call, environment);
-
         if (!environment.TryLookup(call.Callee, out var calleeType))
             throw new Exception($"unknown function '{call.Callee}'");
 
@@ -249,19 +208,15 @@ public class TypeInferrer
     {
         var qualifiedName = $"{qualified.Module}.{qualified.Function}";
 
+        if (BuiltinCatalog.All.ContainsKey(qualifiedName))
+            return InferBuiltinCall(qualifiedName, qualified.Arguments, environment);
+
         if (!environment.TryLookup(qualifiedName, out var calleeType))
-        {
-            // Module function not registered — assign a fresh type for now
             calleeType = FreshTypeVar();
-        }
 
         return ApplyArguments(calleeType, qualified.Arguments, environment);
     }
 
-    // Applies a list of arguments to a function type, returning the final result type.
-    // For `add 3 5` where add : Int → Int → Int:
-    //   apply 3  → result: Int → Int
-    //   apply 5  → result: Int
     private GsType ApplyArguments(GsType calleeType, List<Expression> arguments, TypeEnvironment environment)
     {
         var currentType = calleeType;
@@ -270,7 +225,6 @@ public class TypeInferrer
         {
             var argumentType = InferExpression(argument, environment);
             var returnTypeVar = FreshTypeVar();
-
             _constraints.Add(new TypeConstraint(currentType, new FunctionType(argumentType, returnTypeVar)));
             currentType = returnTypeVar;
         }
@@ -279,88 +233,63 @@ public class TypeInferrer
     }
 
     // -------------------------------------------------------------------------
-    // Built-in functions
+    // Builtin functions
     // -------------------------------------------------------------------------
 
-    private static bool IsPrecompiled(string name) => PrecompiledCatalog.Functions.ContainsKey(name);
-
-    private static void ValidatePrecompiledArguments(CallExpression call)
+    private GsType InferBuiltinCall(string name, List<Expression> arguments, TypeEnvironment environment)
     {
-        if (!PrecompiledCatalog.Functions.TryGetValue(call.Callee, out var expected))
-            return;
-
-        var got = call.Arguments.Count;
-        if (got != expected)
+        if (BuiltinCatalog.All.TryGetValue(name, out var expected) && arguments.Count != expected)
         {
             var argWord = expected == 1 ? "argument" : "arguments";
-            throw new Exception($"'{call.Callee}' expects {expected} {argWord} but got {got}");
+            throw new Exception($"'{name}' expects {expected} {argWord} but got {arguments.Count}");
         }
-    }
-
-    private GsType InferBuiltInCall(CallExpression call, TypeEnvironment environment)
-    {
-        ValidatePrecompiledArguments(call);
 
         var elementTypeVar = FreshTypeVar();
         var arrayType = new ArrayType(elementTypeVar);
 
-        return call.Callee switch
+        return name switch
         {
-            "head" or "last" => InferSingleArrayArg(call, arrayType, elementTypeVar, environment),
-            "tail" => InferSingleArrayArg(call, arrayType, arrayType, environment),
-            "reverse" => InferSingleArrayArg(call, arrayType, arrayType, environment),
-            "len" => InferSingleArrayArg(call, arrayType, new IntType(), environment),
-            "empty" => InferSingleArrayArg(call, arrayType, new BoolType(), environment),
-            "nth" => InferNth(call, arrayType, elementTypeVar, environment),
-            "concat" => InferConcat(call, arrayType, environment),
-            "sort" => InferSingleArrayArg(call, arrayType, arrayType, environment),
-            "str" => InferStr(call, environment),
+            "array.head" or "array.last" =>
+                InferSingleArrayArg(arguments, arrayType, elementTypeVar, environment),
+            "array.tail" or "array.reverse" or "array.sort" =>
+                InferSingleArrayArg(arguments, arrayType, arrayType, environment),
+            "array.len" =>
+                InferSingleArrayArg(arguments, arrayType, new IntType(), environment),
+            "array.empty" =>
+                InferSingleArrayArg(arguments, arrayType, new BoolType(), environment),
+            "array.concat" =>
+                InferConcat(arguments, environment),
+            "string.from" =>
+                InferStringFrom(arguments, environment),
             _ => FreshTypeVar()
         };
     }
 
     private GsType InferSingleArrayArg(
-        CallExpression call,
+        List<Expression> arguments,
         ArrayType expectedArgType,
         GsType resultType,
         TypeEnvironment environment)
     {
-        if (call.Arguments.Count > 0)
+        if (arguments.Count > 0)
         {
-            var argType = InferExpression(call.Arguments[0], environment);
+            var argType = InferExpression(arguments[0], environment);
             _constraints.Add(new TypeConstraint(argType, expectedArgType));
         }
         return resultType;
     }
 
-    private GsType InferNth(CallExpression call, ArrayType arrayType, GsType elementTypeVar, TypeEnvironment environment)
+    private GsType InferConcat(List<Expression> arguments, TypeEnvironment environment)
     {
-        if (call.Arguments.Count >= 1)
-        {
-            var argType = InferExpression(call.Arguments[0], environment);
-            _constraints.Add(new TypeConstraint(argType, arrayType));
-        }
-        if (call.Arguments.Count >= 2)
-        {
-            var indexType = InferExpression(call.Arguments[1], environment);
-            _constraints.Add(new TypeConstraint(indexType, new IntType()));
-        }
-        return elementTypeVar;
-    }
-
-    private GsType InferConcat(CallExpression call, ArrayType arrayType, TypeEnvironment environment)
-    {
-        foreach (var argument in call.Arguments)
+        foreach (var argument in arguments)
             InferExpression(argument, environment);
-
         return new ArrayType(FreshTypeVar());
     }
 
-    private GsType InferStr(CallExpression call, TypeEnvironment environment)
+    private GsType InferStringFrom(List<Expression> arguments, TypeEnvironment environment)
     {
-        if (call.Arguments.Count > 0)
-            InferExpression(call.Arguments[0], environment);
-
+        if (arguments.Count > 0)
+            InferExpression(arguments[0], environment);
         return new StringType();
     }
 
@@ -368,8 +297,6 @@ public class TypeInferrer
     // Helpers
     // -------------------------------------------------------------------------
 
-    // Infers the type of a body (list of expressions). Returns the type of the last expression.
-    // All expressions before the last have their values discarded.
     private GsType InferBody(List<Expression> body, TypeEnvironment environment)
     {
         if (body.Count == 0)
@@ -382,13 +309,9 @@ public class TypeInferrer
         return lastType;
     }
 
-    // Source position of a body's value (its last expression), used to anchor branch
-    // mismatch errors. Falls back to (0, 0) — "unknown" — for an empty body.
     private static (int Line, int Column) BodySpan(List<Expression> body) =>
         body.Count > 0 ? (body[^1].Line, body[^1].Column) : (0, 0);
 
-    // Builds a curried FunctionType from a list of parameter TypeVars and a return TypeVar.
-    // [?a, ?b] with return ?r → FunctionType(?a, FunctionType(?b, ?r))
     private static GsType BuildCurriedFunctionType(List<TypeVar> parameterTypeVars, TypeVar returnTypeVar)
     {
         GsType result = returnTypeVar;
@@ -397,7 +320,6 @@ public class TypeInferrer
         return result;
     }
 
-    // Extracts the TypeVars assigned to each parameter from a curried FunctionType.
     private static List<GsType> ExtractParameterTypeVars(GsType functionType, int parameterCount)
     {
         var parameterTypes = new List<GsType>();
@@ -415,7 +337,6 @@ public class TypeInferrer
         return parameterTypes;
     }
 
-    // Extracts the return TypeVar from a curried FunctionType by traversing past all parameters.
     private static GsType ExtractReturnTypeVar(GsType functionType, int parameterCount)
     {
         var currentType = functionType;
@@ -425,13 +346,11 @@ public class TypeInferrer
         return currentType;
     }
 
-    // Pre-populates the global environment with built-in names as fresh TypeVars.
-    // Their concrete types are resolved at each call site by InferBuiltInCall.
     private TypeEnvironment CreateGlobalEnvironment()
     {
         var globalEnvironment = new TypeEnvironment();
 
-        foreach (var name in PrecompiledCatalog.Functions.Keys)
+        foreach (var name in BuiltinCatalog.All.Keys)
             globalEnvironment.Register(name, FreshTypeVar());
 
         return globalEnvironment;

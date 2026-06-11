@@ -7,25 +7,6 @@ using GSharp.TypeChecker;
 
 namespace GSharp.CodeGen;
 
-// Emits IL for all expression types in G#.
-//
-// ══════════════════════════════════════════════════════════════
-//  STACK CONTRACT
-// ══════════════════════════════════════════════════════════════
-//
-// EmitToStack (public) — always leaves exactly ONE boxed object on the stack.
-//   Used by all callers that need a uniform object reference (PrintEmitter,
-//   IfEmitter, function return values, array element stores, etc.).
-//
-// Emit (internal) — leaves the native CLR type on the stack and returns it.
-//   Value types (int, float, double, bool, decimal) are left unboxed.
-//   Reference types (string, object[], object) are left as-is.
-//   Used by LetEmitter to store typed locals and by binary arithmetic
-//   to chain native IL opcodes without boxing intermediate values.
-//
-// EmitToStack is a thin wrapper over Emit that boxes value types.
-//
-// ══════════════════════════════════════════════════════════════
 public static class ExpressionEmitter
 {
     // Public contract: always leaves exactly one boxed object on the stack.
@@ -37,7 +18,6 @@ public static class ExpressionEmitter
     }
 
     // Internal contract: emits the expression and returns the actual CLR type on the stack.
-    // Value types are left unboxed; reference types are left as references.
     internal static Type Emit(ILGenerator il, Expression expression, EmitContext ctx)
     {
         switch (expression)
@@ -127,11 +107,6 @@ public static class ExpressionEmitter
         }
     }
 
-    // Decimal has no IL literal opcode — decomposes into bit fields and calls the constructor.
-    //
-    // decimal.GetBits() returns four int32 words:
-    //   [0] = lo bits, [1] = mid bits, [2] = hi bits
-    //   [3] = sign (bit 31) + scale (bits 16–23)
     private static void EmitDecimalLiteral(ILGenerator il, decimal value)
     {
         var bits  = decimal.GetBits(value);
@@ -154,7 +129,7 @@ public static class ExpressionEmitter
     }
 
     // -------------------------------------------------------------------------
-    // Binding emission — loads local or parameter, returns its actual CLR type
+    // Binding emission
     // -------------------------------------------------------------------------
 
     private static Type EmitBinding(ILGenerator il, BindingExpression v, EmitContext ctx)
@@ -162,47 +137,42 @@ public static class ExpressionEmitter
         if (ctx.Parameters.TryGetValue(v.Name, out var paramIndex))
         {
             il.Emit(OpCodes.Ldarg, paramIndex);
-            return typeof(object); // function parameters are always object
+            return typeof(object);
         }
 
         if (ctx.Locals.TryGetValue(v.Name, out var local))
         {
             il.Emit(OpCodes.Ldloc, local);
-            return local.LocalType; // typed locals return their actual type (may be int, double, etc.)
+            return local.LocalType;
         }
 
         if (ctx.FunctionAdapters.TryGetValue(v.Name, out var adapter))
         {
             EmitFunctionValue(il, adapter);
-            return typeof(object); // GSharpFunction is a reference type
+            return typeof(object);
         }
 
         throw new Exception($"Undefined binding: '{v.Name}'");
     }
 
     // -------------------------------------------------------------------------
-    // Binary emission — uses direct IL opcodes when types are known numeric
+    // Binary emission
     // -------------------------------------------------------------------------
 
     private static Type EmitBinary(ILGenerator il, BinaryExpression b, EmitContext ctx)
     {
         if (b.Operator is TokenType.And or TokenType.Or)
         {
-            // AND / OR require short-circuit evaluation.
-            // EmitLogicalShortCircuit stores the result in a bool local.
             var result = EmitLogicalShortCircuit(il, b, ctx);
             il.Emit(OpCodes.Ldloc, result);
-            return typeof(bool); // unboxed bool; EmitToStack will box if needed
+            return typeof(bool);
         }
 
-        // When the TypeMap tells us both operands have the same concrete numeric type
-        // AND we can verify the values will actually be unboxed at IL level,
-        // emit direct opcodes (Add/Sub/Mul/Div) — no RuntimeHelpers, no boxing overhead.
         var nativeType = TryGetNativeArithmeticType(b, ctx);
         if (nativeType is not null)
         {
-            Emit(il, b.Left,  ctx); // leaves native value on stack
-            Emit(il, b.Right, ctx); // leaves native value on stack
+            Emit(il, b.Left,  ctx);
+            Emit(il, b.Right, ctx);
 
             var opcode = b.Operator switch
             {
@@ -218,10 +188,8 @@ public static class ExpressionEmitter
             return nativeType;
         }
 
-        // Fallback: box both operands and dispatch through RuntimeHelpers.
-        // RuntimeHelpers handles all type combinations at runtime (int+double, etc.).
-        EmitToStack(il, b.Left,  ctx); // boxed object
-        EmitToStack(il, b.Right, ctx); // boxed object
+        EmitToStack(il, b.Left,  ctx);
+        EmitToStack(il, b.Right, ctx);
 
         var method = b.Operator switch
         {
@@ -240,18 +208,9 @@ public static class ExpressionEmitter
         };
 
         il.Emit(OpCodes.Call, method!);
-        return typeof(object); // RuntimeHelpers always returns a boxed object
+        return typeof(object);
     }
 
-    // Returns the shared CLR type for native arithmetic if possible, null otherwise.
-    //
-    // Native arithmetic requires:
-    //   1. The operator is +, -, *, / (comparison stays with RuntimeHelpers for now).
-    //   2. Both operands have the same concrete GsType in the TypeMap (IntType, FloatType, DoubleType).
-    //   3. Both operands will actually emit unboxed native values (not boxed object locals/params).
-    //
-    // Condition 3 prevents emitting Add on a boxed object from a loop variable or function
-    // parameter, which would corrupt the IL stack.
     private static Type? TryGetNativeArithmeticType(BinaryExpression b, EmitContext ctx)
     {
         if (b.Operator is not (TokenType.Plus or TokenType.Minus or TokenType.Multiply or TokenType.Divide))
@@ -273,8 +232,6 @@ public static class ExpressionEmitter
         };
     }
 
-    // Returns true when Emit(expr) would leave an unboxed native value (not a boxed object).
-    // Used to verify that native arithmetic opcodes are safe to use.
     private static bool WillEmitNativeValue(Expression expr, EmitContext ctx) => expr switch
     {
         LiteralExpression lit  => lit.Value is int or float or double or bool or decimal,
@@ -290,11 +247,11 @@ public static class ExpressionEmitter
 
     private static void EmitCall(ILGenerator il, CallExpression call, EmitContext ctx)
     {
-        if (ctx.PrecompiledFunctions.TryGetValue(call.Callee, out var precompiled))
+        if (ctx.Builtins.TryGetValue(call.Callee, out var builtin))
         {
             foreach (var arg in call.Arguments)
                 EmitToStack(il, arg, ctx);
-            il.Emit(OpCodes.Call, precompiled);
+            il.Emit(OpCodes.Call, builtin);
         }
         else if (ctx.Functions.ContainsKey(call.Callee))
         {
@@ -311,11 +268,12 @@ public static class ExpressionEmitter
     private static void EmitQualifiedCall(ILGenerator il, QualifiedCallExpression qCall, EmitContext ctx)
     {
         var key = $"{qCall.Module}.{qCall.Function}";
-        if (ctx.PrecompiledFunctions.TryGetValue(key, out var precompiledQ))
+
+        if (ctx.Builtins.TryGetValue(key, out var builtin))
         {
             foreach (var arg in qCall.Arguments)
                 EmitToStack(il, arg, ctx);
-            il.Emit(OpCodes.Call, precompiledQ);
+            il.Emit(OpCodes.Call, builtin);
         }
         else if (ctx.Functions.TryGetValue(key, out var moduleMethod))
         {
@@ -323,192 +281,14 @@ public static class ExpressionEmitter
                 EmitToStack(il, arg, ctx);
             il.Emit(OpCodes.Call, moduleMethod);
         }
-        else if (ctx.DotnetTypes.TryGetValue(qCall.Module, out var dotnetType))
-        {
-            EmitDotnetCall(il, qCall, dotnetType, ctx);
-        }
         else
             throw new Exception($"Undefined function: '{key}'");
-    }
-
-    // -------------------------------------------------------------------------
-    // .NET interop — accesses a static member on an imported .NET type:
-    //   method   — `import system.math` then `math.sqrt 16.0d` → System.Math.Sqrt(16.0)
-    //   property — `import system.datetime` then `datetime.now` → System.DateTime.Now
-    //   field    — `import system.math` then `math.pi`         → System.Math.PI
-    // -------------------------------------------------------------------------
-
-    private static void EmitDotnetCall(ILGenerator il, QualifiedCallExpression qCall, Type dotnetType, EmitContext ctx)
-    {
-        var method = TryResolveDotnetMethod(dotnetType, qCall, ctx);
-        if (method is not null)
-        {
-            EmitMethodCall(il, method, qCall, ctx);
-            return;
-        }
-
-        // No method matched. A bare `type.name` (no arguments) may be a static property or field.
-        if (qCall.Arguments.Count == 0)
-        {
-            var property = FindStaticProperty(dotnetType, qCall.Function);
-            if (property is not null)
-            {
-                il.Emit(OpCodes.Call, property.GetGetMethod()!);
-                NormalizeDotnetReturn(il, property.PropertyType);
-                return;
-            }
-
-            var field = FindStaticField(dotnetType, qCall.Function);
-            if (field is not null)
-            {
-                EmitStaticField(il, field);
-                return;
-            }
-        }
-
-        throw new Exception(
-            $"no static method, property or field '{qCall.Function}' on '{dotnetType.FullName}'");
-    }
-
-    private static void EmitMethodCall(ILGenerator il, MethodInfo method, QualifiedCallExpression qCall, EmitContext ctx)
-    {
-        var parameters = method.GetParameters();
-
-        for (var i = 0; i < qCall.Arguments.Count; i++)
-            EmitCoercedArgument(il, qCall.Arguments[i], parameters[i].ParameterType, ctx);
-
-        il.Emit(OpCodes.Call, method);
-
-        NormalizeDotnetReturn(il, method.ReturnType);
-    }
-
-    // Picks the static method to call. Prefers an exact overload match using the inferred
-    // argument types (from the H-M TypeMap); falls back to matching by name and argument count.
-    // Returns null when no method matches (so the caller can try a property/field instead);
-    // throws only when several overloads match and the types can't disambiguate them.
-    private static MethodInfo? TryResolveDotnetMethod(Type type, QualifiedCallExpression qCall, EmitContext ctx)
-    {
-        const BindingFlags flags = BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase;
-
-        var argumentTypes = TryMapArgumentTypes(qCall.Arguments, ctx);
-        if (argumentTypes is not null)
-        {
-            var exactMatch = type.GetMethod(qCall.Function, flags, binder: null, argumentTypes, modifiers: null);
-            if (exactMatch is not null)
-                return exactMatch;
-        }
-
-        var matchesByName = type.GetMethods(flags)
-            .Where(m => string.Equals(m.Name, qCall.Function, StringComparison.OrdinalIgnoreCase)
-                        && m.GetParameters().Length == qCall.Arguments.Count)
-            .ToArray();
-
-        if (matchesByName.Length == 1)
-            return matchesByName[0];
-
-        if (matchesByName.Length == 0)
-            return null;
-
-        throw new Exception(
-            $"ambiguous call to '{qCall.Function}' on '{type.FullName}' — could not resolve the overload");
-    }
-
-    private static PropertyInfo? FindStaticProperty(Type type, string name) =>
-        type.GetProperty(name, BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase) is { CanRead: true } p
-            ? p
-            : null;
-
-    private static FieldInfo? FindStaticField(Type type, string name) =>
-        type.GetField(name, BindingFlags.Public | BindingFlags.Static | BindingFlags.IgnoreCase);
-
-    // Loads a static field, leaving one boxed object on the stack.
-    // A const field (IsLiteral) has no storage — emit its compile-time value directly;
-    // a static readonly field is a real slot read with Ldsfld.
-    private static void EmitStaticField(ILGenerator il, FieldInfo field)
-    {
-        if (field.IsLiteral)
-        {
-            var constantType = EmitLiteral(il, field.GetRawConstantValue()!);
-            if (constantType.IsValueType)
-                il.Emit(OpCodes.Box, constantType);
-            return;
-        }
-
-        il.Emit(OpCodes.Ldsfld, field);
-        NormalizeDotnetReturn(il, field.FieldType);
-    }
-
-    // Maps each argument's inferred GsType to a CLR type for overload resolution.
-    // Returns null if any argument's type is unknown, so the caller falls back to name+arity.
-    private static Type[]? TryMapArgumentTypes(List<Expression> arguments, EmitContext ctx)
-    {
-        var clrTypes = new Type[arguments.Count];
-
-        for (var i = 0; i < arguments.Count; i++)
-        {
-            if (!ctx.TypeMap.TryGetValue(arguments[i], out var gsType))
-                return null;
-
-            var clrType = MapGsTypeToClr(gsType);
-            if (clrType is null)
-                return null;
-
-            clrTypes[i] = clrType;
-        }
-
-        return clrTypes;
-    }
-
-    private static Type? MapGsTypeToClr(GsType gsType) => gsType switch
-    {
-        IntType     => typeof(int),
-        FloatType   => typeof(float),
-        DoubleType  => typeof(double),
-        DecimalType => typeof(decimal),
-        StringType  => typeof(string),
-        BoolType    => typeof(bool),
-        ArrayType   => typeof(object[]),
-        _           => null
-    };
-
-    // Emits an argument, then coerces the boxed value to the exact CLR type the parameter wants
-    // (RuntimeHelpers.CoerceTo handles int→double and friends), leaving it ready for the call.
-    private static void EmitCoercedArgument(ILGenerator il, Expression argument, Type targetType, EmitContext ctx)
-    {
-        EmitToStack(il, argument, ctx); // boxed object
-
-        il.Emit(OpCodes.Ldtoken, targetType);
-        il.Emit(OpCodes.Call, typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!);
-        il.Emit(OpCodes.Call, typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.CoerceTo))!);
-
-        if (targetType.IsValueType)
-            il.Emit(OpCodes.Unbox_Any, targetType);
-        else
-            il.Emit(OpCodes.Castclass, targetType);
-    }
-
-    // Leaves exactly one boxed object on the stack (the expression contract):
-    // void → null; value type → boxed; reference type → already an object.
-    private static void NormalizeDotnetReturn(ILGenerator il, Type returnType)
-    {
-        if (returnType == typeof(void))
-            il.Emit(OpCodes.Ldnull);
-        else if (returnType.IsValueType)
-            il.Emit(OpCodes.Box, returnType);
     }
 
     // -------------------------------------------------------------------------
     // Short-circuit AND / OR
     // -------------------------------------------------------------------------
 
-    // Short-circuit means: if the result can be determined from the left side alone,
-    // the right side is NOT evaluated.
-    //
-    //   AND: if left is false → result is false (skip right)
-    //   OR:  if left is true  → result is true  (skip right)
-    //
-    // Returns a LocalBuilder(bool) holding the result.
-    // The caller is responsible for loading it (and boxing if needed).
     private static LocalBuilder EmitLogicalShortCircuit(
         ILGenerator il, BinaryExpression expr, EmitContext ctx)
     {
@@ -538,8 +318,6 @@ public static class ExpressionEmitter
     // Higher-order function helpers
     // -------------------------------------------------------------------------
 
-    // Wraps a static adapter method in a GSharpFunction so the function can be
-    // passed as a first-class value.
     private static void EmitFunctionValue(ILGenerator il, MethodBuilder adapter)
     {
         var funcType   = typeof(Func<object[], object>);
@@ -552,8 +330,6 @@ public static class ExpressionEmitter
         il.Emit(OpCodes.Newobj, gsFuncCtor);
     }
 
-    // Emits a call through a GSharpFunction value held in a local or parameter.
-    // Arguments are packed into object[] and GSharpFunction.Call(object[]) is invoked.
     private static void EmitDelegateCall(ILGenerator il, CallExpression call, EmitContext ctx)
     {
         if (ctx.Parameters.TryGetValue(call.Callee, out var paramIdx))

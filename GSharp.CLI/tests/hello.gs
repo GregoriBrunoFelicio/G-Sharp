@@ -55,25 +55,28 @@ for x in doubled do
     println x
 
 // --- built-in array functions ---
-println head nums
-println last nums
-println len  nums
-println empty nums
-println nth  nums 2
+println array.head nums
+println array.last nums
+println array.len  nums
+println array.empty nums
 
-let rest     = tail nums
-let reversed = reverse nums
+let rest     = array.tail nums
+let reversed = array.reverse nums
 let more     = [6 7 8]
-let all      = concat nums more
+let all      = array.concat nums more
 
-println head rest
-println head reversed
-println len all
+println array.head rest
+println array.head reversed
+println array.len all
+let unsorted = [3 1 2]
+let sorted = array.sort unsorted
+for s in sorted do
+    println s
 
-// --- type conversion ---
-println str 42
-println str 3.14d
-println str true
+// --- string functions ---
+println string.from 42
+println string.from 3.14d
+println string.from true
 
 // --- conditionals ---
 let a = 10

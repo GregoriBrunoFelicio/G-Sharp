@@ -9,6 +9,7 @@
     <ItemGroup>
       <ProjectReference Include="..\GSharp.AST\GSharp.AST.csproj" />
       <ProjectReference Include="..\GSharp.TypeChecker\GSharp.TypeChecker.csproj" />
+      <ProjectReference Include="..\GSharp.Stdlib\GSharp.Stdlib.csproj" />
     </ItemGroup>
 
 </Project>

@@ -98,30 +98,32 @@ let x = 10    // inline comment
 
 ---
 
-### Built-in functions
+### Standard library
 
-#### Array operations
+G# ships a built-in standard library. No import needed — all functions are always available.
+
+#### array
 
 ```gs
 let nums = [1 2 3 4 5]
 
-println head nums        // 1
-println last nums        // 5
-println len nums         // 5
-println empty nums       // False
-println nth nums 2       // 3  (zero-indexed)
+println array.head nums        // 1
+println array.last nums        // 5
+println array.len nums         // 5
+println array.empty nums       // False
 
-let rest     = tail nums         // [2 3 4 5]
-let reversed = reverse nums      // [5 4 3 2 1]
+let rest     = array.tail nums            // [2 3 4 5]
+let reversed = array.reverse nums         // [5 4 3 2 1]
+let sorted   = array.sort [3 1 2]         // [1 2 3]
 let more     = [6 7 8]
-let all      = concat nums more  // [1 2 3 4 5 6 7 8]
+let all      = array.concat nums more     // [1 2 3 4 5 6 7 8]
 ```
 
-#### Type conversion
+#### string
 
 ```gs
-println str 42       // "42"
-println str 3.14d    // "3.14"
+println string.from 42       // "42"
+println string.from 3.14d    // "3.14"
 ```
 
 ---
@@ -245,17 +247,15 @@ Modules can import other modules — circular imports are detected and reported 
 | Line comments (`//`) | ✅ |
 | `main` as entry point | ✅ |
 | `gs run` CLI with auto-detection | ✅ |
-| Built-in array functions (`head`, `tail`, `last`, `len`, `nth`, `reverse`, `concat`) | ✅ |
-| Type conversion (`str`) | ✅ |
+| Standard library (`array.*`, `string.*`) | ✅ |
 | Module import system (`import`, dot notation) | ✅ |
 | Multi-file projects with recursive module loading | ✅ |
 | Circular import detection | ✅ |
-| String concatenation (`+`) | ⏳ |
+| Hindley-Milner type inference | ✅ |
 | Lambda expressions | ⏳ |
 | `map` / `filter` / `fold` | ⏳ |
-| .NET interop (`import dotnet`) | ⏳ |
-| Hindley-Milner type inference | ✅ |
 | Pattern matching | ⏳ |
+| Custom types (records, ADTs) | ⏳ |
 
 ---
 
@@ -319,7 +319,12 @@ flowchart TD
         C5["EmitContext — locals, params, functions, adapters, type map"]
         C6["GSharpFunction — first-class function wrapper"]
         C7["RuntimeHelpers — numeric type promotion (fallback)"]
-        C8["PrecompiledFunctions — built-in array and conversion functions"]
+    end
+
+    subgraph STDLIB["STANDARD LIBRARY"]
+        S1["ArrayBuiltins — array.head, array.sort, ..."]
+        S2["StringBuiltins — string.from, ..."]
+        S3["BuiltinCatalog — registry of names and arities"]
     end
 
     IL["IL — System.Reflection.Emit"]
@@ -327,6 +332,8 @@ flowchart TD
     OUT["Output"]
 
     SRC --> CLI --> LEXER --> T --> PARSER --> AST --> TYPECHECKER --> TMAP --> CODEGEN --> IL --> RT --> OUT
+    STDLIB --> TYPECHECKER
+    STDLIB --> CODEGEN
 ```
 
 ### Project structure
@@ -338,6 +345,10 @@ GSharp.AST/           — immutable record types for all AST nodes
   Declarations.cs     — FunctionDeclaration, ImportDeclaration
   Calls.cs            — CallExpression, QualifiedCallExpression
   Statements.cs       — Let, Print, If, For
+GSharp.Stdlib/        — standard library (no compiler dependency)
+  BuiltinCatalog.cs   — registry of all builtin names and arities
+  ArrayBuiltins.cs    — array.head, array.tail, array.sort, ...
+  StringBuiltins.cs   — string.from, ...
 GSharp.Parser/        — recursive-descent parser (one class per statement type)
 GSharp.TypeChecker/   — Hindley-Milner type inference
   GsType.cs           — type hierarchy (IntType, FunctionType, TypeVar, ...)

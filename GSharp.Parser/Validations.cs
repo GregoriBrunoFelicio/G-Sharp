@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using GSharp.AST;
 using GSharp.Lexer;
@@ -21,7 +22,23 @@ public static partial class Validations
     ];
 
     public static bool IsReserved(string word) => ReservedKeywords.Contains(word);
+
+    public static bool IsLiteralToken(TokenType t) =>
+        t is TokenType.NumberLiteral
+          or TokenType.StringLiteral
+          or TokenType.BooleanTrueLiteral
+          or TokenType.BooleanFalseLiteral;
     
+    internal static object ParseNumber(string text)
+    {
+        var ic = CultureInfo.InvariantCulture;
+        if (text.EndsWith('f')) return float.Parse(text[..^1], ic);
+        if (text.EndsWith('d')) return double.Parse(text[..^1], ic);
+        if (text.EndsWith('m')) return decimal.Parse(text[..^1], ic);
+        if (text.Contains('.'))  return double.Parse(text, ic);
+        return int.Parse(text, ic);
+    }
+
     public static readonly Dictionary<TokenType, int> OperatorPrecedence = new()
     {
         { TokenType.Or, 1 },

@@ -29,9 +29,6 @@ public class LetParser(Parser parser)
 
     private void ValidateBindingName(string bindingName)
     {
-        if (parser.IsDeclaredInCurrentScope(bindingName))
-            throw new Exception($"Binding '{bindingName}' already declared.");
-
         if (!IsValidBindingName(bindingName))
         {
             var t = parser.Previous();

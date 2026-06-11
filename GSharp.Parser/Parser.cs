@@ -1,5 +1,6 @@
 using GSharp.AST;
 using GSharp.Lexer;
+using static GSharp.Parser.Validations;
 
 namespace GSharp.Parser;
 
@@ -18,12 +19,6 @@ public class Parser(List<Token> tokens)
 
     public void ExitScope() => _scopes.Pop();
 
-    public bool IsDeclaredInCurrentScope(string name)
-    {
-        var currentScope = _scopes.Peek();
-        return currentScope.Contains(name);
-    }
-
     // Declares a name in the current scope, rejecting a duplicate in that same scope
     // (let is immutable — no reassignment, no same-scope shadowing).
     public void DeclareBinding(string name)
@@ -41,7 +36,7 @@ public class Parser(List<Token> tokens)
     {
         var expressions = new List<Expression>();
 
-        while (IsNotEndOfFile())
+        while (!IsAtEnd() && !Check(TokenType.EndOfFile))
         {
             if (Match(TokenType.Newline))
                 continue;
@@ -51,10 +46,6 @@ public class Parser(List<Token> tokens)
 
         return expressions;
     }
-
-    private bool IsNotEndOfFile() =>
-        _current < tokens.Count
-        && tokens[_current].Type != TokenType.EndOfFile;
 
     public Expression ParseNext()
     {
@@ -81,11 +72,8 @@ public class Parser(List<Token> tokens)
             return new ExpressionParser(this).Parse();
         }
 
-        if (Check(TokenType.NumberLiteral) || Check(TokenType.StringLiteral) ||
-            Check(TokenType.BooleanTrueLiteral) || Check(TokenType.BooleanFalseLiteral))
-        {
+        if (IsLiteralToken(Current().Type))
             return new ExpressionParser(this).Parse();
-        }
 
         throw new Exception($"{tokens[_current].Line}: unexpected '{tokens[_current].Value}'");
     }
@@ -95,9 +83,9 @@ public class Parser(List<Token> tokens)
         var saved = _current;
         try
         {
-            Advance(); // skip name
+            Advance(); 
             while (Check(TokenType.Identifier))
-                Advance(); // skip params
+                Advance();
             while (Match(TokenType.Newline)) { }
             return Check(TokenType.Arrow) || Check(TokenType.BlockOpen);
         }

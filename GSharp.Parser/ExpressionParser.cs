@@ -102,10 +102,7 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
         if (parser.Match(TokenType.LeftParen))
             return new QualifiedCallExpression(name, functionName, ParseParenArgs()) { Line = line, Column = column };
 
-        if (allowAtomArgs)
-            return new QualifiedCallExpression(name, functionName, ParseAtomArgs()) { Line = line, Column = column };
-
-        return new QualifiedCallExpression(name, functionName, []) { Line = line, Column = column };
+        return new QualifiedCallExpression(name, functionName, ParseAtomArgs()) { Line = line, Column = column };
     }
 
     private List<Expression> ParseParenArgs()

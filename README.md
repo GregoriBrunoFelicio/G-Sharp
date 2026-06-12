@@ -25,6 +25,13 @@ gs run             # auto-detects entry point in the current directory
 gs hello.gs        # shorthand
 ```
 
+### Rebuild and reinstall
+
+```bash
+./update-tool.sh   # rebuilds GSharp.CLI and reinstalls gs
+./update-lsp.sh    # rebuilds the language server and reinstalls gsharp-lsp
+```
+
 ---
 
 ## Syntax
@@ -47,6 +54,13 @@ let i = 42       // int
 let d = 3.14d    // double
 let f = 2.5f     // float
 let m = 9.99m    // decimal
+```
+
+### Booleans
+
+```gs
+let yes = true
+let no  = false
 ```
 
 ### Arrays
@@ -73,6 +87,21 @@ else
 // as expression
 let label = if age >= 18 then "adult" else "minor"
 println label
+```
+
+### Logical operators
+
+`and` and `or` are binary operators with short-circuit evaluation.
+
+```gs
+let a = true
+let b = false
+
+let both = a and b     // false
+let either = a or b    // true
+
+if a and age >= 18 then
+    println "adult and confirmed"
 ```
 
 ### For — functional map
@@ -230,6 +259,32 @@ Modules can import other modules — circular imports are detected and reported 
 
 ---
 
+## Language Server
+
+G# ships a Language Server Protocol (LSP) implementation that integrates with any LSP-compatible editor.
+
+### Install
+
+```bash
+dotnet tool install -g --add-source ./nupkg GSharp.LanguageServer
+```
+
+The server binary is `gsharp-lsp`.
+
+### Features
+
+**Hover** — hover over any binding, literal, or function call to see its inferred type.
+
+```
+let x = 42        →  int
+let d = 3.14d     →  double
+add a b => a + b  →  (int → (int → int))
+```
+
+**Diagnostics** — type errors and parse errors are reported inline as you type, before you run the program.
+
+---
+
 ## Current Features
 
 | Feature | Status |
@@ -237,6 +292,8 @@ Modules can import other modules — circular imports are detected and reported 
 | Immutable bindings (`let`) | ✅ |
 | Numeric types (int, float, double, decimal) | ✅ |
 | Strings | ✅ |
+| Booleans (`true`, `false`) | ✅ |
+| Logical operators (`and`, `or`, short-circuit) | ✅ |
 | Arrays | ✅ |
 | `if/else` as expression (inline and block) | ✅ |
 | `for` as functional map (returns array) | ✅ |
@@ -252,6 +309,7 @@ Modules can import other modules — circular imports are detected and reported 
 | Multi-file projects with recursive module loading | ✅ |
 | Circular import detection | ✅ |
 | Hindley-Milner type inference | ✅ |
+| Language server (hover, diagnostics) | ✅ |
 | Lambda expressions | ⏳ |
 | `map` / `filter` / `fold` | ⏳ |
 | Pattern matching | ⏳ |
@@ -293,7 +351,7 @@ flowchart TD
         P3["ForParser — functional map over arrays"]
         P4["FunctionParser — named functions"]
         P5["ImportParser — module declarations"]
-        P6["ExpressionParser — arithmetic, calls, HOF"]
+        P6["ExpressionParser — arithmetic, calls, HOF, logical"]
     end
 
     AST["List&lt;Expression&gt; (AST)"]
@@ -327,13 +385,22 @@ flowchart TD
         S3["BuiltinCatalog — registry of names and arities"]
     end
 
+    subgraph LSP["LANGUAGE SERVER"]
+        LS1["TextDocumentHandler — receives document open/change events"]
+        LS2["DocumentAnalyzer — runs Lexer → Parser → TypeInferrer, collects errors"]
+        LS3["HoverProvider — maps cursor position to inferred type"]
+        LS4["DocumentStore — caches latest analysis per document"]
+    end
+
     IL["IL — System.Reflection.Emit"]
     RT[".NET Runtime"]
     OUT["Output"]
+    EDITOR["Editor (LSP client)"]
 
     SRC --> CLI --> LEXER --> T --> PARSER --> AST --> TYPECHECKER --> TMAP --> CODEGEN --> IL --> RT --> OUT
     STDLIB --> TYPECHECKER
     STDLIB --> CODEGEN
+    EDITOR --> LSP --> TYPECHECKER
 ```
 
 ### Project structure
@@ -358,6 +425,13 @@ GSharp.TypeChecker/   — Hindley-Milner type inference
   TypeEnvironment.cs  — scoped variable → type bindings
   TypeConstraint.cs   — equality constraint (A must equal B)
 GSharp.CodeGen/       — IL emitters (one class per statement type) + Compiler entry point
+GSharp.LanguageServer/ — LSP server (hover, diagnostics)
+  DocumentAnalyzer.cs — runs the pipeline over in-memory source, returns diagnostics
+  HoverProvider.cs    — maps cursor position to the inferred type of the node under it
+  HoverHandler.cs     — LSP hover request handler
+  TextDocumentHandler.cs — LSP text document sync handler
+  DocumentStore.cs    — per-document analysis cache
+  TypeDisplay.cs      — formats GsType values for display in hover tooltips
 GSharp.CLI/           — entry point resolver, file loader, program runner
   EntryResolver.cs    — detects which file to run
   GsLoader.cs         — parses files and resolves module imports

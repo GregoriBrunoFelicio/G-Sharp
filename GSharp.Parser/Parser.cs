@@ -6,21 +6,15 @@ namespace GSharp.Parser;
 
 public class Parser(List<Token> tokens)
 {
+    /*Scopes used to detect duplicate declarations.
+    Top-level is the initial scope; each function body gets its own scope.
+    `if`/`for` do not create scopes, since locals are stored per function.*/
+    private readonly Stack<HashSet<string>> _scopes = new([[]]);
     private int _current;
 
-    // Lexical scopes for the "already declared" check. The bottom of the stack is the
-    // top-level scope; FunctionParser pushes a new scope for each function body. Granularity
-    // is per-function — `if`/`for` do NOT open scopes (the codegen stores locals flat per
-    // function), so a name declared in one function never collides with the same name at the
-    // top level or in another function.
-    private readonly Stack<HashSet<string>> _scopes = new([[]]);
-
     public void EnterScope() => _scopes.Push([]);
-
     public void ExitScope() => _scopes.Pop();
 
-    // Declares a name in the current scope, rejecting a duplicate in that same scope
-    // (let is immutable — no reassignment, no same-scope shadowing).
     public void DeclareBinding(string name)
     {
         var currentScope = _scopes.Peek();
@@ -83,10 +77,12 @@ public class Parser(List<Token> tokens)
         var saved = _current;
         try
         {
-            Advance(); 
+            Advance();
             while (Check(TokenType.Identifier))
                 Advance();
-            while (Match(TokenType.Newline)) { }
+            
+            while (Check(TokenType.Newline))
+                Advance();
             return Check(TokenType.Arrow) || Check(TokenType.BlockOpen);
         }
         finally
@@ -96,9 +92,9 @@ public class Parser(List<Token> tokens)
     }
 
     public Token Consume(TokenType type) =>
-        Check(type) ?
-            Advance() :
-            throw new Exception($"{tokens[_current].Line}: expected '{type}', got '{tokens[_current].Value}'");
+        Check(type)
+            ? Advance()
+            : throw new Exception($"{tokens[_current].Line}: expected '{type}', got '{tokens[_current].Value}'");
 
     public Token Advance()
     {
@@ -119,19 +115,12 @@ public class Parser(List<Token> tokens)
         return tokens[_current].Type == type;
     }
 
-    public Token Previous()
-    {
-        if (_current == 0) throw new Exception("No previous token.");
-        return tokens[_current - 1];
-    }
-
-    public Token Current()
-    {
-        if (IsAtEnd()) throw new Exception("unexpected end of input");
-        return tokens[_current];
-    }
+    public Token Current() => 
+        IsAtEnd() ? throw new Exception("unexpected end of input") : tokens[_current];
 
     private bool IsAtEnd() => _current >= tokens.Count;
+
     public Token Identifier() => Consume(TokenType.Identifier);
+
     public void Equals() => Consume(TokenType.Equals);
 }

@@ -13,24 +13,26 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
         while (TryGetOperator(out var op, out var precedence))
         {
             parser.Advance();
-            var right = GetExpression();
-
-            while (
-                TryGetOperator(out var nextOp, out var nextPrecedence)
-                && nextPrecedence > precedence
-            )
-            {
-                parser.Advance();
-                var nextRight = GetExpression();
-                right = new BinaryExpression(right, nextOp, nextRight);
-                precedence = nextPrecedence;
-            }
-
-            // A binary node starts where its left operand starts.
+            var right = ParseRightOperand(precedence);
             left = new BinaryExpression(left, op, right) { Line = left.Line, Column = left.Column };
         }
 
         return left;
+    }
+
+    private Expression ParseRightOperand(int leftPrecedence)
+    {
+        var right = GetExpression();
+
+        while (TryGetOperator(out var nextOp, out var nextPrecedence) && nextPrecedence > leftPrecedence)
+        {
+            parser.Advance();
+            var nextRight = GetExpression();
+            right = new BinaryExpression(right, nextOp, nextRight);
+            leftPrecedence = nextPrecedence;
+        }
+
+        return right;
     }
 
     private bool TryGetOperator(out TokenType op, out int precedence)
@@ -60,46 +62,50 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
         if (parser.Check(TokenType.For))
             return new ForParser(parser).Parse();
 
-        if (parser.Match(TokenType.Identifier))
+        if (parser.Match(TokenType.LeftParen))
         {
-            var (_, name, line, column) = parser.Previous();
-
-            // Qualified call: module.function — e.g. array.sort nums
-            if (parser.Match(TokenType.Dot))
-            {
-                var functionName = parser.Consume(TokenType.Identifier).Value;
-
-                if (parser.Match(TokenType.LeftParen))
-                    return new QualifiedCallExpression(name, functionName, ParseParenArgs()) { Line = line, Column = column };
-
-                if (allowAtomArgs)
-                {
-                    var atomArgs = ParseAtomArgs();
-                    return new QualifiedCallExpression(name, functionName, atomArgs) { Line = line, Column = column };
-                }
-
-                return new QualifiedCallExpression(name, functionName, []) { Line = line, Column = column };
-            }
-
-            // Call with parens: sum(10 20) — args parsed without atom collection
-            // so that `apply(double 5)` stays as apply(double, 5), not apply(double(5)).
-            if (parser.Match(TokenType.LeftParen))
-                return new CallExpression(name, ParseParenArgs()) { Line = line, Column = column };
-
-            // Call without parens: sum 10 20
-            // Collects consecutive atoms as arguments until an operator or keyword.
-            // Disabled inside paren-style arg lists to preserve their semantics.
-            if (allowAtomArgs)
-            {
-                var atomArgs = ParseAtomArgs();
-                if (atomArgs.Count > 0)
-                    return new CallExpression(name, atomArgs) { Line = line, Column = column };
-            }
-
-            return new BindingExpression(name) { Line = line, Column = column };
+            var inner = new ExpressionParser(parser, allowAtomArgs: true).Parse();
+            parser.Consume(TokenType.RightParen);
+            return inner;
         }
 
+        if (parser.Check(TokenType.Identifier))
+            return ParseIdentifierExpression(parser.Advance());
+
         throw new Exception($"{parser.Current().Line}: unexpected '{parser.Current().Value}'");
+    }
+
+    private Expression ParseIdentifierExpression(Token token)
+    {
+        var (_, name, line, column) = token;
+
+        if (parser.Match(TokenType.Dot))
+            return ParseQualifiedCall(name, line, column);
+
+        if (parser.Match(TokenType.LeftParen))
+            return new CallExpression(name, ParseParenArgs()) { Line = line, Column = column };
+
+        if (allowAtomArgs)
+        {
+            var atomArgs = ParseAtomArgs();
+            if (atomArgs.Count > 0)
+                return new CallExpression(name, atomArgs) { Line = line, Column = column };
+        }
+
+        return new BindingExpression(name) { Line = line, Column = column };
+    }
+
+    private Expression ParseQualifiedCall(string name, int line, int column)
+    {
+        var functionName = parser.Consume(TokenType.Identifier).Value;
+
+        if (parser.Match(TokenType.LeftParen))
+            return new QualifiedCallExpression(name, functionName, ParseParenArgs()) { Line = line, Column = column };
+
+        if (allowAtomArgs)
+            return new QualifiedCallExpression(name, functionName, ParseAtomArgs()) { Line = line, Column = column };
+
+        return new QualifiedCallExpression(name, functionName, []) { Line = line, Column = column };
     }
 
     private List<Expression> ParseParenArgs()
@@ -112,7 +118,7 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
     }
 
     private static bool IsAtom(TokenType type) =>
-        IsLiteralToken(type) || type == TokenType.Identifier;
+        IsLiteralToken(type) || type == TokenType.Identifier || type == TokenType.LeftParen;
 
     private static LiteralExpression TokenToLiteral(Token token) => token.Type switch
     {
@@ -128,6 +134,14 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
         var args = new List<Expression>();
         while (IsAtom(parser.Current().Type))
         {
+            if (parser.Match(TokenType.LeftParen))
+            {
+                var inner = new ExpressionParser(parser, allowAtomArgs: true).Parse();
+                parser.Consume(TokenType.RightParen);
+                args.Add(inner);
+                continue;
+            }
+
             var token = parser.Advance();
             Expression arg = token.Type == TokenType.Identifier
                 ? new BindingExpression(token.Value)

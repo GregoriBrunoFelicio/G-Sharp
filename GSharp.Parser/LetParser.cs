@@ -23,19 +23,16 @@ public class LetParser(Parser parser)
     private Token GetBindingNameToken()
     {
         var token = parser.Identifier();
-        ValidateBindingName(token.Value);
+        ValidateBindingName(token);
         return token;
     }
 
-    private void ValidateBindingName(string bindingName)
+    private static void ValidateBindingName(Token token)
     {
-        if (!IsValidBindingName(bindingName))
-        {
-            var t = parser.Previous();
-            throw new Exception($"{t.Line}: invalid binding name '{bindingName}'");
-        }
+        if (!IsValidBindingName(token.Value))
+            throw new Exception($"{token.Line}: invalid binding name '{token.Value}'");
 
-        if (IsReserved(bindingName))
-            throw new Exception($"'{bindingName}' is a reserved keyword.");
+        if (IsReserved(token.Value))
+            throw new Exception($"'{token.Value}' is a reserved keyword.");
     }
 }

@@ -1,2 +1,4 @@
+let a = 10
+println a
 
-println (10 + 20)
+

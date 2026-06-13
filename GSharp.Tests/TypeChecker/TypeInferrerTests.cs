@@ -111,11 +111,11 @@ public class TypeInferrerTests
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void Should_Infer_Println_As_Unit()
+    public void Should_Record_Println_As_Unit_In_Type_Map()
     {
         var types = Infer("println \"hello\"");
 
-        types.Values.Should().ContainItemsAssignableTo<UnitType>();
+        types.Values.Should().Contain(t => t is UnitType);
     }
 
     // -------------------------------------------------------------------------

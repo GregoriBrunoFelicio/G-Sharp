@@ -6,14 +6,24 @@ public static class ArrayBuiltins
 {
     public static void Register(Dictionary<string, MethodInfo> builtins)
     {
-        builtins["array.head"]    = typeof(ArrayBuiltins).GetMethod(nameof(Head))!;
-        builtins["array.tail"]    = typeof(ArrayBuiltins).GetMethod(nameof(Tail))!;
-        builtins["array.last"]    = typeof(ArrayBuiltins).GetMethod(nameof(Last))!;
-        builtins["array.len"]     = typeof(ArrayBuiltins).GetMethod(nameof(Len))!;
-        builtins["array.empty"]   = typeof(ArrayBuiltins).GetMethod(nameof(Empty))!;
+        builtins["array.head"] = typeof(ArrayBuiltins).GetMethod(nameof(Head))!;
+        builtins["array.tail"] = typeof(ArrayBuiltins).GetMethod(nameof(Tail))!;
+        builtins["array.last"] = typeof(ArrayBuiltins).GetMethod(nameof(Last))!;
+        builtins["array.len"] = typeof(ArrayBuiltins).GetMethod(nameof(Len))!;
+        builtins["array.empty"] = typeof(ArrayBuiltins).GetMethod(nameof(Empty))!;
         builtins["array.reverse"] = typeof(ArrayBuiltins).GetMethod(nameof(Reverse))!;
-        builtins["array.concat"]  = typeof(ArrayBuiltins).GetMethod(nameof(Concat))!;
-        builtins["array.sort"]    = typeof(ArrayBuiltins).GetMethod(nameof(Sort))!;
+        builtins["array.concat"] = typeof(ArrayBuiltins).GetMethod(nameof(Concat))!;
+        builtins["array.sort"] = typeof(ArrayBuiltins).GetMethod(nameof(Sort))!;
+        builtins["array.take"] = typeof(ArrayBuiltins).GetMethod(nameof(Take))!;
+    }
+
+    public static object Take(object arg, object quantity)
+    {
+        var arr = (object[])arg;
+        if (arr.Length == 0) throw new Exception("array.head: empty array");
+        var result = new object[(int)quantity];
+        Array.Copy(arr, 0, result, 0, (int)quantity);
+        return result;
     }
 
     public static object Head(object arg)

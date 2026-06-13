@@ -54,34 +54,34 @@ public static class ArrayEmitter
     {
         switch (value)
         {
-            case int i:
+            case int intValue:
                 // Push int32 literal
-                il.Emit(OpCodes.Ldc_I4, i);
+                il.Emit(OpCodes.Ldc_I4, intValue);
 
                 // Box it to object
                 il.Emit(OpCodes.Box, typeof(int));
                 break;
 
-            case double d:
+            case double doubleValue:
                 // Push double literal
-                il.Emit(OpCodes.Ldc_R8, d);
+                il.Emit(OpCodes.Ldc_R8, doubleValue);
 
                 // Box it to object
                 il.Emit(OpCodes.Box, typeof(double));
                 break;
 
-            case bool b:
+            case bool boolValue:
                 // Push 1 or 0 depending on the boolean value
-                il.Emit(b ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                il.Emit(boolValue ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
 
                 // Box it to object
                 il.Emit(OpCodes.Box, typeof(bool));
                 break;
 
-            case string s:
+            case string text:
                 // Strings are reference types.
                 // No boxing needed.
-                il.Emit(OpCodes.Ldstr, s);
+                il.Emit(OpCodes.Ldstr, text);
                 break;
 
             default:

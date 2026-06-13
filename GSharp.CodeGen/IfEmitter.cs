@@ -25,12 +25,12 @@ namespace GSharp.CodeGen;
 //   ; one value on the stack
 public static class IfEmitter
 {
-    public static void EmitToStack(ILGenerator il, IfExpression ifExpr, EmitContext ctx)
+    public static void EmitToStack(ILGenerator il, IfExpression ifExpression, EmitContext context)
     {
         var elseLabel = il.DefineLabel();
         var endLabel  = il.DefineLabel();
 
-        ExpressionEmitter.EmitToStack(il, ifExpr.Condition, ctx);
+        ExpressionEmitter.EmitToStack(il, ifExpression.Condition, context);
 
         il.Emit(OpCodes.Call,
             typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsTrue))!);
@@ -38,14 +38,14 @@ public static class IfEmitter
         il.Emit(OpCodes.Brfalse, elseLabel);
 
         // Then branch — leave last expression's value on the stack.
-        EmitBody(il, ifExpr.ThenBody, ctx);
+        EmitBody(il, ifExpression.ThenBody, context);
 
         il.Emit(OpCodes.Br, endLabel);
 
         il.MarkLabel(elseLabel);
 
-        if (ifExpr.ElseBody is { Count: > 0 })
-            EmitBody(il, ifExpr.ElseBody, ctx);
+        if (ifExpression.ElseBody is { Count: > 0 })
+            EmitBody(il, ifExpression.ElseBody, context);
         else
             il.Emit(OpCodes.Ldnull);
 
@@ -54,16 +54,16 @@ public static class IfEmitter
 
     // Emits a body (list of expressions), discarding all values except the last.
     // The last expression's value is left on the stack.
-    private static void EmitBody(ILGenerator il, List<Expression> body, EmitContext ctx)
+    private static void EmitBody(ILGenerator il, List<Expression> body, EmitContext context)
     {
         for (var i = 0; i < body.Count - 1; i++)
         {
-            ExpressionEmitter.EmitToStack(il, body[i], ctx);
+            ExpressionEmitter.EmitToStack(il, body[i], context);
             il.Emit(OpCodes.Pop);
         }
 
         if (body.Count > 0)
-            ExpressionEmitter.EmitToStack(il, body[^1], ctx);
+            ExpressionEmitter.EmitToStack(il, body[^1], context);
         else
             il.Emit(OpCodes.Ldnull);
     }

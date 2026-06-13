@@ -30,7 +30,7 @@ public static class FunctionEmitter
     // Pass 1: define the MethodBuilder for a function declaration.
     //
     // Registers the function's name and signature in the 'functions' dictionary
-    // so that CallExpression nodes can reference it via ctx.Functions[name].
+    // so that CallExpression nodes can reference it via context.Functions[name].
     // The body is not emitted here — that happens in Pass 2.
     //
     // All parameters are object because G# is dynamically typed.
@@ -66,41 +66,41 @@ public static class FunctionEmitter
     //
     // A fresh EmitContext is created for each function body so that its locals
     // are separate from Main's locals and other functions' locals, and its
-    // parameters are registered so that BindingExpression nodes emit Ldarg
+    // parameters are registered so that IdentifierExpression nodes emit Ldarg
     // instead of Ldloc for parameter names.
-    public static void Emit(FunctionDeclaration fn, EmitContext ctx, string prefix = "")
+    public static void Emit(FunctionDeclaration fn, EmitContext context, string prefix = "")
     {
-        EmitMainBody(fn, ctx, prefix);
-        EmitAdapter(fn, ctx, prefix);
+        EmitMainBody(fn, context, prefix);
+        EmitAdapter(fn, context, prefix);
     }
 
-    private static void EmitMainBody(FunctionDeclaration fn, EmitContext ctx, string prefix)
+    private static void EmitMainBody(FunctionDeclaration fn, EmitContext context, string prefix)
     {
         var qualifiedName = prefix + fn.Name;
-        var method = ctx.Functions[qualifiedName];
+        var method = context.Functions[qualifiedName];
         var il = method.GetILGenerator();
 
-        var fnCtx = new EmitContext(ctx.Functions, ctx.FunctionAdapters, ctx.TypeMap);
-        foreach (var (k, v) in ctx.Builtins)
-            fnCtx.Builtins[k] = v;
+        var functionContext = new EmitContext(context.Functions, context.FunctionAdapters, context.TypeMap);
+        foreach (var (builtinName, builtinMethod) in context.Builtins)
+            functionContext.Builtins[builtinName] = builtinMethod;
 
         // Register each parameter name → argument index.
         // The CLR accesses arguments via Ldarg_0, Ldarg_1, etc. — not Ldloc.
         for (var i = 0; i < fn.Parameters.Count; i++)
-            fnCtx.Parameters[fn.Parameters[i]] = i;
+            functionContext.Parameters[fn.Parameters[i]] = i;
 
         var body = fn.Body;
 
         // Emit all expressions except the last — discard their values.
         for (var i = 0; i < body.Count - 1; i++)
         {
-            ExpressionEmitter.EmitToStack(il, body[i], fnCtx);
+            ExpressionEmitter.EmitToStack(il, body[i], functionContext);
             il.Emit(OpCodes.Pop);
         }
 
         // Emit the last expression — its value is the implicit return value.
         if (body.Count > 0)
-            ExpressionEmitter.EmitToStack(il, body[^1], fnCtx);
+            ExpressionEmitter.EmitToStack(il, body[^1], functionContext);
         else
             il.Emit(OpCodes.Ldnull);
 
@@ -115,10 +115,10 @@ public static class FunctionEmitter
     // This adapter is used when the function is passed as a first-class value.
     // It bridges the GSharpFunction(object[] args) calling convention with the
     // strongly-typed static method signature.
-    private static void EmitAdapter(FunctionDeclaration fn, EmitContext ctx, string prefix)
+    private static void EmitAdapter(FunctionDeclaration fn, EmitContext context, string prefix)
     {
         var qualifiedName = prefix + fn.Name;
-        var adapter = ctx.FunctionAdapters[qualifiedName];
+        var adapter = context.FunctionAdapters[qualifiedName];
         var il = adapter.GetILGenerator();
 
         for (var i = 0; i < fn.Parameters.Count; i++)
@@ -128,7 +128,7 @@ public static class FunctionEmitter
             il.Emit(OpCodes.Ldelem_Ref);
         }
 
-        il.Emit(OpCodes.Call, ctx.Functions[qualifiedName]);
+        il.Emit(OpCodes.Call, context.Functions[qualifiedName]);
         il.Emit(OpCodes.Ret);
     }
 }

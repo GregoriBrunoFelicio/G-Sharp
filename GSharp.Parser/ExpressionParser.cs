@@ -80,7 +80,7 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
         var (_, name, line, column) = token;
 
         if (parser.Match(TokenType.Dot))
-            return ParseQualifiedCall(name, line, column);
+            return ParseModuleCall(name, line, column);
 
         if (parser.Match(TokenType.LeftParen))
             return new CallExpression(name, ParseParenArgs()) { Line = line, Column = column };
@@ -92,17 +92,17 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
                 return new CallExpression(name, atomArgs) { Line = line, Column = column };
         }
 
-        return new BindingExpression(name) { Line = line, Column = column };
+        return new IdentifierExpression(name) { Line = line, Column = column };
     }
 
-    private Expression ParseQualifiedCall(string name, int line, int column)
+    private Expression ParseModuleCall(string name, int line, int column)
     {
         var functionName = parser.Consume(TokenType.Identifier).Value;
 
         if (parser.Match(TokenType.LeftParen))
-            return new QualifiedCallExpression(name, functionName, ParseParenArgs()) { Line = line, Column = column };
+            return new ModuleCallExpression(name, functionName, ParseParenArgs()) { Line = line, Column = column };
 
-        return new QualifiedCallExpression(name, functionName, ParseAtomArgs()) { Line = line, Column = column };
+        return new ModuleCallExpression(name, functionName, ParseAtomArgs()) { Line = line, Column = column };
     }
 
     private List<Expression> ParseParenArgs()
@@ -141,7 +141,7 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
 
             var token = parser.Advance();
             Expression arg = token.Type == TokenType.Identifier
-                ? new BindingExpression(token.Value)
+                ? new IdentifierExpression(token.Value)
                 : TokenToLiteral(token);
             args.Add(arg with { Line = token.Line, Column = token.Column });
         }

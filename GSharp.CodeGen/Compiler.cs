@@ -9,10 +9,10 @@ namespace GSharp.CodeGen;
 
 public class Compiler
 {
-    private static void RegisterBuiltins(EmitContext ctx)
+    private static void RegisterBuiltins(EmitContext context)
     {
-        ArrayBuiltins.Register(ctx.Builtins);
-        StringBuiltins.Register(ctx.Builtins);
+        ArrayBuiltins.Register(context.Builtins);
+        StringBuiltins.Register(context.Builtins);
     }
 
     private static (MethodBuilder, TypeBuilder) CreateBuilders()
@@ -52,26 +52,26 @@ public class Compiler
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
                 FunctionEmitter.Define(typeBuilder, fn, functions, adapters);
 
-            var ctx = new EmitContext(functions, adapters, typeMap);
-            RegisterBuiltins(ctx);
+            var context = new EmitContext(functions, adapters, typeMap);
+            RegisterBuiltins(context);
 
             foreach (var (moduleName, moduleExprs) in modules ?? [])
                 foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
-                    FunctionEmitter.Emit(fn, ctx, prefix: moduleName + ".");
+                    FunctionEmitter.Emit(fn, context, prefix: moduleName + ".");
 
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
-                FunctionEmitter.Emit(fn, ctx);
+                FunctionEmitter.Emit(fn, context);
 
             var il = methodBuilder.GetILGenerator();
 
-            foreach (var expr in expressions.Where(e =>
+            foreach (var expression in expressions.Where(e =>
                          e is not FunctionDeclaration and not ImportDeclaration))
             {
-                ExpressionEmitter.EmitToStack(il, expr, ctx);
+                ExpressionEmitter.EmitToStack(il, expression, context);
                 il.Emit(OpCodes.Pop);
             }
 
-            if (ctx.Functions.TryGetValue("main", out var userMain))
+            if (context.Functions.TryGetValue("main", out var userMain))
             {
                 il.Emit(OpCodes.Call, userMain);
                 il.Emit(OpCodes.Pop);

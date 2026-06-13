@@ -17,9 +17,9 @@ namespace GSharp.CodeGen;
 // is already boxed as object. This overload calls ToString() internally.
 public static class PrintEmitter
 {
-    public static void Emit(ILGenerator il, PrintExpression expr, EmitContext ctx)
+    public static void Emit(ILGenerator il, PrintExpression printExpression, EmitContext context)
     {
-        ExpressionEmitter.EmitToStack(il, expr.Value, ctx);
+        ExpressionEmitter.EmitToStack(il, printExpression.Value, context);
 
         // Console.WriteLine(object) — since everything in G# is boxed as object,
         // this overload fits perfectly and calls ToString() internally.

@@ -29,20 +29,17 @@ public static class Unifier
             // Already equal — nothing to do
             if (leftType == rightType) continue;
 
+            // Normalize: TypeVar always on the left
+            if (leftType is not TypeVar && rightType is TypeVar)
+                (leftType, rightType) = (rightType, leftType);
+
             switch (leftType, rightType)
             {
-                // Left side is a TypeVar — bind it to the right side
-                case (TypeVar tv, GsType resolvedType):
-                    if (OccursIn(tv.Id, resolvedType))
-                        throw new Exception($"{Position(constraint)}type error: infinite type — '{tv.Id}' occurs in '{resolvedType}'");
-                    substitution.Bind(tv.Id, resolvedType);
-                    break;
-
-                // Right side is a TypeVar — bind it to the left side
-                case (GsType resolvedType, TypeVar tv):
-                    if (OccursIn(tv.Id, resolvedType))
-                        throw new Exception($"{Position(constraint)}type error: infinite type — '{tv.Id}' occurs in '{resolvedType}'");
-                    substitution.Bind(tv.Id, resolvedType);
+                // One side is a TypeVar — bind it to the other type
+                case (TypeVar tv, GsType resolved):
+                    if (OccursIn(tv.Id, resolved))
+                        throw new Exception($"{Position(constraint)}type error: infinite type — '{tv.Id}' occurs in '{resolved}'");
+                    substitution.Bind(tv.Id, resolved);
                     break;
 
                 // Both are function types — decompose into two smaller constraints,

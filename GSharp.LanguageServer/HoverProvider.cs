@@ -70,7 +70,7 @@ public static class HoverProvider
             case FunctionDeclaration fn when types.TryGetValue(fn, out var fnType):
                 return Named(fn.Name, fnType, node);
 
-            case LetExpression let when types.TryGetValue(let, out var letType):
+            case LetExpression let when types.TryGetValue(let.Value, out var letType):
                 return Named(let.BindingName, letType, node);
 
             case CallExpression call:
@@ -81,11 +81,11 @@ public static class HoverProvider
                     : types.GetValueOrDefault(call);
                 return callType is null ? null : Named(call.Callee, callType, node, call.Callee.Length);
 
-            case QualifiedCallExpression qualified when types.TryGetValue(qualified, out var qualifiedType):
-                var qualifiedName = $"{qualified.Module}.{qualified.Function}";
+            case ModuleCallExpression moduleCall when types.TryGetValue(moduleCall, out var qualifiedType):
+                var qualifiedName = $"{moduleCall.Module}.{moduleCall.Function}";
                 return Named(qualifiedName, qualifiedType, node, qualifiedName.Length);
 
-            case BindingExpression binding when types.TryGetValue(binding, out var bindingType):
+            case IdentifierExpression binding when types.TryGetValue(binding, out var bindingType):
                 return Named(binding.Name, bindingType, node, binding.Name.Length);
 
             case LiteralExpression literal when types.TryGetValue(literal, out var literalType):
@@ -150,8 +150,8 @@ public static class HoverProvider
                 foreach (var child in WalkAll(call.Arguments)) yield return child;
                 break;
 
-            case QualifiedCallExpression qualified:
-                foreach (var child in WalkAll(qualified.Arguments)) yield return child;
+            case ModuleCallExpression moduleCall:
+                foreach (var child in WalkAll(moduleCall.Arguments)) yield return child;
                 break;
         }
     }

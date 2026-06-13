@@ -19,7 +19,7 @@ public abstract record Expression
 
 public record LiteralExpression(object Value) : Expression;
 
-public record BindingExpression(string Name) : Expression;
+public record IdentifierExpression(string Name) : Expression;
 
 public record BinaryExpression(Expression Left, TokenType Operator, Expression Right) : Expression;
 

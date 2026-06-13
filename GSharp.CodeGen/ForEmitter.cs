@@ -20,17 +20,17 @@ namespace GSharp.CodeGen;
 //   }
 //   return result;
 //
-// The loop binding (e.g. 'item') is registered in ctx.Locals so that
+// The loop binding (e.g. 'item') is registered in context.Locals so that
 // expressions inside the body can reference it like any other binding.
 public static class ForEmitter
 {
-    public static void Emit(ILGenerator il, ForExpression expr, EmitContext ctx)
+    public static void Emit(ILGenerator il, ForExpression forExpression, EmitContext context)
     {
         // ============================
         // 1. Evaluate and store the iterable
         // ============================
 
-        ExpressionEmitter.EmitToStack(il, expr.Iterable, ctx);
+        ExpressionEmitter.EmitToStack(il, forExpression.Iterable, context);
         il.Emit(OpCodes.Castclass, typeof(object[]));
         var arrayLocal = il.DeclareLocal(typeof(object[]));
         il.Emit(OpCodes.Stloc, arrayLocal);
@@ -82,16 +82,16 @@ public static class ForEmitter
         il.Emit(OpCodes.Ldelem_Ref);
         var loopVar = il.DeclareLocal(typeof(object));
         il.Emit(OpCodes.Stloc, loopVar);
-        ctx.Locals[expr.BindingName] = loopVar;
+        context.Locals[forExpression.BindingName] = loopVar;
 
         // ============================
         // 7. Emit body — discard all but the last expression
         //    Last expression becomes the element in result[index]
         // ============================
 
-        for (var i = 0; i < expr.Body.Count - 1; i++)
+        for (var i = 0; i < forExpression.Body.Count - 1; i++)
         {
-            ExpressionEmitter.EmitToStack(il, expr.Body[i], ctx);
+            ExpressionEmitter.EmitToStack(il, forExpression.Body[i], context);
             il.Emit(OpCodes.Pop);
         }
 
@@ -99,7 +99,7 @@ public static class ForEmitter
         // Stelem_Ref expects stack: [array, index, value]
         il.Emit(OpCodes.Ldloc, resultLocal);
         il.Emit(OpCodes.Ldloc, indexLocal);
-        ExpressionEmitter.EmitToStack(il, expr.Body[^1], ctx);
+        ExpressionEmitter.EmitToStack(il, forExpression.Body[^1], context);
         il.Emit(OpCodes.Stelem_Ref);
 
         // ============================

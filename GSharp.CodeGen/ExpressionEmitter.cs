@@ -10,49 +10,49 @@ namespace GSharp.CodeGen;
 public static class ExpressionEmitter
 {
     // Public contract: always leaves exactly one boxed object on the stack.
-    public static void EmitToStack(ILGenerator il, Expression expression, EmitContext ctx)
+    public static void EmitToStack(ILGenerator il, Expression expression, EmitContext context)
     {
-        var clrType = Emit(il, expression, ctx);
+        var clrType = Emit(il, expression, context);
         if (clrType.IsValueType)
             il.Emit(OpCodes.Box, clrType);
     }
 
     // Internal contract: emits the expression and returns the actual CLR type on the stack.
-    internal static Type Emit(ILGenerator il, Expression expression, EmitContext ctx)
+    internal static Type Emit(ILGenerator il, Expression expression, EmitContext context)
     {
         switch (expression)
         {
-            case LiteralExpression lit:
-                return EmitLiteral(il, lit.Value);
+            case LiteralExpression literal:
+                return EmitLiteral(il, literal.Value);
 
-            case BindingExpression v:
-                return EmitBinding(il, v, ctx);
+            case IdentifierExpression binding:
+                return EmitBinding(il, binding, context);
 
             case CallExpression call:
-                EmitCall(il, call, ctx);
+                EmitCall(il, call, context);
                 return typeof(object);
 
-            case QualifiedCallExpression qCall:
-                EmitQualifiedCall(il, qCall, ctx);
+            case ModuleCallExpression moduleCall:
+                EmitModuleCall(il, moduleCall, context);
                 return typeof(object);
 
-            case BinaryExpression b:
-                return EmitBinary(il, b, ctx);
+            case BinaryExpression binary:
+                return EmitBinary(il, binary, context);
 
-            case LetExpression letExpr:
-                LetEmitter.Emit(il, letExpr, ctx);
+            case LetExpression letExpression:
+                LetEmitter.Emit(il, letExpression, context);
                 return typeof(object);
 
-            case PrintExpression printExpr:
-                PrintEmitter.Emit(il, printExpr, ctx);
+            case PrintExpression printExpression:
+                PrintEmitter.Emit(il, printExpression, context);
                 return typeof(object);
 
-            case ForExpression forExpr:
-                ForEmitter.Emit(il, forExpr, ctx);
+            case ForExpression forExpression:
+                ForEmitter.Emit(il, forExpression, context);
                 return typeof(object[]);
 
-            case IfExpression ifExpr:
-                IfEmitter.EmitToStack(il, ifExpr, ctx);
+            case IfExpression ifExpression:
+                IfEmitter.EmitToStack(il, ifExpression, context);
                 return typeof(object);
 
             case FunctionDeclaration:
@@ -73,32 +73,32 @@ public static class ExpressionEmitter
     {
         switch (value)
         {
-            case int i:
-                il.Emit(OpCodes.Ldc_I4, i);
+            case int intValue:
+                il.Emit(OpCodes.Ldc_I4, intValue);
                 return typeof(int);
 
-            case double d:
-                il.Emit(OpCodes.Ldc_R8, d);
+            case double doubleValue:
+                il.Emit(OpCodes.Ldc_R8, doubleValue);
                 return typeof(double);
 
-            case bool b:
-                il.Emit(b ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+            case bool boolValue:
+                il.Emit(boolValue ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
                 return typeof(bool);
 
-            case string s:
-                il.Emit(OpCodes.Ldstr, s);
+            case string text:
+                il.Emit(OpCodes.Ldstr, text);
                 return typeof(string);
 
-            case float f:
-                il.Emit(OpCodes.Ldc_R4, f);
+            case float floatValue:
+                il.Emit(OpCodes.Ldc_R4, floatValue);
                 return typeof(float);
 
-            case decimal m:
-                EmitDecimalLiteral(il, m);
+            case decimal decimalValue:
+                EmitDecimalLiteral(il, decimalValue);
                 return typeof(decimal);
 
-            case object[] arr:
-                ArrayEmitter.EmitToStack(il, arr);
+            case object[] elements:
+                ArrayEmitter.EmitToStack(il, elements);
                 return typeof(object[]);
 
             default:
@@ -132,66 +132,66 @@ public static class ExpressionEmitter
     // Binding emission
     // -------------------------------------------------------------------------
 
-    private static Type EmitBinding(ILGenerator il, BindingExpression v, EmitContext ctx)
+    private static Type EmitBinding(ILGenerator il, IdentifierExpression binding, EmitContext context)
     {
-        if (ctx.Parameters.TryGetValue(v.Name, out var paramIndex))
+        if (context.Parameters.TryGetValue(binding.Name, out var parameterIndex))
         {
-            il.Emit(OpCodes.Ldarg, paramIndex);
+            il.Emit(OpCodes.Ldarg, parameterIndex);
             return typeof(object);
         }
 
-        if (ctx.Locals.TryGetValue(v.Name, out var local))
+        if (context.Locals.TryGetValue(binding.Name, out var local))
         {
             il.Emit(OpCodes.Ldloc, local);
             return local.LocalType;
         }
 
-        if (ctx.FunctionAdapters.TryGetValue(v.Name, out var adapter))
+        if (context.FunctionAdapters.TryGetValue(binding.Name, out var adapter))
         {
             EmitFunctionValue(il, adapter);
             return typeof(object);
         }
 
-        throw new Exception($"Undefined binding: '{v.Name}'");
+        throw new Exception($"Undefined binding: '{binding.Name}'");
     }
 
     // -------------------------------------------------------------------------
     // Binary emission
     // -------------------------------------------------------------------------
 
-    private static Type EmitBinary(ILGenerator il, BinaryExpression b, EmitContext ctx)
+    private static Type EmitBinary(ILGenerator il, BinaryExpression binary, EmitContext context)
     {
-        if (b.Operator is TokenType.And or TokenType.Or)
+        if (binary.Operator is TokenType.And or TokenType.Or)
         {
-            var result = EmitLogicalShortCircuit(il, b, ctx);
+            var result = EmitLogicalShortCircuit(il, binary, context);
             il.Emit(OpCodes.Ldloc, result);
             return typeof(bool);
         }
 
-        var nativeType = TryGetNativeArithmeticType(b, ctx);
+        var nativeType = TryGetNativeArithmeticType(binary, context);
         if (nativeType is not null)
         {
-            Emit(il, b.Left,  ctx);
-            Emit(il, b.Right, ctx);
+            Emit(il, binary.Left,  context);
+            Emit(il, binary.Right, context);
 
-            var opcode = b.Operator switch
+            var opcode = binary.Operator switch
             {
                 TokenType.Plus     => OpCodes.Add,
                 TokenType.Minus    => OpCodes.Sub,
                 TokenType.Multiply => OpCodes.Mul,
                 TokenType.Divide   => OpCodes.Div,
                 _ => throw new InvalidOperationException(
-                    $"internal error: '{b.Operator}' is not a native arithmetic operator")
+                    $"internal error: '{binary.Operator}' is not a native arithmetic operator")
             };
 
             il.Emit(opcode);
             return nativeType;
         }
 
-        EmitToStack(il, b.Left,  ctx);
-        EmitToStack(il, b.Right, ctx);
+        EmitToStack(il, binary.Left,  context);
+        EmitToStack(il, binary.Right, context);
 
-        var method = b.Operator switch
+        var method = binary.Operator switch
         {
             TokenType.GreaterThan        => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThan)),
             TokenType.LessThan           => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThan)),
@@ -204,23 +204,23 @@ public static class ExpressionEmitter
             TokenType.Multiply           => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Multiply)),
             TokenType.Divide             => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Divide)),
             _ => throw new NotSupportedException(
-                $"internal error: no emitter for binary operator '{b.Operator}'")
+                $"internal error: no emitter for binary operator '{binary.Operator}'")
         };
 
         il.Emit(OpCodes.Call, method!);
         return typeof(object);
     }
 
-    private static Type? TryGetNativeArithmeticType(BinaryExpression b, EmitContext ctx)
+    private static Type? TryGetNativeArithmeticType(BinaryExpression binary, EmitContext context)
     {
-        if (b.Operator is not (TokenType.Plus or TokenType.Minus or TokenType.Multiply or TokenType.Divide))
+        if (binary.Operator is not (TokenType.Plus or TokenType.Minus or TokenType.Multiply or TokenType.Divide))
             return null;
 
-        if (!ctx.TypeMap.TryGetValue(b.Left,  out var leftGsType) ||
-            !ctx.TypeMap.TryGetValue(b.Right, out var rightGsType))
+        if (!context.TypeMap.TryGetValue(binary.Left,  out var leftGsType) ||
+            !context.TypeMap.TryGetValue(binary.Right, out var rightGsType))
             return null;
 
-        if (!WillEmitNativeValue(b.Left, ctx) || !WillEmitNativeValue(b.Right, ctx))
+        if (!WillEmitNativeValue(binary.Left, context) || !WillEmitNativeValue(binary.Right, context))
             return null;
 
         return (leftGsType, rightGsType) switch
@@ -232,12 +232,12 @@ public static class ExpressionEmitter
         };
     }
 
-    private static bool WillEmitNativeValue(Expression expr, EmitContext ctx) => expr switch
+    private static bool WillEmitNativeValue(Expression expression, EmitContext context) => expression switch
     {
-        LiteralExpression lit  => lit.Value is int or float or double or bool or decimal,
-        BindingExpression v    => ctx.Locals.TryGetValue(v.Name, out var local)
-                                  && local.LocalType.IsValueType,
-        BinaryExpression bin   => TryGetNativeArithmeticType(bin, ctx) is not null,
+        LiteralExpression literal     => literal.Value is int or float or double or bool or decimal,
+        IdentifierExpression binding     => context.Locals.TryGetValue(binding.Name, out var local)
+                                        && local.LocalType.IsValueType,
+        BinaryExpression nestedBinary => TryGetNativeArithmeticType(nestedBinary, context) is not null,
         _ => false
     };
 
@@ -245,40 +245,40 @@ public static class ExpressionEmitter
     // Call emission
     // -------------------------------------------------------------------------
 
-    private static void EmitCall(ILGenerator il, CallExpression call, EmitContext ctx)
+    private static void EmitCall(ILGenerator il, CallExpression call, EmitContext context)
     {
-        if (ctx.Builtins.TryGetValue(call.Callee, out var builtin))
+        if (context.Builtins.TryGetValue(call.Callee, out var builtin))
         {
             foreach (var arg in call.Arguments)
-                EmitToStack(il, arg, ctx);
+                EmitToStack(il, arg, context);
             il.Emit(OpCodes.Call, builtin);
         }
-        else if (ctx.Functions.ContainsKey(call.Callee))
+        else if (context.Functions.ContainsKey(call.Callee))
         {
             foreach (var arg in call.Arguments)
-                EmitToStack(il, arg, ctx);
-            il.Emit(OpCodes.Call, ctx.Functions[call.Callee]);
+                EmitToStack(il, arg, context);
+            il.Emit(OpCodes.Call, context.Functions[call.Callee]);
         }
         else
         {
-            EmitDelegateCall(il, call, ctx);
+            EmitDelegateCall(il, call, context);
         }
     }
 
-    private static void EmitQualifiedCall(ILGenerator il, QualifiedCallExpression qCall, EmitContext ctx)
+    private static void EmitModuleCall(ILGenerator il, ModuleCallExpression moduleCall, EmitContext context)
     {
-        var key = $"{qCall.Module}.{qCall.Function}";
+        var key = $"{moduleCall.Module}.{moduleCall.Function}";
 
-        if (ctx.Builtins.TryGetValue(key, out var builtin))
+        if (context.Builtins.TryGetValue(key, out var builtin))
         {
-            foreach (var arg in qCall.Arguments)
-                EmitToStack(il, arg, ctx);
+            foreach (var arg in moduleCall.Arguments)
+                EmitToStack(il, arg, context);
             il.Emit(OpCodes.Call, builtin);
         }
-        else if (ctx.Functions.TryGetValue(key, out var moduleMethod))
+        else if (context.Functions.TryGetValue(key, out var moduleMethod))
         {
-            foreach (var arg in qCall.Arguments)
-                EmitToStack(il, arg, ctx);
+            foreach (var arg in moduleCall.Arguments)
+                EmitToStack(il, arg, context);
             il.Emit(OpCodes.Call, moduleMethod);
         }
         else
@@ -290,24 +290,24 @@ public static class ExpressionEmitter
     // -------------------------------------------------------------------------
 
     private static LocalBuilder EmitLogicalShortCircuit(
-        ILGenerator il, BinaryExpression expr, EmitContext ctx)
+        ILGenerator il, BinaryExpression binary, EmitContext context)
     {
         var result = il.DeclareLocal(typeof(bool));
 
         var shortCircuit = il.DefineLabel();
         var end          = il.DefineLabel();
 
-        EmitToStack(il, expr.Left, ctx);
+        EmitToStack(il, binary.Left, context);
         il.Emit(OpCodes.Unbox_Any, typeof(bool));
-        il.Emit(expr.Operator == TokenType.And ? OpCodes.Brfalse : OpCodes.Brtrue, shortCircuit);
+        il.Emit(binary.Operator == TokenType.And ? OpCodes.Brfalse : OpCodes.Brtrue, shortCircuit);
 
-        EmitToStack(il, expr.Right, ctx);
+        EmitToStack(il, binary.Right, context);
         il.Emit(OpCodes.Unbox_Any, typeof(bool));
         il.Emit(OpCodes.Stloc, result);
         il.Emit(OpCodes.Br, end);
 
         il.MarkLabel(shortCircuit);
-        il.Emit(expr.Operator == TokenType.And ? OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1);
+        il.Emit(binary.Operator == TokenType.And ? OpCodes.Ldc_I4_0 : OpCodes.Ldc_I4_1);
         il.Emit(OpCodes.Stloc, result);
 
         il.MarkLabel(end);
@@ -330,11 +330,11 @@ public static class ExpressionEmitter
         il.Emit(OpCodes.Newobj, gsFuncCtor);
     }
 
-    private static void EmitDelegateCall(ILGenerator il, CallExpression call, EmitContext ctx)
+    private static void EmitDelegateCall(ILGenerator il, CallExpression call, EmitContext context)
     {
-        if (ctx.Parameters.TryGetValue(call.Callee, out var paramIdx))
-            il.Emit(OpCodes.Ldarg, paramIdx);
-        else if (ctx.Locals.TryGetValue(call.Callee, out var local))
+        if (context.Parameters.TryGetValue(call.Callee, out var parameterIndex))
+            il.Emit(OpCodes.Ldarg, parameterIndex);
+        else if (context.Locals.TryGetValue(call.Callee, out var local))
             il.Emit(OpCodes.Ldloc, local);
         else
             throw new Exception($"Undefined function or binding: '{call.Callee}'");
@@ -348,7 +348,7 @@ public static class ExpressionEmitter
         {
             il.Emit(OpCodes.Dup);
             il.Emit(OpCodes.Ldc_I4, i);
-            EmitToStack(il, call.Arguments[i], ctx);
+            EmitToStack(il, call.Arguments[i], context);
             il.Emit(OpCodes.Stelem_Ref);
         }
 

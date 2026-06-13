@@ -12,18 +12,18 @@ namespace GSharp.CodeGen;
 //   let s = "hello" → local is string   (reference, no boxing)
 //   let r = f x     → local is object   (function return, fallback)
 //
-// When the binding is later loaded (BindingExpression), EmitBinding returns the local's
+// When the binding is later loaded (IdentifierExpression), EmitBinding returns the local's
 // actual type. EmitToStack then boxes it only if a boxed object is required by the consumer.
 public static class LetEmitter
 {
-    public static void Emit(ILGenerator il, LetExpression expr, EmitContext ctx)
+    public static void Emit(ILGenerator il, LetExpression letExpression, EmitContext context)
     {
-        var clrType = ExpressionEmitter.Emit(il, expr.Value, ctx);
+        var clrType = ExpressionEmitter.Emit(il, letExpression.Value, context);
 
         var local = il.DeclareLocal(clrType);
         il.Emit(OpCodes.Stloc, local);
 
-        ctx.Locals[expr.BindingName] = local;
+        context.Locals[letExpression.BindingName] = local;
 
         // let-binding returns null — it is a side-effecting expression.
         il.Emit(OpCodes.Ldnull);

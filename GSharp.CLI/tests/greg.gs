@@ -1,4 +1,2 @@
-let a = 10
-println a
-
-
+let num = 10
+println num + 10

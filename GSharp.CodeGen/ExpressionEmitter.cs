@@ -17,6 +17,19 @@ public static class ExpressionEmitter
             il.Emit(OpCodes.Box, clrType);
     }
 
+    // Emits an expression and adapts the result to match the expected CLR type.
+    // Used at call sites so typed parameters (int, float, etc.) receive native values.
+    internal static void EmitArgAs(ILGenerator il, Expression arg, Type expected, EmitContext context)
+    {
+        var actual = Emit(il, arg, context);
+        if (actual == expected) return;
+
+        if (expected.IsValueType && actual == typeof(object))
+            il.Emit(OpCodes.Unbox_Any, expected);
+        else if (!expected.IsValueType && actual.IsValueType)
+            il.Emit(OpCodes.Box, actual);
+    }
+
     // Internal contract: emits the expression and returns the actual CLR type on the stack.
     internal static Type Emit(ILGenerator il, Expression expression, EmitContext context)
     {
@@ -134,10 +147,10 @@ public static class ExpressionEmitter
 
     private static Type EmitBinding(ILGenerator il, IdentifierExpression binding, EmitContext context)
     {
-        if (context.Parameters.TryGetValue(binding.Name, out var parameterIndex))
+        if (context.Parameters.TryGetValue(binding.Name, out var param))
         {
-            il.Emit(OpCodes.Ldarg, parameterIndex);
-            return typeof(object);
+            il.Emit(OpCodes.Ldarg, param.Index);
+            return param.ClrType;
         }
 
         if (context.Locals.TryGetValue(binding.Name, out var local))
@@ -234,10 +247,10 @@ public static class ExpressionEmitter
 
     private static bool WillEmitNativeValue(Expression expression, EmitContext context) => expression switch
     {
-        LiteralExpression literal     => literal.Value is int or float or double or bool or decimal,
-        IdentifierExpression binding     => context.Locals.TryGetValue(binding.Name, out var local)
-                                        && local.LocalType.IsValueType,
-        BinaryExpression nestedBinary => TryGetNativeArithmeticType(nestedBinary, context) is not null,
+        LiteralExpression literal  => literal.Value is int or float or double or bool or decimal,
+        IdentifierExpression id    => (context.Locals.TryGetValue(id.Name, out var local) && local.LocalType.IsValueType)
+                                  || (context.Parameters.TryGetValue(id.Name, out var param) && param.ClrType.IsValueType),
+        BinaryExpression nested    => TryGetNativeArithmeticType(nested, context) is not null,
         _ => false
     };
 
@@ -253,11 +266,15 @@ public static class ExpressionEmitter
                 EmitToStack(il, arg, context);
             il.Emit(OpCodes.Call, builtin);
         }
-        else if (context.Functions.ContainsKey(call.Callee))
+        else if (context.Functions.TryGetValue(call.Callee, out var method))
         {
-            foreach (var arg in call.Arguments)
-                EmitToStack(il, arg, context);
-            il.Emit(OpCodes.Call, context.Functions[call.Callee]);
+            var paramTypes = context.FunctionParamTypes.GetValueOrDefault(call.Callee);
+            for (var i = 0; i < call.Arguments.Count; i++)
+            {
+                var expected = paramTypes is not null && i < paramTypes.Length ? paramTypes[i] : typeof(object);
+                EmitArgAs(il, call.Arguments[i], expected, context);
+            }
+            il.Emit(OpCodes.Call, method);
         }
         else
         {
@@ -332,8 +349,8 @@ public static class ExpressionEmitter
 
     private static void EmitDelegateCall(ILGenerator il, CallExpression call, EmitContext context)
     {
-        if (context.Parameters.TryGetValue(call.Callee, out var parameterIndex))
-            il.Emit(OpCodes.Ldarg, parameterIndex);
+        if (context.Parameters.TryGetValue(call.Callee, out var param))
+            il.Emit(OpCodes.Ldarg, param.Index);
         else if (context.Locals.TryGetValue(call.Callee, out var local))
             il.Emit(OpCodes.Ldloc, local);
         else

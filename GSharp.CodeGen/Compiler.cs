@@ -44,15 +44,16 @@ public class Compiler
 
             var functions = new Dictionary<string, MethodBuilder>();
             var adapters = new Dictionary<string, MethodBuilder>();
+            var functionParamTypes = new Dictionary<string, Type[]>();
 
             foreach (var (moduleName, moduleExprs) in modules ?? [])
                 foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
-                    FunctionEmitter.Define(typeBuilder, fn, functions, adapters, prefix: moduleName + ".");
+                    FunctionEmitter.Define(typeBuilder, fn, functions, adapters, typeMap, prefix: moduleName + ".", functionParamTypes: functionParamTypes);
 
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
-                FunctionEmitter.Define(typeBuilder, fn, functions, adapters);
+                FunctionEmitter.Define(typeBuilder, fn, functions, adapters, typeMap, functionParamTypes: functionParamTypes);
 
-            var context = new EmitContext(functions, adapters, typeMap);
+            var context = new EmitContext(functions, adapters, typeMap, functionParamTypes);
             RegisterBuiltins(context);
 
             foreach (var (moduleName, moduleExprs) in modules ?? [])

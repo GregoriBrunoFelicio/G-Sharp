@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using GSharp.AST;
+using GSharp.TypeChecker;
 
 namespace GSharp.CodeGen;
 
@@ -14,7 +15,8 @@ namespace GSharp.CodeGen;
 //
 //   Pass 2 (Emit):   emit the actual IL into each MethodBuilder and its adapter.
 //
-// All G# functions have the signature: static object Name(object p1, object p2, ...)
+// G# functions use native CLR types for parameters when the type inferrer resolves them
+// to a concrete numeric or boolean type (int, float, double, decimal, bool). Otherwise object.
 // The dynamic type system lives entirely at runtime via RuntimeHelpers.
 //
 // For higher-order use, each function also gets an adapter:
@@ -33,17 +35,18 @@ public static class FunctionEmitter
     // so that CallExpression nodes can reference it via context.Functions[name].
     // The body is not emitted here — that happens in Pass 2.
     //
-    // All parameters are object because G# is dynamically typed.
-    // Return type is always object for the same reason.
+    // Return type is always object. Parameter types use native CLR types when known.
     public static void Define(
         TypeBuilder typeBuilder,
         FunctionDeclaration fn,
         Dictionary<string, MethodBuilder> functions,
         Dictionary<string, MethodBuilder> adapters,
-        string prefix = "")
+        Dictionary<Expression, GsType>? typeMap = null,
+        string prefix = "",
+        Dictionary<string, Type[]>? functionParamTypes = null)
     {
         var qualifiedName = prefix + fn.Name;
-        var paramTypes = Enumerable.Repeat(typeof(object), fn.Parameters.Count).ToArray();
+        var paramTypes = ResolveParameterClrTypes(fn, typeMap);
 
         var method = typeBuilder.DefineMethod(
             qualifiedName,
@@ -52,6 +55,7 @@ public static class FunctionEmitter
             paramTypes);
 
         functions[qualifiedName] = method;
+        functionParamTypes?[qualifiedName] = paramTypes;
 
         var adapter = typeBuilder.DefineMethod(
             qualifiedName + "__adapter",
@@ -80,14 +84,20 @@ public static class FunctionEmitter
         var method = context.Functions[qualifiedName];
         var il = method.GetILGenerator();
 
-        var functionContext = new EmitContext(context.Functions, context.FunctionAdapters, context.TypeMap);
+        var functionContext = new EmitContext(context.Functions, context.FunctionAdapters, context.TypeMap, context.FunctionParamTypes);
         foreach (var (builtinName, builtinMethod) in context.Builtins)
             functionContext.Builtins[builtinName] = builtinMethod;
 
-        // Register each parameter name → argument index.
+        // Register each parameter name → (argument index, CLR type).
         // The CLR accesses arguments via Ldarg_0, Ldarg_1, etc. — not Ldloc.
+        var paramClrTypes = ResolveParameterClrTypes(fn, context.TypeMap);
         for (var i = 0; i < fn.Parameters.Count; i++)
-            functionContext.Parameters[fn.Parameters[i]] = i;
+            functionContext.Parameters[fn.Parameters[i]] = (i, paramClrTypes[i]);
+
+        // Label at the top of the body — TCO jumps back here instead of calling recursively.
+        var startLabel = il.DefineLabel();
+        il.MarkLabel(startLabel);
+        functionContext.TailCall = new TailCallInfo(qualifiedName, fn.Parameters.Count, startLabel);
 
         var body = fn.Body;
 
@@ -98,13 +108,14 @@ public static class FunctionEmitter
             il.Emit(OpCodes.Pop);
         }
 
-        // Emit the last expression — its value is the implicit return value.
+        // Emit the last expression in tail position — enables TCO for self-recursive calls.
         if (body.Count > 0)
-            ExpressionEmitter.EmitToStack(il, body[^1], functionContext);
+            TailCallEmitter.EmitTail(il, body[^1], functionContext);
         else
             il.Emit(OpCodes.Ldnull);
 
         // Ret pops the top of the stack as the return value.
+        // Unreachable when all paths end in a TCO jump, but required for non-recursive exits.
         il.Emit(OpCodes.Ret);
     }
 
@@ -121,14 +132,42 @@ public static class FunctionEmitter
         var adapter = context.FunctionAdapters[qualifiedName];
         var il = adapter.GetILGenerator();
 
+        var paramClrTypes = ResolveParameterClrTypes(fn, context.TypeMap);
         for (var i = 0; i < fn.Parameters.Count; i++)
         {
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldc_I4, i);
             il.Emit(OpCodes.Ldelem_Ref);
+            if (paramClrTypes[i].IsValueType)
+                il.Emit(OpCodes.Unbox_Any, paramClrTypes[i]);
         }
 
         il.Emit(OpCodes.Call, context.Functions[qualifiedName]);
         il.Emit(OpCodes.Ret);
     }
+
+    private static Type[] ResolveParameterClrTypes(FunctionDeclaration fn, Dictionary<Expression, GsType>? typeMap)
+    {
+        if (typeMap is null || !typeMap.TryGetValue(fn, out var fnType))
+            return Enumerable.Repeat(typeof(object), fn.Parameters.Count).ToArray();
+
+        var clrTypes = new Type[fn.Parameters.Count];
+        var currentType = fnType;
+        for (var i = 0; i < fn.Parameters.Count; i++)
+        {
+            clrTypes[i] = currentType is FunctionType ft ? GsTypeToClr(ft.ParameterType) : typeof(object);
+            currentType = currentType is FunctionType ft2 ? ft2.ReturnType : currentType;
+        }
+        return clrTypes;
+    }
+
+    private static Type GsTypeToClr(GsType type) => type switch
+    {
+        IntType     => typeof(int),
+        FloatType   => typeof(float),
+        DoubleType  => typeof(double),
+        DecimalType => typeof(decimal),
+        BoolType    => typeof(bool),
+        _           => typeof(object)
+    };
 }

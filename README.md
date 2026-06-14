@@ -310,6 +310,8 @@ add a b => a + b  →  (int → (int → int))
 | Circular import detection | ✅ |
 | Hindley-Milner type inference | ✅ |
 | Language server (hover, diagnostics) | ✅ |
+| Tail-call optimization (self-recursion) | ✅ |
+| Native typed function parameters | ✅ |
 | Lambda expressions | ⏳ |
 | `map` / `filter` / `fold` | ⏳ |
 | Pattern matching | ⏳ |
@@ -373,16 +375,17 @@ flowchart TD
         C1["ExpressionEmitter — typed IL (native int/double) or boxed object fallback"]
         C2["IfEmitter / ForEmitter — control flow via IL labels"]
         C3["LetEmitter — typed local slots (int, double, etc.)"]
-        C4["FunctionEmitter — two-pass (Define + Emit) with adapter methods"]
-        C5["EmitContext — locals, params, functions, adapters, type map"]
-        C6["GSharpFunction — first-class function wrapper"]
-        C7["RuntimeHelpers — numeric type promotion (fallback)"]
+        C4["FunctionEmitter — two-pass (Define + Emit) with adapter methods; typed params"]
+        C5["TailCallEmitter — self-tail-calls as Starg_S + Br (no new stack frame)"]
+        C6["EmitContext — locals, params, functions, adapters, type map, param types"]
+        C7["GSharpFunction — first-class function wrapper"]
+        C8["RuntimeHelpers — numeric type promotion (fallback)"]
     end
 
     subgraph STDLIB["STANDARD LIBRARY"]
-        S1["ArrayBuiltins — array.head, array.sort, ..."]
+        S1["ArrayBuiltins — array.head, array.sort, array.map, ..."]
         S2["StringBuiltins — string.from, ..."]
-        S3["BuiltinCatalog — registry of names and arities"]
+        S3["GSharpFunction — first-class function runtime wrapper"]
     end
 
     subgraph LSP["LANGUAGE SERVER"]
@@ -408,23 +411,24 @@ flowchart TD
 ```
 GSharp.Lexer/         — tokenizer (Lexer, sub-lexers, TokenType)
 GSharp.AST/           — immutable record types for all AST nodes
-  Expression.cs       — base + Literal, Binding, Binary
+  Expression.cs       — base + Literal, Identifier, Binary
   Declarations.cs     — FunctionDeclaration, ImportDeclaration
-  Calls.cs            — CallExpression, QualifiedCallExpression
+  Calls.cs            — CallExpression, ModuleCallExpression
   Statements.cs       — Let, Print, If, For
 GSharp.Stdlib/        — standard library (no compiler dependency)
-  BuiltinCatalog.cs   — registry of all builtin names and arities
-  ArrayBuiltins.cs    — array.head, array.tail, array.sort, ...
+  GSharpFunction.cs   — first-class function runtime wrapper
+  ArrayBuiltins.cs    — array.head, array.tail, array.sort, array.map, ...
   StringBuiltins.cs   — string.from, ...
 GSharp.Parser/        — recursive-descent parser (one class per statement type)
-GSharp.TypeChecker/   — Hindley-Milner type inference
+GSharp.TypeChecker/   — Hindley-Milner type inference (partial classes)
   GsType.cs           — type hierarchy (IntType, FunctionType, TypeVar, ...)
   TypeInferrer.cs     — walks AST, assigns TypeVars, collects constraints
+  BuiltinTypeRules.cs — arities and signatures for all stdlib builtins
   Unifier.cs          — Robinson unification algorithm
   Substitution.cs     — TypeVar → GsType mapping produced by the Unifier
   TypeEnvironment.cs  — scoped variable → type bindings
   TypeConstraint.cs   — equality constraint (A must equal B)
-GSharp.CodeGen/       — IL emitters (one class per statement type) + Compiler entry point
+GSharp.CodeGen/       — IL emitters (one class per construct) + Compiler + TCO
 GSharp.LanguageServer/ — LSP server (hover, diagnostics)
   DocumentAnalyzer.cs — runs the pipeline over in-memory source, returns diagnostics
   HoverProvider.cs    — maps cursor position to the inferred type of the node under it
@@ -538,6 +542,31 @@ Box      int32
 Call     Console.WriteLine(object)
 ```
 
-When types are not known statically (function parameters, loop variables, dynamic calls),
-the emitter falls back to `RuntimeHelpers` with boxed `object` values — the same
-behavior as before the type checker was introduced.
+Function parameters also receive native CLR types when the type inferrer resolves them.
+`add a b => a + b` with `int` arguments emits `Ldarg_0 / Ldarg_1 / Add` — no boxing,
+no `RuntimeHelpers`.
+
+When types are not known statically (loop variables, dynamic calls), the emitter falls
+back to `RuntimeHelpers` with boxed `object` values.
+
+### Tail-call optimization
+
+Self-recursive functions in tail position are compiled into a loop rather than a
+recursive call. This prevents stack overflows for unbounded recursion.
+
+```gs
+sum acc n
+    if n == 0 then acc else
+        let a = acc + n
+        let b = n - 1
+        sum a b     // ← tail call: reuses the current stack frame
+```
+
+```
+// instead of: call sum; ret
+Starg_S  1     // overwrite param n  with new value
+Starg_S  0     // overwrite param acc with new value
+Br       start // jump back to top — no new stack frame
+```
+
+`if/else` branches are both eligible: TCO propagates into each branch independently.

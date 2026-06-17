@@ -21,14 +21,11 @@ public static class PrintEmitter
     {
         ExpressionEmitter.EmitToStack(il, printExpression.Value, context);
 
-        // Console.WriteLine(object) — since everything in G# is boxed as object,
-        // this overload fits perfectly and calls ToString() internally.
         var method = typeof(Console)
             .GetMethod("WriteLine", [typeof(object)])!;
 
         il.Emit(OpCodes.Call, method);
 
-        // println returns null — it is a side-effecting expression.
         il.Emit(OpCodes.Ldnull);
     }
 }

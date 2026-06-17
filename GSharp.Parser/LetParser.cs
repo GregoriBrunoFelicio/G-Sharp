@@ -9,15 +9,14 @@ public class LetParser(Parser parser)
     public LetExpression Parse()
     {
         parser.Consume(TokenType.Let);
-        var nameToken   = GetBindingNameToken();
-        var bindingName = nameToken.Value;
+        var (_, bindingName, line, column) = GetBindingNameToken();
 
-        parser.Equals();
+        parser.Consume(TokenType.Equals);
         var value = new ExpressionParser(parser).Parse();
 
         parser.DeclareBinding(bindingName);
 
-        return new LetExpression(bindingName, value) { Line = nameToken.Line, Column = nameToken.Column };
+        return new LetExpression(bindingName, value) { Line = line, Column = column };
     }
 
     private Token GetBindingNameToken()

@@ -12,8 +12,15 @@ public class Parser(List<Token> tokens)
     private readonly Stack<HashSet<string>> _scopes = new([[]]);
     private int _current;
 
-    public void EnterScope() => _scopes.Push([]);
-    public void ExitScope() => _scopes.Pop();
+    public void EnterScope()
+    {
+        _scopes.Push([]);
+    }
+
+    public void ExitScope()
+    {
+        _scopes.Pop();
+    }
 
     public void DeclareBinding(string name)
     {
@@ -35,7 +42,9 @@ public class Parser(List<Token> tokens)
             if (Match(TokenType.Newline))
                 continue;
 
-            expressions.Add(ParseNext());
+            var expression = ParseNext();
+
+            expressions.Add(expression);
         }
 
         return expressions;
@@ -80,7 +89,7 @@ public class Parser(List<Token> tokens)
             Advance();
             while (Check(TokenType.Identifier))
                 Advance();
-            
+
             while (Check(TokenType.Newline))
                 Advance();
             return Check(TokenType.Arrow) || Check(TokenType.BlockOpen);
@@ -91,10 +100,12 @@ public class Parser(List<Token> tokens)
         }
     }
 
-    public Token Consume(TokenType type) =>
-        Check(type)
+    public Token Consume(TokenType type)
+    {
+        return Check(type)
             ? Advance()
             : throw new Exception($"{tokens[_current].Line}: expected '{type}', got '{tokens[_current].Value}'");
+    }
 
     public Token Advance()
     {
@@ -111,16 +122,21 @@ public class Parser(List<Token> tokens)
 
     public bool Check(TokenType type)
     {
-        if (IsAtEnd()) return false;
-        return tokens[_current].Type == type;
+        return !IsAtEnd() && tokens[_current].Type == type;
     }
 
-    public Token Current() => 
-        IsAtEnd() ? throw new Exception("unexpected end of input") : tokens[_current];
+    public Token Current()
+    {
+        return IsAtEnd() ? throw new Exception("unexpected end of input") : tokens[_current];
+    }
 
-    private bool IsAtEnd() => _current >= tokens.Count;
+    private bool IsAtEnd()
+    {
+        return _current >= tokens.Count;
+    }
 
-    public Token Identifier() => Consume(TokenType.Identifier);
-
-    public void Equals() => Consume(TokenType.Equals);
+    public Token Identifier()
+    {
+        return Consume(TokenType.Identifier);
+    }
 }

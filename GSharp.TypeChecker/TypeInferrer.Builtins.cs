@@ -14,7 +14,7 @@ public partial class TypeInferrer
         ["array.len"] = new BuiltinTypeRule(_ => new IntType(), [arrayType => arrayType]),
         ["array.empty"] = new BuiltinTypeRule(_ => new BoolType(), [arrayType => arrayType]),
         ["array.concat"] =
-            new BuiltinTypeRule(arrayType => arrayType, [arrayType => arrayType, arrayType => arrayType]),
+            new BuiltinTypeRule(arrayType => arrayType, [null, null]),
         ["array.take"] = new BuiltinTypeRule(arrayType => arrayType, [arrayType => arrayType, _ => new IntType()]),
         ["string.from"] = new BuiltinTypeRule(_ => new StringType(), [null])
     };

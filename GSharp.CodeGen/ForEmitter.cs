@@ -1,25 +1,17 @@
 using System.Reflection.Emit;
 using GSharp.AST;
+using GSharp.TypeChecker;
 
 namespace GSharp.CodeGen;
-
 
 public static class ForEmitter
 {
     public static void Emit(ILGenerator il, ForExpression forExpression, EmitContext context)
     {
-        // ============================
-        // 1. Evaluate and store the iterable
-        // ============================
-
         ExpressionEmitter.EmitToStack(il, forExpression.Iterable, context);
         il.Emit(OpCodes.Castclass, typeof(object[]));
         var arrayLocal = il.DeclareLocal(typeof(object[]));
         il.Emit(OpCodes.Stloc, arrayLocal);
-
-        // ============================
-        // 2. Allocate result array of the same length
-        // ============================
 
         il.Emit(OpCodes.Ldloc, arrayLocal);
         il.Emit(OpCodes.Ldlen);
@@ -28,26 +20,14 @@ public static class ForEmitter
         var resultLocal = il.DeclareLocal(typeof(object[]));
         il.Emit(OpCodes.Stloc, resultLocal);
 
-        // ============================
-        // 3. Initialize the index
-        // ============================
-
         var indexLocal = il.DeclareLocal(typeof(int));
         il.Emit(OpCodes.Ldc_I4_0);
         il.Emit(OpCodes.Stloc, indexLocal);
-
-        // ============================
-        // 4. Loop structure
-        // ============================
 
         var loopStart = il.DefineLabel();
         var loopEnd   = il.DefineLabel();
 
         il.MarkLabel(loopStart);
-
-        // ============================
-        // 5. Condition: index < array.Length
-        // ============================
 
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldloc, arrayLocal);
@@ -55,21 +35,17 @@ public static class ForEmitter
         il.Emit(OpCodes.Conv_I4);
         il.Emit(OpCodes.Bge, loopEnd);
 
-        // ============================
-        // 6. Load current element: item = array[index]
-        // ============================
-
         il.Emit(OpCodes.Ldloc, arrayLocal);
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldelem_Ref);
-        var loopVar = il.DeclareLocal(typeof(object));
+
+        var elementClrType = ResolveElementClrType(forExpression, context);
+        if (elementClrType != typeof(object))
+            il.Emit(OpCodes.Unbox_Any, elementClrType);
+
+        var loopVar = il.DeclareLocal(elementClrType);
         il.Emit(OpCodes.Stloc, loopVar);
         context.Locals[forExpression.BindingName] = loopVar;
-
-        // ============================
-        // 7. Emit body — discard all but the last expression
-        //    Last expression becomes the element in result[index]
-        // ============================
 
         for (var i = 0; i < forExpression.Body.Count - 1; i++)
         {
@@ -77,16 +53,10 @@ public static class ForEmitter
             il.Emit(OpCodes.Pop);
         }
 
-        // Store last expression into result[index].
-        // Stelem_Ref expects stack: [array, index, value]
         il.Emit(OpCodes.Ldloc, resultLocal);
         il.Emit(OpCodes.Ldloc, indexLocal);
         ExpressionEmitter.EmitToStack(il, forExpression.Body[^1], context);
         il.Emit(OpCodes.Stelem_Ref);
-
-        // ============================
-        // 8. Increment index and loop back
-        // ============================
 
         il.Emit(OpCodes.Ldloc, indexLocal);
         il.Emit(OpCodes.Ldc_I4_1);
@@ -96,7 +66,16 @@ public static class ForEmitter
 
         il.MarkLabel(loopEnd);
 
-        // Return the result array — satisfies the one-object-on-stack contract.
         il.Emit(OpCodes.Ldloc, resultLocal);
+    }
+
+    private static Type ResolveElementClrType(ForExpression forExpression, EmitContext context)
+    {
+        if (!context.TypeMap.TryGetValue(forExpression.Iterable, out var gsType))
+            return typeof(object);
+
+        return gsType is ArrayType arrayType
+            ? FunctionEmitter.GsTypeToClr(arrayType.ElementType)
+            : typeof(object);
     }
 }

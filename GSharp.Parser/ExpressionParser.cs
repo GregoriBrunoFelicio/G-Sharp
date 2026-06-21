@@ -114,8 +114,15 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
         return args;
     }
 
+    private static readonly HashSet<TokenType> AtomStartTokens =
+    [
+        TokenType.Identifier,
+        TokenType.LeftParen,
+        TokenType.LeftBracket,
+    ];
+
     private static bool IsAtom(TokenType type) =>
-        IsLiteralToken(type) || type == TokenType.Identifier || type == TokenType.LeftParen;
+        IsLiteralToken(type) || AtomStartTokens.Contains(type);
 
     private static LiteralExpression TokenToLiteral(Token token) => token.Type switch
     {
@@ -136,6 +143,12 @@ public class ExpressionParser(Parser parser, bool allowAtomArgs = true)
                 var inner = new ExpressionParser(parser, allowAtomArgs: true).Parse();
                 parser.Consume(TokenType.RightParen);
                 args.Add(inner);
+                continue;
+            }
+
+            if (parser.Match(TokenType.LeftBracket))
+            {
+                args.Add(new ArrayParser(parser).Parse());
                 continue;
             }
 

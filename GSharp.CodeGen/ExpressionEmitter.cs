@@ -9,6 +9,34 @@ namespace GSharp.CodeGen;
 
 public static class ExpressionEmitter
 {
+    // -------------------------------------------------------------------------
+    // Cached reflection — looked up once at class load, not on every emission
+    // -------------------------------------------------------------------------
+
+    private static readonly MethodInfo GsFunctionCallMethod =
+        typeof(GSharpFunction).GetMethod(nameof(GSharpFunction.Call))!;
+    private static readonly MethodInfo GsFunctionCall1Method =
+        typeof(GSharpFunction).GetMethod(nameof(GSharpFunction.Call1))!;
+
+    private static readonly MethodInfo GreaterThanMethod        = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThan))!;
+    private static readonly MethodInfo LessThanMethod           = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThan))!;
+    private static readonly MethodInfo GreaterThanOrEqualMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThanOrEqual))!;
+    private static readonly MethodInfo LessThanOrEqualMethod    = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThanOrEqual))!;
+    private static readonly MethodInfo EqualEqualMethod         = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.EqualEqual))!;
+    private static readonly MethodInfo NotEqualMethod           = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.NotEqual))!;
+    private static readonly MethodInfo AddMethod                = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Add))!;
+    private static readonly MethodInfo SubtractMethod           = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Subtract))!;
+    private static readonly MethodInfo MultiplyMethod           = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Multiply))!;
+    private static readonly MethodInfo DivideMethod             = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Divide))!;
+
+    private static readonly ConstructorInfo DecimalCtor = typeof(decimal).GetConstructor([
+        typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)
+    ]) ?? throw new Exception("Decimal constructor not found");
+
+    // -------------------------------------------------------------------------
+    // Public entry points
+    // -------------------------------------------------------------------------
+
     public static void EmitToStack(ILGenerator il, Expression expression, EmitContext context)
     {
         var clrType = Emit(il, expression, context);
@@ -39,10 +67,28 @@ public static class ExpressionEmitter
 
             case CallExpression call:
                 EmitCall(il, call, context);
+                if (context.TypeMap.TryGetValue(call, out var callGsType))
+                {
+                    var returnClrType = FunctionEmitter.GsTypeToClr(callGsType);
+                    if (returnClrType != typeof(object))
+                    {
+                        il.Emit(OpCodes.Unbox_Any, returnClrType);
+                        return returnClrType;
+                    }
+                }
                 return typeof(object);
 
             case ModuleCallExpression moduleCall:
                 EmitModuleCall(il, moduleCall, context);
+                if (context.TypeMap.TryGetValue(moduleCall, out var mcGsType))
+                {
+                    var mcClrType = FunctionEmitter.GsTypeToClr(mcGsType);
+                    if (mcClrType != typeof(object))
+                    {
+                        il.Emit(OpCodes.Unbox_Any, mcClrType);
+                        return mcClrType;
+                    }
+                }
                 return typeof(object);
 
             case BinaryExpression binary:
@@ -125,16 +171,12 @@ public static class ExpressionEmitter
         var sign  = (bits[3] & 0x80000000) != 0;
         var scale = (byte)((bits[3] >> 16) & 0x7F);
 
-        var ctor = typeof(decimal).GetConstructor([
-            typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)
-        ]) ?? throw new Exception("Decimal constructor not found");
-
         il.Emit(OpCodes.Ldc_I4, lo);
         il.Emit(OpCodes.Ldc_I4, mid);
         il.Emit(OpCodes.Ldc_I4, hi);
         il.Emit(sign ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
         il.Emit(OpCodes.Ldc_I4_S, scale);
-        il.Emit(OpCodes.Newobj, ctor);
+        il.Emit(OpCodes.Newobj, DecimalCtor);
     }
 
     // -------------------------------------------------------------------------
@@ -155,6 +197,14 @@ public static class ExpressionEmitter
             return local.LocalType;
         }
 
+        // Load cached static GSharpFunction field (preferred — no allocation).
+        if (context.FunctionFields.TryGetValue(binding.Name, out var field))
+        {
+            il.Emit(OpCodes.Ldsfld, field);
+            return typeof(object);
+        }
+
+        // Fallback: allocate function wrapper on the spot (e.g. module functions).
         if (context.FunctionAdapters.TryGetValue(binding.Name, out var adapter))
         {
             EmitFunctionValue(il, adapter);
@@ -202,21 +252,21 @@ public static class ExpressionEmitter
 
         var method = binary.Operator switch
         {
-            TokenType.GreaterThan        => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThan)),
-            TokenType.LessThan           => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThan)),
-            TokenType.GreaterThanOrEqual => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThanOrEqual)),
-            TokenType.LessThanOrEqual    => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThanOrEqual)),
-            TokenType.EqualEqual         => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.EqualEqual)),
-            TokenType.NotEqual           => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.NotEqual)),
-            TokenType.Plus               => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Add)),
-            TokenType.Minus              => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Subtract)),
-            TokenType.Multiply           => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Multiply)),
-            TokenType.Divide             => typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Divide)),
+            TokenType.GreaterThan        => GreaterThanMethod,
+            TokenType.LessThan           => LessThanMethod,
+            TokenType.GreaterThanOrEqual => GreaterThanOrEqualMethod,
+            TokenType.LessThanOrEqual    => LessThanOrEqualMethod,
+            TokenType.EqualEqual         => EqualEqualMethod,
+            TokenType.NotEqual           => NotEqualMethod,
+            TokenType.Plus               => AddMethod,
+            TokenType.Minus              => SubtractMethod,
+            TokenType.Multiply           => MultiplyMethod,
+            TokenType.Divide             => DivideMethod,
             _ => throw new NotSupportedException(
                 $"internal error: no emitter for binary operator '{binary.Operator}'")
         };
 
-        il.Emit(OpCodes.Call, method!);
+        il.Emit(OpCodes.Call, method);
         return typeof(object);
     }
 
@@ -243,10 +293,14 @@ public static class ExpressionEmitter
 
     private static bool WillEmitNativeValue(Expression expression, EmitContext context) => expression switch
     {
-        LiteralExpression literal  => literal.Value is int or float or double or bool or decimal,
-        IdentifierExpression id    => (context.Locals.TryGetValue(id.Name, out var local) && local.LocalType.IsValueType)
-                                  || (context.Parameters.TryGetValue(id.Name, out var param) && param.ClrType.IsValueType),
-        BinaryExpression nested    => TryGetNativeArithmeticType(nested, context) is not null,
+        LiteralExpression literal    => literal.Value is int or float or double or bool or decimal,
+        IdentifierExpression id      => (context.Locals.TryGetValue(id.Name, out var local) && local.LocalType.IsValueType)
+                                     || (context.Parameters.TryGetValue(id.Name, out var param) && param.ClrType.IsValueType),
+        BinaryExpression nested      => TryGetNativeArithmeticType(nested, context) is not null,
+        CallExpression call          => context.TypeMap.TryGetValue(call, out var t)
+                                     && FunctionEmitter.GsTypeToClr(t) != typeof(object),
+        ModuleCallExpression mc      => context.TypeMap.TryGetValue(mc, out var t)
+                                     && FunctionEmitter.GsTypeToClr(t) != typeof(object),
         _ => false
     };
 
@@ -310,12 +364,14 @@ public static class ExpressionEmitter
         var shortCircuit = il.DefineLabel();
         var end          = il.DefineLabel();
 
-        EmitToStack(il, binary.Left, context);
-        il.Emit(OpCodes.Unbox_Any, typeof(bool));
+        var leftType = Emit(il, binary.Left, context);
+        if (leftType != typeof(bool))
+            il.Emit(OpCodes.Unbox_Any, typeof(bool));
         il.Emit(binary.Operator == TokenType.And ? OpCodes.Brfalse : OpCodes.Brtrue, shortCircuit);
 
-        EmitToStack(il, binary.Right, context);
-        il.Emit(OpCodes.Unbox_Any, typeof(bool));
+        var rightType = Emit(il, binary.Right, context);
+        if (rightType != typeof(bool))
+            il.Emit(OpCodes.Unbox_Any, typeof(bool));
         il.Emit(OpCodes.Stloc, result);
         il.Emit(OpCodes.Br, end);
 
@@ -354,17 +410,25 @@ public static class ExpressionEmitter
 
         il.Emit(OpCodes.Castclass, typeof(GSharpFunction));
 
-        il.Emit(OpCodes.Ldc_I4, call.Arguments.Count);
-        il.Emit(OpCodes.Newarr, typeof(object));
-
-        for (var i = 0; i < call.Arguments.Count; i++)
+        if (call.Arguments.Count == 1)
         {
-            il.Emit(OpCodes.Dup);
-            il.Emit(OpCodes.Ldc_I4, i);
-            EmitToStack(il, call.Arguments[i], context);
-            il.Emit(OpCodes.Stelem_Ref);
+            EmitToStack(il, call.Arguments[0], context);
+            il.Emit(OpCodes.Callvirt, GsFunctionCall1Method);
         }
+        else
+        {
+            il.Emit(OpCodes.Ldc_I4, call.Arguments.Count);
+            il.Emit(OpCodes.Newarr, typeof(object));
 
-        il.Emit(OpCodes.Callvirt, typeof(GSharpFunction).GetMethod(nameof(GSharpFunction.Call))!);
+            for (var i = 0; i < call.Arguments.Count; i++)
+            {
+                il.Emit(OpCodes.Dup);
+                il.Emit(OpCodes.Ldc_I4, i);
+                EmitToStack(il, call.Arguments[i], context);
+                il.Emit(OpCodes.Stelem_Ref);
+            }
+
+            il.Emit(OpCodes.Callvirt, GsFunctionCallMethod);
+        }
     }
 }

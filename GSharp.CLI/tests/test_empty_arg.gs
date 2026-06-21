@@ -1,4 +1,3 @@
-
 map array fn aux
     if array.empty array then
         aux
@@ -8,10 +7,7 @@ map array fn aux
         result -> fn head
         map tail fn (array.concat result aux)
 
-
 arr -> [1 2 3 4 5 6]
-empt -> []
-
 double x => x * 2
 
-println (map arr double empt)
+println (map arr double [])

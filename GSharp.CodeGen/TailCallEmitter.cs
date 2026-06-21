@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Reflection.Emit;
 using GSharp.AST;
 using GSharp.CodeGen.Helpers;
@@ -44,14 +45,22 @@ public static class TailCallEmitter
         return true;
     }
 
+    private static readonly MethodInfo IsTrueMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsTrue))!;
+
     private static void EmitTailIf(ILGenerator il, IfExpression ifExpression, EmitContext context)
     {
         var elseLabel = il.DefineLabel();
         var endLabel  = il.DefineLabel();
 
-        ExpressionEmitter.EmitToStack(il, ifExpression.Condition, context);
-        il.Emit(OpCodes.Call, typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsTrue))!);
-        il.Emit(OpCodes.Brfalse, elseLabel);
+        var condType = ExpressionEmitter.Emit(il, ifExpression.Condition, context);
+        if (condType == typeof(bool))
+            il.Emit(OpCodes.Brfalse, elseLabel);
+        else
+        {
+            il.Emit(OpCodes.Call, IsTrueMethod);
+            il.Emit(OpCodes.Brfalse, elseLabel);
+        }
 
         EmitTailBody(il, ifExpression.ThenBody, context);
         il.Emit(OpCodes.Br, endLabel);

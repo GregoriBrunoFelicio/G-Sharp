@@ -5,7 +5,7 @@ namespace GSharp.TypeChecker;
 ///     Environments are chained — a child scope inherits all names from its parent
 ///     but can introduce new bindings that are invisible outside the child.
 ///     This models lexical scoping: function parameters exist only inside the function body,
-///     let bindings exist only after their declaration, etc.
+///     `->` bindings exist only after their declaration, etc.
 ///     Example:
 ///     global scope: { add → FunctionType, println → UnitType }
 ///     function scope: { a → ?0, b → ?1 }   ← created by CreateChildScope()

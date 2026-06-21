@@ -1,32 +1,12 @@
 {
   "profiles": {
-    "test_main": {
-      "commandName": "Project",
-      "commandLineArgs": "tests/test_main.gs"
-    },
-    "test_import": {
-      "commandName": "Project",
-      "commandLineArgs": "tests/test_import.gs"
-    },
-    "test_array": {
-      "commandName": "Project",
-      "commandLineArgs": "tests/test_array.gs"
-    },
-    "test_call": {
-      "commandName": "Project",
-      "commandLineArgs": "tests/test_call.gs"
-    },
-    "test_for": {
-      "commandName": "Project",
-      "commandLineArgs": "tests/test_for.gs"
-    },
     "hello": {
       "commandName": "Project",
       "commandLineArgs": "tests/hello.gs"
     },
-    "greg": {
+    "tests": {
       "commandName": "Project",
-      "commandLineArgs": "tests/greg.gs"
+      "commandLineArgs": "tests/tests.gs"
     }
   }
 }

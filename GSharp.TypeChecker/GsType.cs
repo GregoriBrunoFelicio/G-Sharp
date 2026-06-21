@@ -44,7 +44,7 @@ public record BoolType : GsType
 
 /// <summary>
 /// Unit — absence of a meaningful value.
-/// Returned by println, for, let, and similar side-effecting expressions.
+/// Returned by println, for, `->` bindings, and similar side-effecting expressions.
 /// </summary>
 public record UnitType : GsType
 {

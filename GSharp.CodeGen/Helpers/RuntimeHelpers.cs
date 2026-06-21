@@ -13,7 +13,7 @@ public static class RuntimeHelpers
     /// <see cref="Convert.ChangeType(object, Type, IFormatProvider)"/> (e.g. int → double).
     /// Used by the interop call path to bridge G#'s boxed values to typed .NET signatures.
     /// </summary>
-    public static object CoerceTo(object value, Type target) =>
+    public static object? CoerceTo(object? value, Type target) =>
         value is null || target.IsInstanceOfType(value)
             ? value
             : Convert.ChangeType(value, target, CultureInfo.InvariantCulture);

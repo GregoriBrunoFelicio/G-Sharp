@@ -15,7 +15,9 @@ public static class FunctionEmitter
         Dictionary<string, MethodBuilder> adapters,
         Dictionary<Expression, GsType>? typeMap = null,
         string prefix = "",
-        Dictionary<string, Type[]>? functionParamTypes = null)
+        Dictionary<string, Type[]>? functionParamTypes = null,
+        Dictionary<string, MethodBuilder>? adapters1 = null,
+        Dictionary<string, FieldBuilder>? functionFields = null)
     {
         var qualifiedName = prefix + fn.Name;
         var paramTypes = ResolveParameterClrTypes(fn, typeMap);
@@ -36,6 +38,26 @@ public static class FunctionEmitter
             [typeof(object[])]);
 
         adapters[qualifiedName] = adapter;
+
+        // Arity-1 adapter: single object parameter, no array allocation at call sites.
+        if (fn.Parameters.Count == 1 && adapters1 is not null)
+        {
+            var adapter1 = typeBuilder.DefineMethod(
+                qualifiedName + "__adapter1",
+                MethodAttributes.Public | MethodAttributes.Static,
+                typeof(object),
+                [typeof(object)]);
+            adapters1[qualifiedName] = adapter1;
+        }
+
+        if (functionFields is not null)
+        {
+            var field = typeBuilder.DefineField(
+                "__fn_" + qualifiedName,
+                typeof(GSharp.CodeGen.Helpers.GSharpFunction),
+                FieldAttributes.Public | FieldAttributes.Static);
+            functionFields[qualifiedName] = field;
+        }
     }
 
 
@@ -43,6 +65,10 @@ public static class FunctionEmitter
     {
         EmitMainBody(fn, context, prefix);
         EmitAdapter(fn, context, prefix);
+
+        var qualifiedName = prefix + fn.Name;
+        if (context.FunctionAdapters1.ContainsKey(qualifiedName))
+            EmitAdapter1(fn, context, prefix);
     }
 
     private static void EmitMainBody(FunctionDeclaration fn, EmitContext context, string prefix)
@@ -51,7 +77,13 @@ public static class FunctionEmitter
         var method = context.Functions[qualifiedName];
         var il = method.GetILGenerator();
 
-        var functionContext = new EmitContext(context.Functions, context.FunctionAdapters, context.TypeMap, context.FunctionParamTypes);
+        var functionContext = new EmitContext(
+            context.Functions,
+            context.FunctionAdapters,
+            context.TypeMap,
+            context.FunctionParamTypes,
+            context.FunctionAdapters1,
+            context.FunctionFields);
         foreach (var (builtinName, builtinMethod) in context.Builtins)
             functionContext.Builtins[builtinName] = builtinMethod;
 
@@ -99,6 +131,22 @@ public static class FunctionEmitter
         il.Emit(OpCodes.Ret);
     }
 
+    // Single-object adapter for arity-1 functions: avoids array unpacking.
+    private static void EmitAdapter1(FunctionDeclaration fn, EmitContext context, string prefix)
+    {
+        var qualifiedName = prefix + fn.Name;
+        var adapter1 = context.FunctionAdapters1[qualifiedName];
+        var il = adapter1.GetILGenerator();
+
+        var paramClrTypes = ResolveParameterClrTypes(fn, context.TypeMap);
+        il.Emit(OpCodes.Ldarg_0);
+        if (paramClrTypes[0].IsValueType)
+            il.Emit(OpCodes.Unbox_Any, paramClrTypes[0]);
+
+        il.Emit(OpCodes.Call, context.Functions[qualifiedName]);
+        il.Emit(OpCodes.Ret);
+    }
+
     private static Type[] ResolveParameterClrTypes(FunctionDeclaration fn, Dictionary<Expression, GsType>? typeMap)
     {
         if (typeMap is null || !typeMap.TryGetValue(fn, out var fnType))
@@ -114,7 +162,7 @@ public static class FunctionEmitter
         return clrTypes;
     }
 
-    private static Type GsTypeToClr(GsType type) => type switch
+    internal static Type GsTypeToClr(GsType type) => type switch
     {
         IntType     => typeof(int),
         FloatType   => typeof(float),

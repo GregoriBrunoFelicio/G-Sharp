@@ -70,8 +70,8 @@ public static class HoverProvider
             case FunctionDeclaration fn when types.TryGetValue(fn, out var fnType):
                 return Named(fn.Name, fnType, node);
 
-            case BindingExpression let when types.TryGetValue(let.Value, out var letType):
-                return Named(let.BindingName, letType, node);
+            case BindingExpression binding when types.TryGetValue(binding.Value, out var bindingType):
+                return Named(binding.BindingName, bindingType, node);
 
             case CallExpression call:
                 // Prefer the callee's signature; fall back to the call's result type
@@ -122,8 +122,8 @@ public static class HoverProvider
                 foreach (var child in Walk(binary.Right)) yield return child;
                 break;
 
-            case BindingExpression let:
-                foreach (var child in Walk(let.Value)) yield return child;
+            case BindingExpression binding:
+                foreach (var child in Walk(binding.Value)) yield return child;
                 break;
 
             case PrintExpression print:

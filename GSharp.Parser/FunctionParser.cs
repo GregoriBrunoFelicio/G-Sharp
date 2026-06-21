@@ -23,9 +23,9 @@ public class FunctionParser(Parser parser)
         return new FunctionDeclaration(name, parameters, body) { Line = nameToken.Line, Column = nameToken.Column };
     }
 
-    // Parses the body inside a new lexical scope seeded with the parameter names, so a `let`
+    // Parses the body inside a new lexical scope seeded with the parameter names, so a binding
     // can't reuse a parameter name (the codegen resolves parameters before locals, which would
-    // otherwise make such a `let` silently unreadable). The scope is always popped, even if the
+    // otherwise make such a binding silently unreadable). The scope is always popped, even if the
     // body throws.
     private List<Expression> ParseScopedBody(List<string> parameters)
     {

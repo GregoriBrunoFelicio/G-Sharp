@@ -23,7 +23,7 @@ public record IdentifierExpression(string Name) : Expression;
 
 public record BinaryExpression(Expression Left, TokenType Operator, Expression Right) : Expression;
 
-public record LetExpression(string BindingName, Expression Value) : Expression;
+public record BindingExpression(string BindingName, Expression Value) : Expression;
 
 public record PrintExpression(Expression Value) : Expression;
 

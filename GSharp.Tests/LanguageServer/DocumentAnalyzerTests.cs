@@ -8,7 +8,7 @@ public class DocumentAnalyzerTests
     [Fact]
     public void Valid_Source_Produces_No_Diagnostics()
     {
-        var diagnostics = DocumentAnalyzer.Analyze("let x = 42");
+        var diagnostics = DocumentAnalyzer.Analyze("x -> 42");
 
         diagnostics.Should().BeEmpty();
     }
@@ -29,7 +29,7 @@ public class DocumentAnalyzerTests
     public void Syntax_Error_Maps_To_Its_Line()
     {
         // '@' is not a valid token; the lexer reports it on line 2 (1-based).
-        var source = "let x = 42\n@";
+        var source = "x -> 42\n@";
 
         var diagnostics = DocumentAnalyzer.Analyze(source);
 
@@ -50,9 +50,9 @@ public class DocumentAnalyzerTests
         // bad line (line 4, 1-based) instead of falling back to the first line.
         var source =
             "f x\n" +
-            "    let a = 1\n" +
-            "  let b = 2\n" +
-            "        let c = 3\n";
+            "    a -> 1\n" +
+            "  b -> 2\n" +
+            "        c -> 3\n";
 
         var diagnostics = DocumentAnalyzer.Analyze(source);
 
@@ -65,7 +65,7 @@ public class DocumentAnalyzerTests
     {
         // 'y' is never bound; the type inferrer now reports it (with its source line)
         // instead of letting it slip through to CodeGen.
-        var source = "let x = 1\nlet z = y";
+        var source = "x -> 1\nz -> y";
 
         var diagnostics = DocumentAnalyzer.Analyze(source);
 
@@ -79,7 +79,7 @@ public class DocumentAnalyzerTests
     {
         // Mixing int and string in arithmetic — the unifier reports a type mismatch
         // carrying the offending expression's source line.
-        var diagnostics = DocumentAnalyzer.Analyze("let x = 1 + \"a\"");
+        var diagnostics = DocumentAnalyzer.Analyze("x -> 1 + \"a\"");
 
         diagnostics.Should().ContainSingle();
         diagnostics[0].Line.Should().Be(0); // 0-based -> first line
@@ -90,7 +90,7 @@ public class DocumentAnalyzerTests
     public void Type_Error_On_Later_Line_Maps_To_That_Line()
     {
         // The mismatch is on the third line; the diagnostic must land there, not on line 1.
-        var source = "let a = 1\nlet b = 2\nlet c = a + \"x\"";
+        var source = "a -> 1\nb -> 2\nc -> a + \"x\"";
 
         var diagnostics = DocumentAnalyzer.Analyze(source);
 

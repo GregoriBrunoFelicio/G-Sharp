@@ -13,6 +13,9 @@ public static class SymbolLexer
 
         switch (current)
         {
+            case '-' when next == '>':
+                lexer.Advance(); lexer.Advance();
+                return new Token(TokenType.ThinArrow, "->", line, col);
             case '=' when next == '>':
                 lexer.Advance(); lexer.Advance();
                 return new Token(TokenType.Arrow, "=>", line, col);

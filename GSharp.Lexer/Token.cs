@@ -5,7 +5,7 @@ public record Token(TokenType Type, string Value, int Line = 0, int Column = 0);
 public enum TokenType
 {
     // Keywords
-    Equals,
+    Equals, // bare '=' — invalid in G#; kept so the lexer can gate '==' and '=>'
     Newline,
     Println,
     EndOfFile,
@@ -14,8 +14,7 @@ public enum TokenType
     If,
     Else,
 
-    //Let
-    Let,
+    // Identifier
     Identifier,
 
     // Number
@@ -49,7 +48,8 @@ public enum TokenType
     LeftBrace, // {
     RightBrace, // }
 
-    Arrow, // =>
+    Arrow,     // =>
+    ThinArrow, // ->
 
     // Comparison
     GreaterThan, // >

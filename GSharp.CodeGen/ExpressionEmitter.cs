@@ -9,7 +9,6 @@ namespace GSharp.CodeGen;
 
 public static class ExpressionEmitter
 {
-    // Public contract: always leaves exactly one boxed object on the stack.
     public static void EmitToStack(ILGenerator il, Expression expression, EmitContext context)
     {
         var clrType = Emit(il, expression, context);
@@ -17,8 +16,6 @@ public static class ExpressionEmitter
             il.Emit(OpCodes.Box, clrType);
     }
 
-    // Emits an expression and adapts the result to match the expected CLR type.
-    // Used at call sites so typed parameters (int, float, etc.) receive native values.
     internal static void EmitArgAs(ILGenerator il, Expression arg, Type expected, EmitContext context)
     {
         var actual = Emit(il, arg, context);
@@ -30,7 +27,6 @@ public static class ExpressionEmitter
             il.Emit(OpCodes.Box, actual);
     }
 
-    // Internal contract: emits the expression and returns the actual CLR type on the stack.
     internal static Type Emit(ILGenerator il, Expression expression, EmitContext context)
     {
         switch (expression)
@@ -52,8 +48,8 @@ public static class ExpressionEmitter
             case BinaryExpression binary:
                 return EmitBinary(il, binary, context);
 
-            case LetExpression letExpression:
-                LetEmitter.Emit(il, letExpression, context);
+            case BindingExpression binding:
+                BindingEmitter.Emit(il, binding, context);
                 return typeof(object);
 
             case PrintExpression printExpression:

@@ -19,9 +19,6 @@ public static class IdentifierLexer
 
     private static readonly Dictionary<string, TokenType> KeywordTokenMap = new()
     {
-        // Declarations
-        ["let"] = TokenType.Let,
-
         // Booleans
         ["true"] = TokenType.BooleanTrueLiteral,
         ["false"] = TokenType.BooleanFalseLiteral,

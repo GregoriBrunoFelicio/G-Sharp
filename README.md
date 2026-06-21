@@ -36,43 +36,43 @@ gs hello.gs        # shorthand
 
 ## Syntax
 
-### Let bindings
+### Bindings
 
 Bindings are immutable. There is no reassignment.
 
 ```gs
-let name = "Alice"
-let age  = 30
-let pi   = 3.14d
+name -> "Alice"
+age  -> 30
+pi   -> 3.14d
 println name
 ```
 
 ### Numeric types
 
 ```gs
-let i = 42       // int
-let d = 3.14d    // double
-let f = 2.5f     // float
-let m = 9.99m    // decimal
+i -> 42       // int
+d -> 3.14d    // double
+f -> 2.5f     // float
+m -> 9.99m    // decimal
 ```
 
 ### Booleans
 
 ```gs
-let yes = true
-let no  = false
+yes -> true
+no  -> false
 ```
 
 ### Arrays
 
 ```gs
-let nums  = [1 2 3 4 5]
-let names = ["Alice" "Bob" "Carol"]
+nums  -> [1 2 3 4 5]
+names -> ["Alice" "Bob" "Carol"]
 ```
 
 ### Conditionals
 
-`if` is an expression — it can appear on the right side of `let`.
+`if` is an expression — it can appear on the right side of a binding.
 
 ```gs
 // inline
@@ -85,7 +85,7 @@ else
     println "minor"
 
 // as expression
-let label = if age >= 18 then "adult" else "minor"
+label -> if age >= 18 then "adult" else "minor"
 println label
 ```
 
@@ -94,11 +94,11 @@ println label
 `and` and `or` are binary operators with short-circuit evaluation.
 
 ```gs
-let a = true
-let b = false
+a -> true
+b -> false
 
-let both = a and b     // false
-let either = a or b    // true
+both   -> a and b     // false
+either -> a or b      // true
 
 if a and age >= 18 then
     println "adult and confirmed"
@@ -110,8 +110,8 @@ if a and age >= 18 then
 The last expression in the body is the value for each element.
 
 ```gs
-let nums    = [1 2 3 4 5]
-let doubled = for item in nums do
+nums    -> [1 2 3 4 5]
+doubled -> for item in nums do
     item * 2
 
 for x in doubled do
@@ -122,7 +122,7 @@ for x in doubled do
 
 ```gs
 // this is a comment
-let x = 10    // inline comment
+x -> 10    // inline comment
 ```
 
 ---
@@ -134,18 +134,18 @@ G# ships a built-in standard library. No import needed — all functions are alw
 #### array
 
 ```gs
-let nums = [1 2 3 4 5]
+nums -> [1 2 3 4 5]
 
 println array.head nums        // 1
 println array.last nums        // 5
 println array.len nums         // 5
 println array.empty nums       // False
 
-let rest     = array.tail nums            // [2 3 4 5]
-let reversed = array.reverse nums         // [5 4 3 2 1]
-let sorted   = array.sort [3 1 2]         // [1 2 3]
-let more     = [6 7 8]
-let all      = array.concat nums more     // [1 2 3 4 5 6 7 8]
+rest     -> array.tail nums            // [2 3 4 5]
+reversed -> array.reverse nums         // [5 4 3 2 1]
+sorted   -> array.sort [3 1 2]         // [1 2 3]
+more     -> [6 7 8]
+all      -> array.concat nums more     // [1 2 3 4 5 6 7 8]
 ```
 
 #### string
@@ -212,7 +212,7 @@ applyTwice f x => f(f(x))
 println apply double 5        // 10
 println applyTwice double 3   // 12
 
-let fn = double
+fn -> double
 println fn(10)                // 20
 ```
 
@@ -228,7 +228,7 @@ For multi-file programs, declare `main` as the entry point. Exactly one file mus
 add a b => a + b
 
 main
-    let result = add 10 20
+    result -> add 10 20
     println result
 ```
 
@@ -276,8 +276,8 @@ The server binary is `gsharp-lsp`.
 **Hover** — hover over any binding, literal, or function call to see its inferred type.
 
 ```
-let x = 42        →  int
-let d = 3.14d     →  double
+x -> 42           →  int
+d -> 3.14d        →  double
 add a b => a + b  →  (int → (int → int))
 ```
 
@@ -289,7 +289,7 @@ add a b => a + b  →  (int → (int → int))
 
 | Feature | Status |
 |---|---|
-| Immutable bindings (`let`) | ✅ |
+| Immutable bindings (`x -> value`) | ✅ |
 | Numeric types (int, float, double, decimal) | ✅ |
 | Strings | ✅ |
 | Booleans (`true`, `false`) | ✅ |
@@ -341,14 +341,14 @@ flowchart TD
         L1["IdentifierLexer — keywords and names"]
         L2["NumberLexer — int, float, double, decimal"]
         L3["StringLexer — string literals"]
-        L4["SymbolLexer — operators, arrow (=>)"]
+        L4["SymbolLexer — operators, arrows (-> and =>)"]
         L5["Indentation — BlockOpen / BlockClose tokens"]
     end
 
     T["List&lt;Token&gt;"]
 
     subgraph PARSER["PARSER"]
-        P1["LetParser — immutable bindings"]
+        P1["BindingParser — immutable bindings (x -> value)"]
         P2["IfParser — inline or block conditionals"]
         P3["ForParser — functional map over arrays"]
         P4["FunctionParser — named functions"]
@@ -374,7 +374,7 @@ flowchart TD
     subgraph CODEGEN["CODE GEN"]
         C1["ExpressionEmitter — typed IL (native int/double) or boxed object fallback"]
         C2["IfEmitter / ForEmitter — control flow via IL labels"]
-        C3["LetEmitter — typed local slots (int, double, etc.)"]
+        C3["BindingEmitter — typed local slots (int, double, etc.)"]
         C4["FunctionEmitter — two-pass (Define + Emit) with adapter methods; typed params"]
         C5["TailCallEmitter — self-tail-calls as Starg_S + Br (no new stack frame)"]
         C6["EmitContext — locals, params, functions, adapters, type map, param types"]
@@ -411,15 +411,15 @@ flowchart TD
 ```
 GSharp.Lexer/         — tokenizer (Lexer, sub-lexers, TokenType)
 GSharp.AST/           — immutable record types for all AST nodes
-  Expression.cs       — base + Literal, Identifier, Binary
+  Expression.cs       — base + Literal, Identifier, Binary, Binding
   Declarations.cs     — FunctionDeclaration, ImportDeclaration
   Calls.cs            — CallExpression, ModuleCallExpression
-  Statements.cs       — Let, Print, If, For
+  Statements.cs       — Print, If, For
 GSharp.Stdlib/        — standard library (no compiler dependency)
   GSharpFunction.cs   — first-class function runtime wrapper
   ArrayBuiltins.cs    — array.head, array.tail, array.sort, array.map, ...
   StringBuiltins.cs   — string.from, ...
-GSharp.Parser/        — recursive-descent parser (one class per statement type)
+GSharp.Parser/        — recursive-descent parser (one class per construct)
 GSharp.TypeChecker/   — Hindley-Milner type inference (partial classes)
   GsType.cs           — type hierarchy (IntType, FunctionType, TypeVar, ...)
   TypeInferrer.cs     — walks AST, assigns TypeVars, collects constraints
@@ -460,7 +460,7 @@ without requiring annotations. Type errors are caught before any IL is emitted.
 | `decimal` | `9.99m` |
 | `string` | `"hello"` |
 | `bool` | `true` |
-| `unit` | result of `println`, `for`, `let` |
+| `unit` | result of `println`, `for`, bindings |
 | `[int]` | `[1 2 3]` |
 | `(int → int)` | `double x => x * 2` |
 
@@ -471,12 +471,12 @@ it fails with an error and no code is generated.
 
 ```gs
 // int + string — caught at compile time
-let x = 10 + "hello"
+x -> 10 + "hello"
 // → type mismatch: expected 'int', got 'string'
 
 // if branches return different types
-let flag = true
-let result = if flag then 1 else "text"
+flag   -> true
+result -> if flag then 1 else "text"
 // → type mismatch: expected 'int', got 'string'
 ```
 
@@ -491,10 +491,10 @@ As sub-expressions are visited, _constraints_ are collected — equality require
 between types.
 
 ```
-let x = 10          →  x : IntType
-let y = x + 5       →  resultType = ?0
-                        constraints: [ IntType == IntType,  ?0 == IntType ]
-println y           →  UnitType
+x -> 10          →  x : IntType
+y -> x + 5       →  resultType = ?0
+                     constraints: [ IntType == IntType,  ?0 == IntType ]
+println y        →  UnitType
 ```
 
 **Phase 2 — Unification.** The `Unifier` solves all constraints using Robinson's
@@ -516,8 +516,8 @@ Any `?0` that was a placeholder becomes its resolved type. The result is a
 `Dictionary<Expression, GsType>` that maps every AST node to its final concrete type.
 
 ```
-BinaryExpression(x + 5)  →  was ?0,  now IntType
-LetExpression("y")        →  was ?0,  now IntType
+BinaryExpression(x + 5)    →  was ?0,  now IntType
+BindingExpression("y")     →  was ?0,  now IntType
 ```
 
 ### Typed code generation
@@ -526,11 +526,11 @@ The resolved type map is passed to the `Compiler`. The `ExpressionEmitter` uses 
 emit more efficient IL for expressions with known types.
 
 ```
-// let x = 10 — typed local, no heap allocation
+// x -> 10 — typed local, no heap allocation
 Ldc_I4   10       // push int32 literal
 Stloc    x        // store in int32 local slot  (no boxing)
 
-// let z = x + y — direct Add opcode, no RuntimeHelpers
+// z -> x + y — direct Add opcode, no RuntimeHelpers
 Ldloc    x        // push int32
 Ldloc    y        // push int32
 Add               // native integer add
@@ -557,14 +557,14 @@ recursive call. This prevents stack overflows for unbounded recursion.
 ```gs
 sum acc n
     if n == 0 then acc else
-        let a = acc + n
-        let b = n - 1
+        a -> acc + n
+        b -> n - 1
         sum a b     // ← tail call: reuses the current stack frame
 ```
 
 ```
 // instead of: call sum; ret
-Starg_S  1     // overwrite param n  with new value
+Starg_S  1     // overwrite param n   with new value
 Starg_S  0     // overwrite param acc with new value
 Br       start // jump back to top — no new stack frame
 ```

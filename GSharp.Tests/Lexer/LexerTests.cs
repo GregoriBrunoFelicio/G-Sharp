@@ -63,23 +63,23 @@ public class LexerTests
 
     public static IEnumerable<object[]> GetTokenizationSamples()
     {
-        yield return ["""let name = "greg" """];
-        yield return ["let age = 33"];
-        yield return ["let isTrue = true"];
+        yield return ["""name -> "greg" """];
+        yield return ["age -> 33"];
+        yield return ["isTrue -> true"];
         yield return ["println name"];
-        yield return ["let d = 10.13d"];
-        yield return ["let m = 10.24m"];
-        yield return ["let f = 10.87f"];
-        yield return ["let nums = [1 2 3]"];
-        yield return ["""let names = ["Greg" "Felicio"]"""];
-        yield return ["let flags = [true false true]"];
+        yield return ["d -> 10.13d"];
+        yield return ["m -> 10.24m"];
+        yield return ["f -> 10.87f"];
+        yield return ["nums -> [1 2 3]"];
+        yield return ["""names -> ["Greg" "Felicio"]"""];
+        yield return ["flags -> [true false true]"];
         yield return ["for item in nums do\n    println item"];
         yield return ["""if 1 == 1 then println "ok" """];
         yield return ["""if n != 10 then println "x" else println "y" """];
         yield return ["add a b => a + b"];
         yield return ["square x => x * x"];
         yield return ["import mymodule"];
-        yield return ["let empty = []"];
+        yield return ["empty -> []"];
         yield return ["""if isTrue and 1 == 1 then println "compound" """];
         yield return ["""if not isFalse then println "negated" """];
         yield return ["""if isTrue or isFalse then println "logic" """];

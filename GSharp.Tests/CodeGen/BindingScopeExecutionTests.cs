@@ -33,9 +33,9 @@ public class BindingScopeExecutionTests
     {
         var source =
             "identity n\n" +
-            "    let h = n\n" +
+            "    h -> n\n" +
             "    h\n" +
-            "let h = 7\n" +
+            "h -> 7\n" +
             "println identity 42\n" +
             "println h";
 

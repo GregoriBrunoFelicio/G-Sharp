@@ -15,7 +15,7 @@ public static partial class Validations
 
     private static readonly HashSet<string> ReservedKeywords =
     [
-        "let", "if", "else", "for", "return",
+        "if", "else", "for", "return",
         "true", "false", "null",
         "function", "print", "printf", "println",
         "in", "main", "import",

@@ -55,9 +55,6 @@ public class Parser(List<Token> tokens)
         if (Check(TokenType.Import))
             return new ImportParser(this).Parse();
 
-        if (Check(TokenType.Let))
-            return new LetParser(this).Parse();
-
         if (Check(TokenType.Println))
             return new PrintParser(this).Parse();
 
@@ -69,6 +66,9 @@ public class Parser(List<Token> tokens)
 
         if (Check(TokenType.Identifier))
         {
+            if (IsLetBinding())
+                return new BindingParser(this).Parse();
+
             if (IsFunctionDeclaration())
                 return new FunctionParser(this).Parse();
 
@@ -79,6 +79,19 @@ public class Parser(List<Token> tokens)
             return new ExpressionParser(this).Parse();
 
         throw new Exception($"{tokens[_current].Line}: unexpected '{tokens[_current].Value}'");
+    }
+
+    private bool IsLetBinding()
+    {
+        var saved = _current;
+        try
+        {
+            Advance();
+            while (Check(TokenType.Newline))
+                Advance();
+            return Check(TokenType.ThinArrow);
+        }
+        finally { _current = saved; }
     }
 
     private bool IsFunctionDeclaration()

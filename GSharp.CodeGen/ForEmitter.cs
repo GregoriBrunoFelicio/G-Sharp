@@ -3,25 +3,7 @@ using GSharp.AST;
 
 namespace GSharp.CodeGen;
 
-// Emits IL for 'for item in collection do' expressions.
-//
-// for is a functional map — it transforms each element and returns a new array.
-// The generated IL is equivalent to this C# pattern:
-//
-//   object[] array  = (object[]) <iterable>;
-//   object[] result = new object[array.Length];
-//   int index = 0;
-//   while (index < array.Length)
-//   {
-//       object item    = array[index];
-//       <body expressions except last — values discarded>
-//       result[index]  = <last body expression>;
-//       index++;
-//   }
-//   return result;
-//
-// The loop binding (e.g. 'item') is registered in context.Locals so that
-// expressions inside the body can reference it like any other binding.
+
 public static class ForEmitter
 {
     public static void Emit(ILGenerator il, ForExpression forExpression, EmitContext context)

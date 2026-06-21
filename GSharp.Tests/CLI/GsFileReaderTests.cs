@@ -7,11 +7,11 @@ public class GsFileReaderTests
     [Fact]
     public void Should_Read_Valid_Gs_File()
     {
-        var path = CreateTempFile("valid.gs", "let x: number = 10\r\nprintln x");
+        var path = CreateTempFile("valid.gs", "x -> 10\r\nprintln x");
 
         var content = GsFileReader.ReadSource(path);
 
-        content.Should().Be("let x: number = 10\nprintln x");
+        content.Should().Be("x -> 10\nprintln x");
     }
 
     [Fact]

@@ -34,10 +34,10 @@ public class TailCallOptimizationTests
             "    if n == 0 then\n" +
             "        acc\n" +
             "    else\n" +
-            "        let a = acc + n\n" +
-            "        let b = n - 1\n" +
+            "        a -> acc + n\n" +
+            "        b -> n - 1\n" +
             "        sum a b\n" +
-            "let result = sum 0 100\n" +
+            "result -> sum 0 100\n" +
             "println result";
 
         Run(source).Should().Be("5050");
@@ -52,10 +52,10 @@ public class TailCallOptimizationTests
             "    if n == 0 then\n" +
             "        acc\n" +
             "    else\n" +
-            "        let a = acc + n\n" +
-            "        let b = n - 1\n" +
+            "        a -> acc + n\n" +
+            "        b -> n - 1\n" +
             "        sum a b\n" +
-            "let result = sum 0 100000\n" +
+            "result -> sum 0 100000\n" +
             "println result";
 
         var act = () => Run(source);

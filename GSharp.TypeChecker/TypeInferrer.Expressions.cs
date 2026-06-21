@@ -74,10 +74,10 @@ public partial class TypeInferrer
         return resultType;
     }
 
-    private GsType InferLet(LetExpression let, TypeEnvironment environment)
+    private GsType InferBinding(BindingExpression binding, TypeEnvironment environment)
     {
-        var valueType = InferExpression(let.Value, environment);
-        environment.Register(let.BindingName, valueType);
+        var valueType = InferExpression(binding.Value, environment);
+        environment.Register(binding.BindingName, valueType);
         return new UnitType();
     }
 

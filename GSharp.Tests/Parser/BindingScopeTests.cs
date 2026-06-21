@@ -4,7 +4,7 @@ namespace G.Sharp.Compiler.Tests.Parser;
 
 // Bindings are scoped per function: a name declared inside a function never collides with the
 // same name at the top level or in another function. Redeclaring a name within the same scope
-// stays an error (let is immutable — no reassignment, no same-scope shadowing).
+// stays an error (bindings are immutable — no reassignment, no same-scope shadowing).
 public class BindingScopeTests
 {
     private static Action Parsing(string source) => () =>
@@ -18,9 +18,9 @@ public class BindingScopeTests
     {
         var source =
             "identity x\n" +
-            "    let h = x\n" +
+            "    h -> x\n" +
             "    h\n" +
-            "let h = 10";
+            "h -> 10";
 
         Parsing(source).Should().NotThrow();
     }
@@ -30,10 +30,10 @@ public class BindingScopeTests
     {
         var source =
             "first x\n" +
-            "    let h = x\n" +
+            "    h -> x\n" +
             "    h\n" +
             "second y\n" +
-            "    let h = y\n" +
+            "    h -> y\n" +
             "    h";
 
         Parsing(source).Should().NotThrow();
@@ -42,7 +42,7 @@ public class BindingScopeTests
     [Fact]
     public void Redeclaring_At_Top_Level_Throws()
     {
-        var source = "let x = 1\nlet x = 2";
+        var source = "x -> 1\nx -> 2";
 
         Parsing(source).Should().Throw<Exception>().WithMessage("*already declared*");
     }
@@ -52,8 +52,8 @@ public class BindingScopeTests
     {
         var source =
             "fn a\n" +
-            "    let x = a\n" +
-            "    let x = a";
+            "    x -> a\n" +
+            "    x -> a";
 
         Parsing(source).Should().Throw<Exception>().WithMessage("*already declared*");
     }
@@ -61,26 +61,26 @@ public class BindingScopeTests
     [Fact]
     public void Redeclaring_Across_Blocks_In_The_Same_Function_Throws()
     {
-        // `if`/`for` don't open a new scope — both `let x` land in the function scope.
+        // `if`/`for` don't open a new scope — both `x ->` land in the function scope.
         var source =
             "fn a\n" +
             "    if a > 0 then\n" +
-            "        let x = a\n" +
+            "        x -> a\n" +
             "        x\n" +
             "    else\n" +
             "        a\n" +
-            "    let x = a\n" +
+            "    x -> a\n" +
             "    x";
 
         Parsing(source).Should().Throw<Exception>().WithMessage("*already declared*");
     }
 
     [Fact]
-    public void A_Let_Shadowing_A_Parameter_Throws()
+    public void A_Binding_Shadowing_A_Parameter_Throws()
     {
         var source =
             "fn x\n" +
-            "    let x = 1\n" +
+            "    x -> 1\n" +
             "    x";
 
         Parsing(source).Should().Throw<Exception>().WithMessage("*already declared*");

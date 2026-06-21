@@ -20,16 +20,13 @@ public class Compiler
         var assemblyName = new AssemblyName("GSharpRuntimeAssembly");
         var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
             assemblyName, AssemblyBuilderAccess.Run);
-
         var moduleBuilder = assemblyBuilder.DefineDynamicModule("MainModule");
         var typeBuilder = moduleBuilder.DefineType("Program", TypeAttributes.Public);
-
         var methodBuilder = typeBuilder.DefineMethod(
             "Main",
             MethodAttributes.Public | MethodAttributes.Static,
             typeof(void),
             Type.EmptyTypes);
-
         return (methodBuilder, typeBuilder);
     }
 

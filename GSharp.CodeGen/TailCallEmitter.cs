@@ -4,22 +4,8 @@ using GSharp.CodeGen.Helpers;
 
 namespace GSharp.CodeGen;
 
-// Emits tail-call-optimized IL for self-recursive functions.
-//
-// When the last expression of a function body is a call to the same function
-// with all arguments, instead of emitting a new stack frame (call + ret),
-// we overwrite the parameter slots and jump back to the function start.
-//
-// This converts unbounded recursion into a loop, preventing stack overflows.
-//
-// Only direct self-recursion is handled — mutual recursion (f calls g calls f)
-// is not covered here.
 public static class TailCallEmitter
 {
-    // Emits an expression in tail position.
-    // Self-tail-calls emit TCO (starg + br) and do not leave a value on the stack.
-    // if/else propagates tail mode into each branch.
-    // Everything else falls back to EmitToStack — leaves a value on the stack.
     public static void EmitTail(ILGenerator il, Expression expression, EmitContext context)
     {
         if (context.TailCall is { } tco)
@@ -44,9 +30,6 @@ public static class TailCallEmitter
         if (call.Callee != tco.FunctionName) return false;
         if (call.Arguments.Count != tco.ParameterCount) return false;
 
-        // Push all new argument values before overwriting any parameter slot.
-        // This ensures expressions that read parameters see the original values.
-        // Types must match the parameter slot types — Starg_S rejects object into int.
         var paramTypes = context.FunctionParamTypes.GetValueOrDefault(tco.FunctionName);
         for (var i = 0; i < call.Arguments.Count; i++)
         {
@@ -54,7 +37,6 @@ public static class TailCallEmitter
             ExpressionEmitter.EmitArgAs(il, call.Arguments[i], expected, context);
         }
 
-        // Store in reverse order — top of stack is the last argument.
         for (var i = tco.ParameterCount - 1; i >= 0; i--)
             il.Emit(OpCodes.Starg_S, (byte)i);
 

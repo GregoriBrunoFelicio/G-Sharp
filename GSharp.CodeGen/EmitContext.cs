@@ -18,8 +18,7 @@ public class EmitContext(
     public readonly Dictionary<string, MethodBuilder> Functions = functions;
     public readonly Dictionary<string, MethodBuilder> FunctionAdapters = functionAdapters;
     public readonly Dictionary<string, MethodInfo> Builtins = new();
-    // Shared across parent and all child contexts so call sites and TCO can resolve typed param slots.
-    public readonly Dictionary<string, Type[]> FunctionParamTypes = functionParamTypes ?? new();
+    public readonly Dictionary<string, Type[]> FunctionParamTypes = functionParamTypes ?? new Dictionary<string, Type[]>();
     public readonly Dictionary<Expression, GsType> TypeMap =
         typeMap ?? new Dictionary<Expression, GsType>(ReferenceEqualityComparer.Instance);
 

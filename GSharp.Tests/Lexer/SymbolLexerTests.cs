@@ -6,6 +6,7 @@ namespace G.Sharp.Compiler.Tests.Lexer;
 public class SymbolLexerTests
 {
     [Theory]
+    [InlineData("->", TokenType.ThinArrow)]
     [InlineData(">=", TokenType.GreaterThanOrEqual)]
     [InlineData("<=", TokenType.LessThanOrEqual)]
     [InlineData("==", TokenType.EqualEqual)]
@@ -22,7 +23,6 @@ public class SymbolLexerTests
     [Theory]
     [InlineData(">", TokenType.GreaterThan)]
     [InlineData("<", TokenType.LessThan)]
-    [InlineData("=", TokenType.Equals)]
     [InlineData("+", TokenType.Plus)]
     [InlineData("-", TokenType.Minus)]
     [InlineData("*", TokenType.Multiply)]

@@ -4,7 +4,8 @@ public static class SymbolTokenMap
 {
     public static readonly Dictionary<char, TokenType> Symbols = new()
     {
-        // Separators
+        // '=' must be gated here so SymbolLexer is called for '==' and '=>'.
+        // A bare '=' still produces Equals, which the parser will reject.
         { '=', TokenType.Equals },
 
         // Parentheses

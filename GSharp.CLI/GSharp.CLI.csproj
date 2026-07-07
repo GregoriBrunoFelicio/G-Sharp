@@ -13,10 +13,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\GSharp.CodeGen\GSharp.CodeGen.csproj" />
-      <ProjectReference Include="..\GSharp.Lexer\GSharp.Lexer.csproj" />
-      <ProjectReference Include="..\GSharp.Parser\GSharp.Parser.csproj" />
-      <ProjectReference Include="..\GSharp.TypeChecker\GSharp.TypeChecker.csproj" />
+      <ProjectReference Include="..\GSharp.Compiler\GSharp.Compiler.csproj" />
     </ItemGroup>
 
     <ItemGroup>

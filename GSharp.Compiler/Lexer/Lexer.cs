@@ -118,18 +118,151 @@ public class Lexer
     private Token ReadNextToken()
     {
         if (Current.IsLetter())
-            return IdentifierLexer.Read(this);
+            return ReadIdentifier();
 
         if (Current.IsNumber())
-            return NumberLexer.Read(this);
+            return ReadNumber();
 
         if (Current.IsOnlyQuotes())
-            return StringLexer.Read(this);
+            return ReadString();
 
         if (Symbols.ContainsKey(Current))
-            return SymbolLexer.Read(this);
+            return ReadSymbol();
 
         throw new Exception($"{Line}: unexpected '{Current}'");
+    }
+
+    private static readonly Dictionary<string, TokenType> KeywordTokenMap = new()
+    {
+        // Booleans
+        ["true"] = TokenType.BooleanTrueLiteral,
+        ["false"] = TokenType.BooleanFalseLiteral,
+
+        // Conditionals
+        ["if"] = TokenType.If,
+        ["else"] = TokenType.Else,
+
+        // Loops
+        ["for"] = TokenType.For,
+        ["in"] = TokenType.In,
+        ["do"] = TokenType.Do,
+        ["then"] = TokenType.Then,
+
+        // IO
+        ["println"] = TokenType.Println,
+
+        // Logical operators
+        ["and"] = TokenType.And,
+        ["or"] = TokenType.Or,
+        ["not"] = TokenType.Not,
+
+        // Functions
+        ["function"] = TokenType.Function,
+
+        // Imports
+        ["import"] = TokenType.Import,
+        ["as"] = TokenType.As
+    };
+
+    public Token ReadIdentifier()
+    {
+        var line = Line;
+        var col  = Column;
+        var start = Position;
+
+        AdvanceWhile(char.IsLetterOrDigit);
+
+        var value = Code[start..Position];
+        var tokenType = KeywordTokenMap.GetValueOrDefault(value, TokenType.Identifier);
+
+        return new Token(tokenType, value, line, col);
+    }
+
+    private static readonly HashSet<char> NumberSuffixes = ['f', 'F', 'd', 'D', 'm', 'M'];
+
+    public Token ReadNumber()
+    {
+        var line  = Line;
+        var col   = Column;
+        var start = Position;
+
+        AdvanceWhile(char.IsDigit);
+        ReadDecimalIfExists();
+
+        var number = Code[start..Position];
+        return new Token(TokenType.NumberLiteral, number, line, col);
+    }
+
+    private void ReadDecimalIfExists()
+    {
+        if (IsAtEnd() || Current != '.') return;
+        Advance();
+        AdvanceWhile(char.IsDigit);
+
+        ReadNumberSuffix();
+    }
+
+    private void ReadNumberSuffix()
+    {
+        if (IsAtEnd() || !NumberSuffixes.Contains(Current)) return;
+        Advance();
+    }
+
+    public Token ReadString()
+    {
+        var line = Line;
+        var col  = Column;
+
+        Advance(); // skip opening "
+
+        var start = Position;
+        AdvanceWhile(c => c != '"');
+
+        if (IsAtEnd())
+            throw new Exception($"{line}: unterminated string literal");
+
+        var word = Code[start..Position];
+        Advance(); // skip closing "
+
+        return new Token(TokenType.StringLiteral, word, line, col);
+    }
+
+    public Token ReadSymbol()
+    {
+        var line    = Line;
+        var col     = Column;
+        var current = Current;
+        var next    = Next();
+
+        switch (current)
+        {
+            case '-' when next == '>':
+                Advance(); Advance();
+                return new Token(TokenType.ThinArrow, "->", line, col);
+            case '=' when next == '>':
+                Advance(); Advance();
+                return new Token(TokenType.Arrow, "=>", line, col);
+            case '>' when next == '=':
+                Advance(); Advance();
+                return new Token(TokenType.GreaterThanOrEqual, ">=", line, col);
+            case '<' when next == '=':
+                Advance(); Advance();
+                return new Token(TokenType.LessThanOrEqual, "<=", line, col);
+            case '=' when next == '=':
+                Advance(); Advance();
+                return new Token(TokenType.EqualEqual, "==", line, col);
+            case '!' when next == '=':
+                Advance(); Advance();
+                return new Token(TokenType.NotEqual, "!=", line, col);
+        }
+
+        if (Symbols.TryGetValue(current, out var tokenType))
+        {
+            Advance();
+            return new Token(tokenType, current.ToString(), line, col);
+        }
+
+        throw new Exception($"{line}: unexpected '{current}'");
     }
 
     public void Advance()

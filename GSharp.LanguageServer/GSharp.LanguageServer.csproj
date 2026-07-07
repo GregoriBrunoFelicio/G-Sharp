@@ -16,10 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GSharp.AST\GSharp.AST.csproj" />
-    <ProjectReference Include="..\GSharp.Lexer\GSharp.Lexer.csproj" />
-    <ProjectReference Include="..\GSharp.Parser\GSharp.Parser.csproj" />
-    <ProjectReference Include="..\GSharp.TypeChecker\GSharp.TypeChecker.csproj" />
+    <ProjectReference Include="..\GSharp.Compiler\GSharp.Compiler.csproj" />
   </ItemGroup>
 
 </Project>

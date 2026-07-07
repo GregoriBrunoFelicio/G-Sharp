@@ -28,6 +28,7 @@ public static class ExpressionEmitter
     private static readonly MethodInfo SubtractMethod           = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Subtract))!;
     private static readonly MethodInfo MultiplyMethod           = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Multiply))!;
     private static readonly MethodInfo DivideMethod             = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Divide))!;
+    private static readonly MethodInfo IsTrueMethod             = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsTrue))!;
 
     private static readonly ConstructorInfo DecimalCtor = typeof(decimal).GetConstructor([
         typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)
@@ -69,7 +70,7 @@ public static class ExpressionEmitter
                 EmitCall(il, call, context);
                 if (context.TypeMap.TryGetValue(call, out var callGsType))
                 {
-                    var returnClrType = FunctionEmitter.GsTypeToClr(callGsType);
+                    var returnClrType = GsTypeToClr(callGsType);
                     if (returnClrType != typeof(object))
                     {
                         il.Emit(OpCodes.Unbox_Any, returnClrType);
@@ -82,7 +83,7 @@ public static class ExpressionEmitter
                 EmitModuleCall(il, moduleCall, context);
                 if (context.TypeMap.TryGetValue(moduleCall, out var mcGsType))
                 {
-                    var mcClrType = FunctionEmitter.GsTypeToClr(mcGsType);
+                    var mcClrType = GsTypeToClr(mcGsType);
                     if (mcClrType != typeof(object))
                     {
                         il.Emit(OpCodes.Unbox_Any, mcClrType);
@@ -95,19 +96,19 @@ public static class ExpressionEmitter
                 return EmitBinary(il, binary, context);
 
             case BindingExpression binding:
-                BindingEmitter.Emit(il, binding, context);
+                EmitBindingDeclaration(il, binding, context);
                 return typeof(object);
 
             case PrintExpression printExpression:
-                PrintEmitter.Emit(il, printExpression, context);
+                EmitPrint(il, printExpression, context);
                 return typeof(object);
 
             case ForExpression forExpression:
-                ForEmitter.Emit(il, forExpression, context);
+                EmitFor(il, forExpression, context);
                 return typeof(object[]);
 
             case IfExpression ifExpression:
-                IfEmitter.EmitToStack(il, ifExpression, context);
+                EmitIf(il, ifExpression, context);
                 return typeof(object);
 
             case FunctionDeclaration:
@@ -153,7 +154,7 @@ public static class ExpressionEmitter
                 return typeof(decimal);
 
             case object[] elements:
-                ArrayEmitter.EmitToStack(il, elements);
+                EmitArrayToStack(il, elements);
                 return typeof(object[]);
 
             default:
@@ -212,6 +213,15 @@ public static class ExpressionEmitter
         }
 
         throw new Exception($"Undefined binding: '{binding.Name}'");
+    }
+
+    private static void EmitBindingDeclaration(ILGenerator il, BindingExpression binding, EmitContext context)
+    {
+        var clrType = Emit(il, binding.Value, context);
+        var local = il.DeclareLocal(clrType);
+        il.Emit(OpCodes.Stloc, local);
+        context.Locals[binding.BindingName] = local;
+        il.Emit(OpCodes.Ldnull);
     }
 
     // -------------------------------------------------------------------------
@@ -298,9 +308,9 @@ public static class ExpressionEmitter
                                      || (context.Parameters.TryGetValue(id.Name, out var param) && param.ClrType.IsValueType),
         BinaryExpression nested      => TryGetNativeArithmeticType(nested, context) is not null,
         CallExpression call          => context.TypeMap.TryGetValue(call, out var t)
-                                     && FunctionEmitter.GsTypeToClr(t) != typeof(object),
+                                     && GsTypeToClr(t) != typeof(object),
         ModuleCallExpression mc      => context.TypeMap.TryGetValue(mc, out var t)
-                                     && FunctionEmitter.GsTypeToClr(t) != typeof(object),
+                                     && GsTypeToClr(t) != typeof(object),
         _ => false
     };
 
@@ -431,4 +441,431 @@ public static class ExpressionEmitter
             il.Emit(OpCodes.Callvirt, GsFunctionCallMethod);
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Array literal emission
+    // -------------------------------------------------------------------------
+
+    private static void EmitArrayToStack(ILGenerator il, object[] array)
+    {
+        il.Emit(OpCodes.Ldc_I4, array.Length);
+        il.Emit(OpCodes.Newarr, typeof(object));
+        for (var i = 0; i < array.Length; i++)
+        {
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldc_I4, i);
+            EmitArrayElement(il, array[i]);
+            il.Emit(OpCodes.Stelem_Ref);
+        }
+    }
+
+    private static void EmitArrayElement(ILGenerator il, object value)
+    {
+        switch (value)
+        {
+            case int intValue:
+                il.Emit(OpCodes.Ldc_I4, intValue);
+                il.Emit(OpCodes.Box, typeof(int));
+                break;
+            case double doubleValue:
+                il.Emit(OpCodes.Ldc_R8, doubleValue);
+                il.Emit(OpCodes.Box, typeof(double));
+                break;
+            case bool boolValue:
+                il.Emit(boolValue ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+                il.Emit(OpCodes.Box, typeof(bool));
+                break;
+            case string text:
+                il.Emit(OpCodes.Ldstr, text);
+                break;
+            default:
+                throw new NotSupportedException(
+                    $"internal error: no emitter for array element type '{value?.GetType().Name ?? "null"}'");
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // If emission
+    // -------------------------------------------------------------------------
+
+    private static void EmitIf(ILGenerator il, IfExpression ifExpression, EmitContext context)
+    {
+        var elseLabel = il.DefineLabel();
+        var endLabel  = il.DefineLabel();
+
+        var condType = Emit(il, ifExpression.Condition, context);
+        if (condType == typeof(bool))
+            il.Emit(OpCodes.Brfalse, elseLabel);
+        else
+        {
+            il.Emit(OpCodes.Call, IsTrueMethod);
+            il.Emit(OpCodes.Brfalse, elseLabel);
+        }
+
+        EmitIfBody(il, ifExpression.ThenBody, context);
+
+        il.Emit(OpCodes.Br, endLabel);
+
+        il.MarkLabel(elseLabel);
+
+        if (ifExpression.ElseBody is { Count: > 0 })
+            EmitIfBody(il, ifExpression.ElseBody, context);
+        else
+            il.Emit(OpCodes.Ldnull);
+        il.MarkLabel(endLabel);
+    }
+
+    private static void EmitIfBody(ILGenerator il, List<Expression> body, EmitContext context)
+    {
+        if (body.Count == 0) { il.Emit(OpCodes.Ldnull); return; }
+
+        foreach (var expr in body.SkipLast(1))
+        {
+            EmitToStack(il, expr, context);
+            il.Emit(OpCodes.Pop);
+        }
+
+        EmitToStack(il, body[^1], context);
+    }
+
+    // -------------------------------------------------------------------------
+    // For loop emission
+    // -------------------------------------------------------------------------
+
+    private static void EmitFor(ILGenerator il, ForExpression forExpression, EmitContext context)
+    {
+        EmitToStack(il, forExpression.Iterable, context);
+        il.Emit(OpCodes.Castclass, typeof(object[]));
+        var arrayLocal = il.DeclareLocal(typeof(object[]));
+        il.Emit(OpCodes.Stloc, arrayLocal);
+
+        il.Emit(OpCodes.Ldloc, arrayLocal);
+        il.Emit(OpCodes.Ldlen);
+        il.Emit(OpCodes.Conv_I4);
+        il.Emit(OpCodes.Newarr, typeof(object));
+        var resultLocal = il.DeclareLocal(typeof(object[]));
+        il.Emit(OpCodes.Stloc, resultLocal);
+
+        var indexLocal = il.DeclareLocal(typeof(int));
+        il.Emit(OpCodes.Ldc_I4_0);
+        il.Emit(OpCodes.Stloc, indexLocal);
+
+        var loopStart = il.DefineLabel();
+        var loopEnd   = il.DefineLabel();
+
+        il.MarkLabel(loopStart);
+
+        il.Emit(OpCodes.Ldloc, indexLocal);
+        il.Emit(OpCodes.Ldloc, arrayLocal);
+        il.Emit(OpCodes.Ldlen);
+        il.Emit(OpCodes.Conv_I4);
+        il.Emit(OpCodes.Bge, loopEnd);
+
+        il.Emit(OpCodes.Ldloc, arrayLocal);
+        il.Emit(OpCodes.Ldloc, indexLocal);
+        il.Emit(OpCodes.Ldelem_Ref);
+
+        var elementClrType = ResolveForElementClrType(forExpression, context);
+        if (elementClrType != typeof(object))
+            il.Emit(OpCodes.Unbox_Any, elementClrType);
+
+        var loopVar = il.DeclareLocal(elementClrType);
+        il.Emit(OpCodes.Stloc, loopVar);
+        context.Locals[forExpression.BindingName] = loopVar;
+
+        for (var i = 0; i < forExpression.Body.Count - 1; i++)
+        {
+            EmitToStack(il, forExpression.Body[i], context);
+            il.Emit(OpCodes.Pop);
+        }
+
+        il.Emit(OpCodes.Ldloc, resultLocal);
+        il.Emit(OpCodes.Ldloc, indexLocal);
+        EmitToStack(il, forExpression.Body[^1], context);
+        il.Emit(OpCodes.Stelem_Ref);
+
+        il.Emit(OpCodes.Ldloc, indexLocal);
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Stloc, indexLocal);
+        il.Emit(OpCodes.Br, loopStart);
+
+        il.MarkLabel(loopEnd);
+
+        il.Emit(OpCodes.Ldloc, resultLocal);
+    }
+
+    private static Type ResolveForElementClrType(ForExpression forExpression, EmitContext context)
+    {
+        if (!context.TypeMap.TryGetValue(forExpression.Iterable, out var gsType))
+            return typeof(object);
+
+        return gsType is ArrayType arrayType
+            ? GsTypeToClr(arrayType.ElementType)
+            : typeof(object);
+    }
+
+    // -------------------------------------------------------------------------
+    // Print emission
+    // -------------------------------------------------------------------------
+
+    private static void EmitPrint(ILGenerator il, PrintExpression printExpression, EmitContext context)
+    {
+        EmitToStack(il, printExpression.Value, context);
+        var method = typeof(Console)
+            .GetMethod("WriteLine", [typeof(object)])!;
+        il.Emit(OpCodes.Call, method);
+        il.Emit(OpCodes.Ldnull);
+    }
+
+    // -------------------------------------------------------------------------
+    // Tail call emission
+    // -------------------------------------------------------------------------
+
+    internal static void EmitTail(ILGenerator il, Expression expression, EmitContext context)
+    {
+        if (context.TailCall is { } tco)
+        {
+            if (TryEmitTailCall(il, expression, tco, context))
+                return;
+
+            if (expression is IfExpression ifExpression)
+            {
+                EmitTailIf(il, ifExpression, context);
+                return;
+            }
+        }
+
+        EmitToStack(il, expression, context);
+    }
+
+    private static bool TryEmitTailCall(
+        ILGenerator il, Expression expression, TailCallInfo tco, EmitContext context)
+    {
+        if (expression is not CallExpression call) return false;
+        if (call.Callee != tco.FunctionName) return false;
+        if (call.Arguments.Count != tco.ParameterCount) return false;
+
+        var paramTypes = context.FunctionParamTypes.GetValueOrDefault(tco.FunctionName);
+        for (var i = 0; i < call.Arguments.Count; i++)
+        {
+            var expected = paramTypes is not null && i < paramTypes.Length ? paramTypes[i] : typeof(object);
+            EmitArgAs(il, call.Arguments[i], expected, context);
+        }
+
+        for (var i = tco.ParameterCount - 1; i >= 0; i--)
+            il.Emit(OpCodes.Starg_S, (byte)i);
+
+        il.Emit(OpCodes.Br, tco.StartLabel);
+        return true;
+    }
+
+    private static void EmitTailIf(ILGenerator il, IfExpression ifExpression, EmitContext context)
+    {
+        var elseLabel = il.DefineLabel();
+        var endLabel  = il.DefineLabel();
+
+        var condType = Emit(il, ifExpression.Condition, context);
+        if (condType == typeof(bool))
+            il.Emit(OpCodes.Brfalse, elseLabel);
+        else
+        {
+            il.Emit(OpCodes.Call, IsTrueMethod);
+            il.Emit(OpCodes.Brfalse, elseLabel);
+        }
+
+        EmitTailBody(il, ifExpression.ThenBody, context);
+        il.Emit(OpCodes.Br, endLabel);
+
+        il.MarkLabel(elseLabel);
+        if (ifExpression.ElseBody is { Count: > 0 })
+            EmitTailBody(il, ifExpression.ElseBody, context);
+        else
+            il.Emit(OpCodes.Ldnull);
+
+        il.MarkLabel(endLabel);
+    }
+
+    private static void EmitTailBody(ILGenerator il, List<Expression> body, EmitContext context)
+    {
+        for (var i = 0; i < body.Count - 1; i++)
+        {
+            EmitToStack(il, body[i], context);
+            il.Emit(OpCodes.Pop);
+        }
+
+        if (body.Count > 0)
+            EmitTail(il, body[^1], context);
+        else
+            il.Emit(OpCodes.Ldnull);
+    }
+
+    // -------------------------------------------------------------------------
+    // Function definition & emission — two-pass: Define registers every
+    // MethodBuilder up front (so forward calls/recursion resolve), Emit fills
+    // in the bodies afterward.
+    // -------------------------------------------------------------------------
+
+    internal static void DefineFunction(
+        TypeBuilder typeBuilder,
+        FunctionDeclaration fn,
+        Dictionary<string, MethodBuilder> functions,
+        Dictionary<string, MethodBuilder> adapters,
+        Dictionary<Expression, GsType>? typeMap = null,
+        string prefix = "",
+        Dictionary<string, Type[]>? functionParamTypes = null,
+        Dictionary<string, MethodBuilder>? adapters1 = null,
+        Dictionary<string, FieldBuilder>? functionFields = null)
+    {
+        var qualifiedName = prefix + fn.Name;
+        var paramTypes = ResolveParameterClrTypes(fn, typeMap);
+
+        var method = typeBuilder.DefineMethod(
+            qualifiedName,
+            MethodAttributes.Public | MethodAttributes.Static,
+            typeof(object),
+            paramTypes);
+
+        functions[qualifiedName] = method;
+        functionParamTypes?[qualifiedName] = paramTypes;
+
+        var adapter = typeBuilder.DefineMethod(
+            qualifiedName + "__adapter",
+            MethodAttributes.Public | MethodAttributes.Static,
+            typeof(object),
+            [typeof(object[])]);
+
+        adapters[qualifiedName] = adapter;
+
+        // Arity-1 adapter: single object parameter, no array allocation at call sites.
+        if (fn.Parameters.Count == 1 && adapters1 is not null)
+        {
+            var adapter1 = typeBuilder.DefineMethod(
+                qualifiedName + "__adapter1",
+                MethodAttributes.Public | MethodAttributes.Static,
+                typeof(object),
+                [typeof(object)]);
+            adapters1[qualifiedName] = adapter1;
+        }
+
+        if (functionFields is not null)
+        {
+            var field = typeBuilder.DefineField(
+                "__fn_" + qualifiedName,
+                typeof(GSharpFunction),
+                FieldAttributes.Public | FieldAttributes.Static);
+            functionFields[qualifiedName] = field;
+        }
+    }
+
+    internal static void EmitFunction(FunctionDeclaration fn, EmitContext context, string prefix = "")
+    {
+        EmitFunctionMainBody(fn, context, prefix);
+        EmitFunctionAdapter(fn, context, prefix);
+
+        var qualifiedName = prefix + fn.Name;
+        if (context.FunctionAdapters1.ContainsKey(qualifiedName))
+            EmitFunctionAdapter1(fn, context, prefix);
+    }
+
+    private static void EmitFunctionMainBody(FunctionDeclaration fn, EmitContext context, string prefix)
+    {
+        var qualifiedName = prefix + fn.Name;
+        var method = context.Functions[qualifiedName];
+        var il = method.GetILGenerator();
+
+        var functionContext = new EmitContext(
+            context.Functions,
+            context.FunctionAdapters,
+            context.TypeMap,
+            context.FunctionParamTypes,
+            context.FunctionAdapters1,
+            context.FunctionFields);
+        foreach (var (builtinName, builtinMethod) in context.Builtins)
+            functionContext.Builtins[builtinName] = builtinMethod;
+
+        var paramClrTypes = ResolveParameterClrTypes(fn, context.TypeMap);
+        for (var i = 0; i < fn.Parameters.Count; i++)
+            functionContext.Parameters[fn.Parameters[i]] = (i, paramClrTypes[i]);
+
+        var startLabel = il.DefineLabel();
+        il.MarkLabel(startLabel);
+        functionContext.TailCall = new TailCallInfo(qualifiedName, fn.Parameters.Count, startLabel);
+
+        var body = fn.Body;
+
+        for (var i = 0; i < body.Count - 1; i++)
+        {
+            EmitToStack(il, body[i], functionContext);
+            il.Emit(OpCodes.Pop);
+        }
+
+        if (body.Count > 0)
+            EmitTail(il, body[^1], functionContext);
+        else
+            il.Emit(OpCodes.Ldnull);
+
+        il.Emit(OpCodes.Ret);
+    }
+
+    private static void EmitFunctionAdapter(FunctionDeclaration fn, EmitContext context, string prefix)
+    {
+        var qualifiedName = prefix + fn.Name;
+        var adapter = context.FunctionAdapters[qualifiedName];
+        var il = adapter.GetILGenerator();
+
+        var paramClrTypes = ResolveParameterClrTypes(fn, context.TypeMap);
+        for (var i = 0; i < fn.Parameters.Count; i++)
+        {
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4, i);
+            il.Emit(OpCodes.Ldelem_Ref);
+            if (paramClrTypes[i].IsValueType)
+                il.Emit(OpCodes.Unbox_Any, paramClrTypes[i]);
+        }
+
+        il.Emit(OpCodes.Call, context.Functions[qualifiedName]);
+        il.Emit(OpCodes.Ret);
+    }
+
+    // Single-object adapter for arity-1 functions: avoids array unpacking.
+    private static void EmitFunctionAdapter1(FunctionDeclaration fn, EmitContext context, string prefix)
+    {
+        var qualifiedName = prefix + fn.Name;
+        var adapter1 = context.FunctionAdapters1[qualifiedName];
+        var il = adapter1.GetILGenerator();
+
+        var paramClrTypes = ResolveParameterClrTypes(fn, context.TypeMap);
+        il.Emit(OpCodes.Ldarg_0);
+        if (paramClrTypes[0].IsValueType)
+            il.Emit(OpCodes.Unbox_Any, paramClrTypes[0]);
+
+        il.Emit(OpCodes.Call, context.Functions[qualifiedName]);
+        il.Emit(OpCodes.Ret);
+    }
+
+    private static Type[] ResolveParameterClrTypes(FunctionDeclaration fn, Dictionary<Expression, GsType>? typeMap)
+    {
+        if (typeMap is null || !typeMap.TryGetValue(fn, out var fnType))
+            return Enumerable.Repeat(typeof(object), fn.Parameters.Count).ToArray();
+
+        var clrTypes = new Type[fn.Parameters.Count];
+        var currentType = fnType;
+        for (var i = 0; i < fn.Parameters.Count; i++)
+        {
+            clrTypes[i] = currentType is FunctionType ft ? GsTypeToClr(ft.ParameterType) : typeof(object);
+            currentType = currentType is FunctionType ft2 ? ft2.ReturnType : currentType;
+        }
+        return clrTypes;
+    }
+
+    internal static Type GsTypeToClr(GsType type) => type switch
+    {
+        IntType     => typeof(int),
+        FloatType   => typeof(float),
+        DoubleType  => typeof(double),
+        DecimalType => typeof(decimal),
+        BoolType    => typeof(bool),
+        _           => typeof(object)
+    };
 }

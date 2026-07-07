@@ -85,12 +85,12 @@ public class Compiler
 
             foreach (var (moduleName, moduleExprs) in modules ?? [])
                 foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
-                    FunctionEmitter.Define(typeBuilder, fn, functions, adapters, typeMap,
+                    ExpressionEmitter.DefineFunction(typeBuilder, fn, functions, adapters, typeMap,
                         prefix: moduleName + ".", functionParamTypes: functionParamTypes,
                         adapters1: adapters1, functionFields: functionFields);
 
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
-                FunctionEmitter.Define(typeBuilder, fn, functions, adapters, typeMap,
+                ExpressionEmitter.DefineFunction(typeBuilder, fn, functions, adapters, typeMap,
                     functionParamTypes: functionParamTypes,
                     adapters1: adapters1, functionFields: functionFields);
 
@@ -102,10 +102,10 @@ public class Compiler
 
             foreach (var (moduleName, moduleExprs) in modules ?? [])
                 foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
-                    FunctionEmitter.Emit(fn, context, prefix: moduleName + ".");
+                    ExpressionEmitter.EmitFunction(fn, context, prefix: moduleName + ".");
 
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
-                FunctionEmitter.Emit(fn, context);
+                ExpressionEmitter.EmitFunction(fn, context);
 
             var il = methodBuilder.GetILGenerator();
 

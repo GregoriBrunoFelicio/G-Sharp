@@ -14,7 +14,7 @@ public class SymbolLexerTests
     public void Should_Recognize_Composite_Symbols(string code, TokenType expected)
     {
         var lexer = new GSharp.Lexer.Lexer(code);
-        var token = SymbolLexer.Read(lexer);
+        var token = lexer.ReadSymbol();
 
         token.Type.Should().Be(expected);
         token.Value.Should().Be(code);
@@ -30,7 +30,7 @@ public class SymbolLexerTests
     public void Should_Recognize_Single_Symbols(string code, TokenType expected)
     {
         var lexer = new GSharp.Lexer.Lexer(code);
-        var token = SymbolLexer.Read(lexer);
+        var token = lexer.ReadSymbol();
 
         token.Type.Should().Be(expected);
         token.Value.Should().Be(code);
@@ -41,7 +41,7 @@ public class SymbolLexerTests
     {
         var lexer = new GSharp.Lexer.Lexer("@");
 
-        var act = () => SymbolLexer.Read(lexer);
+        var act = () => lexer.ReadSymbol();
 
         act.Should().Throw<Exception>()
             .WithMessage("1: unexpected '@'");

@@ -1,11 +1,18 @@
-using GSharp.AST;
-using GSharp.Lexer;
-using static GSharp.Parser.Validations;
+using GSharp.Compiler.AST;
+using GSharp.Compiler.Lexer;
+using static GSharp.Compiler.Parser.Validations;
 
-namespace GSharp.Parser;
+namespace GSharp.Compiler.Parser;
 
 public class Parser(List<Token> tokens)
 {
+    private static readonly HashSet<TokenType> AtomStartTokens =
+    [
+        TokenType.Identifier,
+        TokenType.LeftParen,
+        TokenType.LeftBracket
+    ];
+
     /*Scopes used to detect duplicate declarations.
     Top-level is the initial scope; each function body gets its own scope.
     `if`/`for` do not create scopes, since locals are stored per function.*/
@@ -91,7 +98,10 @@ public class Parser(List<Token> tokens)
                 Advance();
             return Check(TokenType.ThinArrow);
         }
-        finally { _current = saved; }
+        finally
+        {
+            _current = saved;
+        }
     }
 
     private bool IsFunctionDeclaration()
@@ -234,7 +244,10 @@ public class Parser(List<Token> tokens)
         return expressions;
     }
 
-    private List<Expression> ParseIfInlineBody() => [ParseNext()];
+    private List<Expression> ParseIfInlineBody()
+    {
+        return [ParseNext()];
+    }
 
     private BindingExpression ParseBinding()
     {
@@ -267,7 +280,7 @@ public class Parser(List<Token> tokens)
     private FunctionDeclaration ParseFunction()
     {
         var nameToken = Identifier();
-        var name      = nameToken.Value;
+        var name = nameToken.Value;
 
         var parameters = new List<string>();
         while (Check(TokenType.Identifier))
@@ -317,6 +330,7 @@ public class Parser(List<Token> tokens)
             if (Match(TokenType.Newline)) continue;
             expressions.Add(ParseNext());
         }
+
         return expressions;
     }
 
@@ -403,7 +417,7 @@ public class Parser(List<Token> tokens)
 
         if (Match(TokenType.LeftParen))
         {
-            var inner = ParseExpression(allowAtomArgs: true);
+            var inner = ParseExpression(true);
             Consume(TokenType.RightParen);
             return inner;
         }
@@ -448,29 +462,27 @@ public class Parser(List<Token> tokens)
     {
         var args = new List<Expression>();
         while (!Check(TokenType.RightParen))
-            args.Add(ParseExpression(allowAtomArgs: false));
+            args.Add(ParseExpression(false));
         Consume(TokenType.RightParen);
         return args;
     }
 
-    private static readonly HashSet<TokenType> AtomStartTokens =
-    [
-        TokenType.Identifier,
-        TokenType.LeftParen,
-        TokenType.LeftBracket,
-    ];
-
-    private static bool IsAtom(TokenType type) =>
-        IsLiteralToken(type) || AtomStartTokens.Contains(type);
-
-    private static LiteralExpression TokenToLiteral(Token token) => token.Type switch
+    private static bool IsAtom(TokenType type)
     {
-        TokenType.NumberLiteral       => new LiteralExpression(ParseNumber(token.Value)),
-        TokenType.StringLiteral       => new LiteralExpression(token.Value),
-        TokenType.BooleanTrueLiteral  => new LiteralExpression(true),
-        TokenType.BooleanFalseLiteral => new LiteralExpression(false),
-        _                             => throw new Exception("unreachable"),
-    };
+        return IsLiteralToken(type) || AtomStartTokens.Contains(type);
+    }
+
+    private static LiteralExpression TokenToLiteral(Token token)
+    {
+        return token.Type switch
+        {
+            TokenType.NumberLiteral => new LiteralExpression(ParseNumber(token.Value)),
+            TokenType.StringLiteral => new LiteralExpression(token.Value),
+            TokenType.BooleanTrueLiteral => new LiteralExpression(true),
+            TokenType.BooleanFalseLiteral => new LiteralExpression(false),
+            _ => throw new Exception("unreachable")
+        };
+    }
 
     private List<Expression> ParseAtomArgs()
     {
@@ -479,7 +491,7 @@ public class Parser(List<Token> tokens)
         {
             if (Match(TokenType.LeftParen))
             {
-                var inner = ParseExpression(allowAtomArgs: true);
+                var inner = ParseExpression(true);
                 Consume(TokenType.RightParen);
                 args.Add(inner);
                 continue;
@@ -497,6 +509,7 @@ public class Parser(List<Token> tokens)
                 : TokenToLiteral(token);
             args.Add(arg with { Line = token.Line, Column = token.Column });
         }
+
         return args;
     }
 }

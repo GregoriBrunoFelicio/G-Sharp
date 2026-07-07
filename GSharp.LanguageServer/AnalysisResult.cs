@@ -1,15 +1,14 @@
-using GSharp.AST;
-using GSharp.TypeChecker;
+using GSharp.Compiler.AST;
+using GSharp.Compiler.TypeChecker;
 
 namespace GSharp.LanguageServer;
 
 /// <summary>
-/// Everything one analysis pass produces: the diagnostics to publish, plus the parsed
-/// expressions and their inferred types. The latter two power hover — they let the
-/// <see cref="HoverHandler"/> map a cursor position back to an expression and its type.
-///
-/// On a lexer/parser/type error the pipeline aborts early, so <see cref="Expressions"/>
-/// and <see cref="Types"/> come back empty while <see cref="Diagnostics"/> carries the error.
+///     Everything one analysis pass produces: the diagnostics to publish, plus the parsed
+///     expressions and their inferred types. The latter two power hover — they let the
+///     <see cref="HoverHandler" /> map a cursor position back to an expression and its type.
+///     On a lexer/parser/type error the pipeline aborts early, so <see cref="Expressions" />
+///     and <see cref="Types" /> come back empty while <see cref="Diagnostics" /> carries the error.
 /// </summary>
 public record AnalysisResult(
     IReadOnlyList<AnalyzerDiagnostic> Diagnostics,

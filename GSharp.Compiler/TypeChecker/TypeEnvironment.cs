@@ -1,4 +1,4 @@
-namespace GSharp.TypeChecker;
+namespace GSharp.Compiler.TypeChecker;
 
 /// <summary>
 ///     Maps variable and function names to their types within a given scope.

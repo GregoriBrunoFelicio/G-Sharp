@@ -1,4 +1,4 @@
-namespace GSharp.AST;
+namespace GSharp.Compiler.AST;
 
 public record FunctionDeclaration(string Name, List<string> Parameters, List<Expression> Body) : Expression;
 

@@ -1,6 +1,6 @@
-using GSharp.AST;
+using GSharp.Compiler.AST;
 
-namespace GSharp.TypeChecker;
+namespace GSharp.Compiler.TypeChecker;
 
 public partial class TypeInferrer
 {

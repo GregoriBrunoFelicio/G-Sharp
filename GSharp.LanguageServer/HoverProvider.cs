@@ -1,5 +1,6 @@
-using GSharp.AST;
-using GSharp.TypeChecker;
+using GSharp.Compiler.AST;
+using GSharp.Compiler.Lexer;
+using GSharp.Compiler.TypeChecker;
 
 namespace GSharp.LanguageServer;
 
@@ -7,15 +8,13 @@ namespace GSharp.LanguageServer;
 public record HoverResult(string Markdown, int Line, int StartColumn, int EndColumn);
 
 /// <summary>
-/// Answers "what is under the cursor?" by walking the typed AST.
-///
-/// All coordinates here are 1-based, matching the lexer's <see cref="GSharp.Lexer.Token"/>
-/// positions stored on each <see cref="Expression"/>. The caller converts to/from LSP's
-/// 0-based positions.
-///
-/// The cursor lands on the innermost named construct whose source range contains it, and
-/// the tooltip shows that name with its inferred type — e.g. <c>add : int → int → int</c>
-/// for a function, <c>x : int</c> for a binding. Function call sites show the callee's full
+///     Answers "what is under the cursor?" by walking the typed AST.
+///     All coordinates here are 1-based, matching the lexer's <see cref="Token" />
+///     positions stored on each <see cref="Expression" />. The caller converts to/from LSP's
+///     0-based positions.
+///     The cursor lands on the innermost named construct whose source range contains it, and
+///     the tooltip shows that name with its inferred type — e.g. <c>add : int → int → int</c>
+///     for a function, <c>x : int</c> for a binding. Function call sites show the callee's full
 /// </summary>
 public static class HoverProvider
 {
@@ -25,19 +24,19 @@ public static class HoverProvider
 
         Candidate? best = null;
         foreach (var expression in analysis.Expressions)
-            foreach (var node in Walk(expression))
-            {
-                var candidate = ToCandidate(node, analysis.Types, signatures);
-                if (candidate is null)
-                    continue;
+        foreach (var node in Walk(expression))
+        {
+            var candidate = ToCandidate(node, analysis.Types, signatures);
+            if (candidate is null)
+                continue;
 
-                if (!candidate.Contains(line, character))
-                    continue;
+            if (!candidate.Contains(line, character))
+                continue;
 
-                // Prefer the tightest span so a literal wins over the call that encloses it.
-                if (best is null || candidate.Width < best.Width)
-                    best = candidate;
-            }
+            // Prefer the tightest span so a literal wins over the call that encloses it.
+            if (best is null || candidate.Width < best.Width)
+                best = candidate;
+        }
 
         if (best is null)
             return null;
@@ -97,19 +96,26 @@ public static class HoverProvider
         }
     }
 
-    private static Candidate Named(string name, GsType type, Expression node) =>
-        Named(name, type, node, name.Length);
-
-    private static Candidate Named(string name, GsType type, Expression node, int width) =>
-        new(node.Line, node.Column, Math.Max(1, width), $"{name} : {TypeDisplay.Format(type)}");
-
-    private static int LiteralWidth(LiteralExpression literal) => literal.Value switch
+    private static Candidate Named(string name, GsType type, Expression node)
     {
-        string text => text.Length + 2, // the source span includes the surrounding quotes
-        null        => 1,
-        object[]    => 1,               // arrays span multiple tokens; don't guess
-        var value   => value.ToString()?.Length ?? 1
-    };
+        return Named(name, type, node, name.Length);
+    }
+
+    private static Candidate Named(string name, GsType type, Expression node, int width)
+    {
+        return new Candidate(node.Line, node.Column, Math.Max(1, width), $"{name} : {TypeDisplay.Format(type)}");
+    }
+
+    private static int LiteralWidth(LiteralExpression literal)
+    {
+        return literal.Value switch
+        {
+            string text => text.Length + 2, // the source span includes the surrounding quotes
+            null => 1,
+            object[] => 1, // arrays span multiple tokens; don't guess
+            var value => value.ToString()?.Length ?? 1
+        };
+    }
 
     private static IEnumerable<Expression> Walk(Expression expression)
     {
@@ -134,7 +140,8 @@ public static class HoverProvider
                 foreach (var child in Walk(ifExpression.Condition)) yield return child;
                 foreach (var child in WalkAll(ifExpression.ThenBody)) yield return child;
                 if (ifExpression.ElseBody is not null)
-                    foreach (var child in WalkAll(ifExpression.ElseBody)) yield return child;
+                    foreach (var child in WalkAll(ifExpression.ElseBody))
+                        yield return child;
                 break;
 
             case ForExpression forExpression:
@@ -159,13 +166,15 @@ public static class HoverProvider
     private static IEnumerable<Expression> WalkAll(IEnumerable<Expression> expressions)
     {
         foreach (var expression in expressions)
-            foreach (var child in Walk(expression))
-                yield return child;
+        foreach (var child in Walk(expression))
+            yield return child;
     }
 
     private record Candidate(int Line, int StartColumn, int Width, string Label)
     {
-        public bool Contains(int line, int character) =>
-            line == Line && character >= StartColumn && character < StartColumn + Width;
+        public bool Contains(int line, int character)
+        {
+            return line == Line && character >= StartColumn && character < StartColumn + Width;
+        }
     }
 }

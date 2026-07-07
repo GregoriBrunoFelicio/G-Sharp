@@ -1,14 +1,15 @@
 ﻿using FluentAssertions;
-using GSharp.Lexer;
+using GSharp.Compiler.Lexer;
 
 namespace G.Sharp.Compiler.Tests.Lexer;
 
 public class LexerTests
 {
-    [Theory, MemberData(nameof(GetTokenizationSamples))]
+    [Theory]
+    [MemberData(nameof(GetTokenizationSamples))]
     public void Should_Tokenize_Code_Correctly(string code)
     {
-        var lexer = new GSharp.Lexer.Lexer(code);
+        var lexer = new GSharp.Compiler.Lexer.Lexer(code);
         var tokens = lexer.Tokenize();
 
         tokens.Should().NotBeNull();
@@ -22,7 +23,7 @@ public class LexerTests
     [InlineData("\n\t\r")]
     public void Should_Throw_When_Code_Is_Null_Or_Whitespace(string code)
     {
-        var act = () => new GSharp.Lexer.Lexer(code);
+        var act = () => new GSharp.Compiler.Lexer.Lexer(code);
 
         act.Should().Throw<NullReferenceException>()
             .WithMessage("Code cannot be null or empty.");
@@ -31,7 +32,7 @@ public class LexerTests
     [Fact]
     public void Should_Advance_Position()
     {
-        var lexer = new GSharp.Lexer.Lexer("a");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("a");
         lexer.Position.Should().Be(0);
 
         lexer.Advance();
@@ -41,7 +42,7 @@ public class LexerTests
     [Fact]
     public void Should_Return_True_When_End_Is_Reached()
     {
-        var lexer = new GSharp.Lexer.Lexer("a");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("a");
         lexer.Advance();
         lexer.IsAtEnd().Should().BeTrue();
     }
@@ -49,14 +50,14 @@ public class LexerTests
     [Fact]
     public void Should_Peek_Next_Character_Correctly()
     {
-        var lexer = new GSharp.Lexer.Lexer("abc");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("abc");
         lexer.Next().Should().Be('b');
     }
 
     [Fact]
     public void Should_Advance_While_Condition_Is_True()
     {
-        var lexer = new GSharp.Lexer.Lexer("    xyz");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("    xyz");
         lexer.AdvanceWhile(char.IsWhiteSpace);
         lexer.Current.Should().Be('x');
     }

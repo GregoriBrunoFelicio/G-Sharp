@@ -1,21 +1,24 @@
 using System.Reflection;
 using System.Reflection.Emit;
-using GSharp.AST;
-using GSharp.CodeGen.Helpers;
-using GSharp.Stdlib;
-using GSharp.TypeChecker;
+using GSharp.Compiler.AST;
+using GSharp.Compiler.CodeGen.Helpers;
+using GSharp.Compiler.Stdlib;
+using GSharp.Compiler.TypeChecker;
 using Type = System.Type;
 
-namespace GSharp.CodeGen;
+namespace GSharp.Compiler.CodeGen;
 
 public class Compiler
 {
     private static readonly ConstructorInfo FuncObjectArrayObjectCtor =
         typeof(Func<object[], object>).GetConstructors()[0];
+
     private static readonly ConstructorInfo FuncObjectObjectCtor =
         typeof(Func<object, object>).GetConstructors()[0];
+
     private static readonly ConstructorInfo GsFunctionArityNCtor =
         typeof(GSharpFunction).GetConstructor([typeof(Func<object[], object>)])!;
+
     private static readonly ConstructorInfo GsFunctionArity1Ctor =
         typeof(GSharpFunction).GetConstructor([typeof(Func<object, object>)])!;
 
@@ -52,7 +55,7 @@ public class Compiler
     {
         if (functionFields.Count == 0) return;
 
-        var cctor   = typeBuilder.DefineTypeInitializer();
+        var cctor = typeBuilder.DefineTypeInitializer();
         var cctorIl = cctor.GetILGenerator();
 
         foreach (var (name, field) in functionFields)
@@ -60,8 +63,8 @@ public class Compiler
             var isArity1 = adapters1.ContainsKey(name);
             cctorIl.Emit(OpCodes.Ldnull);
             cctorIl.Emit(OpCodes.Ldftn, isArity1 ? adapters1[name] : adapters[name]);
-            cctorIl.Emit(OpCodes.Newobj, isArity1 ? FuncObjectObjectCtor      : FuncObjectArrayObjectCtor);
-            cctorIl.Emit(OpCodes.Newobj, isArity1 ? GsFunctionArity1Ctor      : GsFunctionArityNCtor);
+            cctorIl.Emit(OpCodes.Newobj, isArity1 ? FuncObjectObjectCtor : FuncObjectArrayObjectCtor);
+            cctorIl.Emit(OpCodes.Newobj, isArity1 ? GsFunctionArity1Ctor : GsFunctionArityNCtor);
             cctorIl.Emit(OpCodes.Stsfld, field);
         }
 
@@ -77,17 +80,17 @@ public class Compiler
         {
             var (methodBuilder, typeBuilder) = CreateBuilders();
 
-            var functions       = new Dictionary<string, MethodBuilder>();
-            var adapters        = new Dictionary<string, MethodBuilder>();
-            var adapters1       = new Dictionary<string, MethodBuilder>();
-            var functionFields  = new Dictionary<string, FieldBuilder>();
+            var functions = new Dictionary<string, MethodBuilder>();
+            var adapters = new Dictionary<string, MethodBuilder>();
+            var adapters1 = new Dictionary<string, MethodBuilder>();
+            var functionFields = new Dictionary<string, FieldBuilder>();
             var functionParamTypes = new Dictionary<string, Type[]>();
 
             foreach (var (moduleName, moduleExprs) in modules ?? [])
-                foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
-                    ExpressionEmitter.DefineFunction(typeBuilder, fn, functions, adapters, typeMap,
-                        prefix: moduleName + ".", functionParamTypes: functionParamTypes,
-                        adapters1: adapters1, functionFields: functionFields);
+            foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
+                ExpressionEmitter.DefineFunction(typeBuilder, fn, functions, adapters, typeMap,
+                    moduleName + ".", functionParamTypes,
+                    adapters1, functionFields);
 
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
                 ExpressionEmitter.DefineFunction(typeBuilder, fn, functions, adapters, typeMap,
@@ -97,12 +100,12 @@ public class Compiler
             EmitStaticInitializer(typeBuilder, adapters, adapters1, functionFields);
 
             var context = new EmitContext(functions, adapters, typeMap, functionParamTypes,
-                functionAdapters1: adapters1, functionFields: functionFields);
+                adapters1, functionFields);
             RegisterBuiltins(context);
 
             foreach (var (moduleName, moduleExprs) in modules ?? [])
-                foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
-                    ExpressionEmitter.EmitFunction(fn, context, prefix: moduleName + ".");
+            foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
+                ExpressionEmitter.EmitFunction(fn, context, moduleName + ".");
 
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
                 ExpressionEmitter.EmitFunction(fn, context);
@@ -127,7 +130,7 @@ public class Compiler
             var programType = typeBuilder.CreateType();
 
             var main = programType.GetMethod("Main", BindingFlags.Public | BindingFlags.Static)
-                ?? throw new Exception("Method 'Main' was not found.");
+                       ?? throw new Exception("Method 'Main' was not found.");
 
             main.Invoke(null, null);
         }

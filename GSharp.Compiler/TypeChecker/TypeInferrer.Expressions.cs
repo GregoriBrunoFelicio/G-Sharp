@@ -1,7 +1,7 @@
-using GSharp.AST;
-using GSharp.Lexer;
+using GSharp.Compiler.AST;
+using GSharp.Compiler.Lexer;
 
-namespace GSharp.TypeChecker;
+namespace GSharp.Compiler.TypeChecker;
 
 public partial class TypeInferrer
 {
@@ -9,17 +9,20 @@ public partial class TypeInferrer
     // Literal inference
     // -------------------------------------------------------------------------
 
-    private GsType InferLiteral(LiteralExpression literal) => literal.Value switch
+    private GsType InferLiteral(LiteralExpression literal)
     {
-        int            => new IntType(),
-        float          => new FloatType(),
-        double         => new DoubleType(),
-        decimal        => new DecimalType(),
-        string         => new StringType(),
-        bool           => new BoolType(),
-        object[] elements => InferArrayLiteral(elements),
-        _              => FreshTypeVar()
-    };
+        return literal.Value switch
+        {
+            int => new IntType(),
+            float => new FloatType(),
+            double => new DoubleType(),
+            decimal => new DecimalType(),
+            string => new StringType(),
+            bool => new BoolType(),
+            object[] elements => InferArrayLiteral(elements),
+            _ => FreshTypeVar()
+        };
+    }
 
     private GsType InferArrayLiteral(object[] elements)
     {
@@ -28,13 +31,13 @@ public partial class TypeInferrer
 
         var elementType = elements[0] switch
         {
-            int     => (GsType)new IntType(),
-            float   => new FloatType(),
-            double  => new DoubleType(),
+            int => (GsType)new IntType(),
+            float => new FloatType(),
+            double => new DoubleType(),
             decimal => new DecimalType(),
-            string  => new StringType(),
-            bool    => new BoolType(),
-            _       => FreshTypeVar()
+            string => new StringType(),
+            bool => new BoolType(),
+            _ => FreshTypeVar()
         };
 
         return new ArrayType(elementType);
@@ -54,7 +57,7 @@ public partial class TypeInferrer
 
     private GsType InferBinary(BinaryExpression binary, TypeEnvironment environment)
     {
-        var leftType  = InferExpression(binary.Left, environment);
+        var leftType = InferExpression(binary.Left, environment);
         var rightType = InferExpression(binary.Right, environment);
 
         var isComparisonOperator = binary.Operator is
@@ -106,7 +109,7 @@ public partial class TypeInferrer
 
     private GsType InferFor(ForExpression forExpression, TypeEnvironment environment)
     {
-        var iterableType   = InferExpression(forExpression.Iterable, environment);
+        var iterableType = InferExpression(forExpression.Iterable, environment);
         var elementTypeVar = FreshTypeVar();
 
         _constraints.Add(new TypeConstraint(iterableType, new ArrayType(elementTypeVar)));

@@ -1,25 +1,59 @@
-using GSharp.Lexer.Helpers;
-using static GSharp.Lexer.Helpers.SymbolTokenMap;
+using GSharp.Compiler.Lexer.Helpers;
+using static GSharp.Compiler.Lexer.Helpers.SymbolTokenMap;
 
-namespace GSharp.Lexer;
+namespace GSharp.Compiler.Lexer;
 
 public class Lexer
 {
-    public readonly string Code;
-    public int Position;
-    public int Line { get; private set; } = 1;
-    public int Column { get; private set; } = 1;
-    public char Current => !IsAtEnd() ? Code[Position] : '\0';
+    private static readonly Dictionary<string, TokenType> KeywordTokenMap = new()
+    {
+        // Booleans
+        ["true"] = TokenType.BooleanTrueLiteral,
+        ["false"] = TokenType.BooleanFalseLiteral,
+
+        // Conditionals
+        ["if"] = TokenType.If,
+        ["else"] = TokenType.Else,
+
+        // Loops
+        ["for"] = TokenType.For,
+        ["in"] = TokenType.In,
+        ["do"] = TokenType.Do,
+        ["then"] = TokenType.Then,
+
+        // IO
+        ["println"] = TokenType.Println,
+
+        // Logical operators
+        ["and"] = TokenType.And,
+        ["or"] = TokenType.Or,
+        ["not"] = TokenType.Not,
+
+        // Functions
+        ["function"] = TokenType.Function,
+
+        // Imports
+        ["import"] = TokenType.Import,
+        ["as"] = TokenType.As
+    };
+
+    private static readonly HashSet<char> NumberSuffixes = ['f', 'F', 'd', 'D', 'm', 'M'];
+    private readonly Stack<int> _blockLevelStack = new([0]);
 
     private readonly List<Token> _tokens = [];
+    public readonly string Code;
     private bool _atStartOfLine = true;
-    private readonly Stack<int> _blockLevelStack = new([0]);
+    public int Position;
 
     public Lexer(string code)
     {
         if (string.IsNullOrWhiteSpace(code)) throw new NullReferenceException("Code cannot be null or empty.");
         Code = code;
     }
+
+    public int Line { get; private set; } = 1;
+    public int Column { get; private set; } = 1;
+    public char Current => !IsAtEnd() ? Code[Position] : '\0';
 
     public List<Token> Tokenize()
     {
@@ -95,11 +129,20 @@ public class Lexer
         }
     }
 
-    private bool IsNewLine() => Current == '\n' || Current == '\r';
+    private bool IsNewLine()
+    {
+        return Current == '\n' || Current == '\r';
+    }
 
-    private bool IsLineComment() => Current == '/' && Next() == '/';
+    private bool IsLineComment()
+    {
+        return Current == '/' && Next() == '/';
+    }
 
-    private void SkipLineComment() => AdvanceWhile(c => c != '\n' && c != '\r');
+    private void SkipLineComment()
+    {
+        AdvanceWhile(c => c != '\n' && c != '\r');
+    }
 
     private void ConsumeNewLine()
     {
@@ -112,8 +155,10 @@ public class Lexer
             _tokens.Add(new Token(TokenType.Newline, "\n"));
     }
 
-    private bool LastTokenIsNewline() =>
-        _tokens.Count > 0 && _tokens[^1].Type == TokenType.Newline;
+    private bool LastTokenIsNewline()
+    {
+        return _tokens.Count > 0 && _tokens[^1].Type == TokenType.Newline;
+    }
 
     private Token ReadNextToken()
     {
@@ -132,42 +177,10 @@ public class Lexer
         throw new Exception($"{Line}: unexpected '{Current}'");
     }
 
-    private static readonly Dictionary<string, TokenType> KeywordTokenMap = new()
-    {
-        // Booleans
-        ["true"] = TokenType.BooleanTrueLiteral,
-        ["false"] = TokenType.BooleanFalseLiteral,
-
-        // Conditionals
-        ["if"] = TokenType.If,
-        ["else"] = TokenType.Else,
-
-        // Loops
-        ["for"] = TokenType.For,
-        ["in"] = TokenType.In,
-        ["do"] = TokenType.Do,
-        ["then"] = TokenType.Then,
-
-        // IO
-        ["println"] = TokenType.Println,
-
-        // Logical operators
-        ["and"] = TokenType.And,
-        ["or"] = TokenType.Or,
-        ["not"] = TokenType.Not,
-
-        // Functions
-        ["function"] = TokenType.Function,
-
-        // Imports
-        ["import"] = TokenType.Import,
-        ["as"] = TokenType.As
-    };
-
     public Token ReadIdentifier()
     {
         var line = Line;
-        var col  = Column;
+        var col = Column;
         var start = Position;
 
         AdvanceWhile(char.IsLetterOrDigit);
@@ -178,12 +191,10 @@ public class Lexer
         return new Token(tokenType, value, line, col);
     }
 
-    private static readonly HashSet<char> NumberSuffixes = ['f', 'F', 'd', 'D', 'm', 'M'];
-
     public Token ReadNumber()
     {
-        var line  = Line;
-        var col   = Column;
+        var line = Line;
+        var col = Column;
         var start = Position;
 
         AdvanceWhile(char.IsDigit);
@@ -211,7 +222,7 @@ public class Lexer
     public Token ReadString()
     {
         var line = Line;
-        var col  = Column;
+        var col = Column;
 
         Advance(); // skip opening "
 
@@ -229,30 +240,36 @@ public class Lexer
 
     public Token ReadSymbol()
     {
-        var line    = Line;
-        var col     = Column;
+        var line = Line;
+        var col = Column;
         var current = Current;
-        var next    = Next();
+        var next = Next();
 
         switch (current)
         {
             case '-' when next == '>':
-                Advance(); Advance();
+                Advance();
+                Advance();
                 return new Token(TokenType.ThinArrow, "->", line, col);
             case '=' when next == '>':
-                Advance(); Advance();
+                Advance();
+                Advance();
                 return new Token(TokenType.Arrow, "=>", line, col);
             case '>' when next == '=':
-                Advance(); Advance();
+                Advance();
+                Advance();
                 return new Token(TokenType.GreaterThanOrEqual, ">=", line, col);
             case '<' when next == '=':
-                Advance(); Advance();
+                Advance();
+                Advance();
                 return new Token(TokenType.LessThanOrEqual, "<=", line, col);
             case '=' when next == '=':
-                Advance(); Advance();
+                Advance();
+                Advance();
                 return new Token(TokenType.EqualEqual, "==", line, col);
             case '!' when next == '=':
-                Advance(); Advance();
+                Advance();
+                Advance();
                 return new Token(TokenType.NotEqual, "!=", line, col);
         }
 
@@ -276,6 +293,7 @@ public class Lexer
         {
             Column++;
         }
+
         Position++;
     }
 
@@ -291,5 +309,8 @@ public class Lexer
             Advance();
     }
 
-    public bool IsAtEnd() => Position >= Code.Length;
+    public bool IsAtEnd()
+    {
+        return Position >= Code.Length;
+    }
 }

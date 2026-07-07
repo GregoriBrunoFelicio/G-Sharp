@@ -1,12 +1,27 @@
+namespace GSharp.Compiler.Lexer.Helpers;
 
-namespace GSharp.Lexer.Helpers;
 public static class CharExtensions
 {
     extension(char c)
     {
-        public bool IsOnlyQuotes() => c == '"';
-        public bool IsLetter() => char.IsLetter(c);
-        public bool IsNumber() => char.IsDigit(c);
-        public bool IsWhitespace() => c is ' ' or '\t';
+        public bool IsOnlyQuotes()
+        {
+            return c == '"';
+        }
+
+        public bool IsLetter()
+        {
+            return char.IsLetter(c);
+        }
+
+        public bool IsNumber()
+        {
+            return char.IsDigit(c);
+        }
+
+        public bool IsWhitespace()
+        {
+            return c is ' ' or '\t';
+        }
     }
 }

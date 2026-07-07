@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace GSharp.Stdlib;
+namespace GSharp.Compiler.Stdlib;
 
 public static class StringBuiltins
 {
@@ -9,5 +9,8 @@ public static class StringBuiltins
         builtins["string.from"] = typeof(StringBuiltins).GetMethod(nameof(From))!;
     }
 
-    public static object From(object arg) => arg?.ToString() ?? "";
+    public static object From(object arg)
+    {
+        return arg?.ToString() ?? "";
+    }
 }

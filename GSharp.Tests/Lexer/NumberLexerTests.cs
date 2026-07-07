@@ -1,5 +1,5 @@
 using FluentAssertions;
-using GSharp.Lexer;
+using GSharp.Compiler.Lexer;
 
 namespace G.Sharp.Compiler.Tests.Lexer;
 
@@ -10,7 +10,7 @@ public class NumberLexerTests
     [InlineData("1234567890", "1234567890")]
     public void Should_Parse_Whole_Number(string input, string expected)
     {
-        var lexer = new GSharp.Lexer.Lexer(input);
+        var lexer = new GSharp.Compiler.Lexer.Lexer(input);
         var token = lexer.ReadNumber();
 
         token.Type.Should().Be(TokenType.NumberLiteral);
@@ -23,7 +23,7 @@ public class NumberLexerTests
     [InlineData("10.1", "10.1")]
     public void Should_Parse_Float_Number(string input, string expected)
     {
-        var lexer = new GSharp.Lexer.Lexer(input);
+        var lexer = new GSharp.Compiler.Lexer.Lexer(input);
         var token = lexer.ReadNumber();
 
         token.Type.Should().Be(TokenType.NumberLiteral);
@@ -36,7 +36,7 @@ public class NumberLexerTests
     [InlineData("99.99m", "99.99m")]
     public void Should_Parse_Number_With_Suffix(string input, string expected)
     {
-        var lexer = new GSharp.Lexer.Lexer(input);
+        var lexer = new GSharp.Compiler.Lexer.Lexer(input);
         var token = lexer.ReadNumber();
 
         token.Type.Should().Be(TokenType.NumberLiteral);
@@ -46,7 +46,7 @@ public class NumberLexerTests
     [Fact]
     public void Should_Parse_Number_With_Dot_But_No_Digits_After()
     {
-        var lexer = new GSharp.Lexer.Lexer("10.");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("10.");
         var token = lexer.ReadNumber();
 
         token.Type.Should().Be(TokenType.NumberLiteral);
@@ -56,7 +56,7 @@ public class NumberLexerTests
     [Fact]
     public void Should_Parse_Number_With_Dot_And_Stop_At_NonSuffix()
     {
-        var lexer = new GSharp.Lexer.Lexer("10.5x");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("10.5x");
         var token = lexer.ReadNumber();
 
         token.Type.Should().Be(TokenType.NumberLiteral);
@@ -67,7 +67,7 @@ public class NumberLexerTests
     [Fact]
     public void Should_Parse_Number_With_Suffix_At_End_Of_Code()
     {
-        var lexer = new GSharp.Lexer.Lexer("42.0f");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("42.0f");
         var token = lexer.ReadNumber();
 
         token.Type.Should().Be(TokenType.NumberLiteral);
@@ -78,7 +78,7 @@ public class NumberLexerTests
     [Fact]
     public void Should_Parse_Number_And_Leave_Next_Token_Untouched()
     {
-        var lexer = new GSharp.Lexer.Lexer("10.2f;");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("10.2f;");
         var token = lexer.ReadNumber();
 
         token.Type.Should().Be(TokenType.NumberLiteral);

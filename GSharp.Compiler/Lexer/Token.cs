@@ -1,4 +1,4 @@
-namespace GSharp.Lexer;
+namespace GSharp.Compiler.Lexer;
 
 public record Token(TokenType Type, string Value, int Line = 0, int Column = 0);
 
@@ -39,8 +39,8 @@ public enum TokenType
     // Block openers
     Then,
 
-    LeftParen,   // (
-    RightParen,  // )
+    LeftParen, // (
+    RightParen, // )
 
     LeftBracket, // [
     RightBracket, // ]
@@ -48,7 +48,7 @@ public enum TokenType
     LeftBrace, // {
     RightBrace, // }
 
-    Arrow,     // =>
+    Arrow, // =>
     ThinArrow, // ->
 
     // Comparison
@@ -69,8 +69,8 @@ public enum TokenType
     Minus, // -
     Multiply, // *    
     Divide, // /
-    
-    
+
+
     // Function
     Function,
 

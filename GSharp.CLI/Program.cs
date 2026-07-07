@@ -1,12 +1,12 @@
 using G.Sharp.Compiler;
-using GSharp.CodeGen;
-using GSharp.TypeChecker;
+using GSharp.Compiler.CodeGen;
+using GSharp.Compiler.TypeChecker;
 
 try
 {
-    var path        = EntryResolver.ResolvePath(args);
+    var path = EntryResolver.ResolvePath(args);
     var expressions = GsLoader.ParseFile(path);
-    var modules     = GsLoader.LoadModules(path, expressions);
+    var modules = GsLoader.LoadModules(path, expressions);
 
     var typeMap = new TypeInferrer().Infer(expressions);
 

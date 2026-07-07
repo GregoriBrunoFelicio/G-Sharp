@@ -1,4 +1,4 @@
-using GSharp.Lexer;
+using GSharp.Compiler.Lexer;
 
 namespace G.Sharp.Compiler;
 
@@ -8,11 +8,11 @@ internal static class EntryResolver
     {
         var path = args.Length switch
         {
-            0                           => FindEntryPoint(),
-            1 when args[0] == "run"     => FindEntryPoint(),
-            1                           => args[0],
-            _ when args[0] == "run"     => args[1],
-            _                           => null
+            0 => FindEntryPoint(),
+            1 when args[0] == "run" => FindEntryPoint(),
+            1 => args[0],
+            _ when args[0] == "run" => args[1],
+            _ => null
         };
 
         if (path is not null) return path;
@@ -40,7 +40,8 @@ internal static class EntryResolver
             0 => throw new Exception(
                 "multiple .gs files found — declare a 'main' function in one of them or specify a file: gs <file.gs>"),
             1 => withMain[0],
-            _ => throw new Exception($"multiple entry points found: {string.Join(", ", withMain.Select(Path.GetFileName))}")
+            _ => throw new Exception(
+                $"multiple entry points found: {string.Join(", ", withMain.Select(Path.GetFileName))}")
         };
     }
 

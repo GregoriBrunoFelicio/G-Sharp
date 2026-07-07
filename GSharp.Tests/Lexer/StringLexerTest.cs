@@ -1,5 +1,5 @@
 using FluentAssertions;
-using GSharp.Lexer;
+using GSharp.Compiler.Lexer;
 
 namespace G.Sharp.Compiler.Tests.Lexer;
 
@@ -8,7 +8,7 @@ public class StringLexerTest
     [Fact]
     public void Should_Parse_Simple_String()
     {
-        var lexer = new GSharp.Lexer.Lexer("\"hello\"");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("\"hello\"");
         var token = lexer.ReadString();
 
         token.Type.Should().Be(TokenType.StringLiteral);
@@ -18,7 +18,7 @@ public class StringLexerTest
     [Fact]
     public void Should_Parse_Empty_String()
     {
-        var lexer = new GSharp.Lexer.Lexer("\"\"");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("\"\"");
         var token = lexer.ReadString();
 
         token.Type.Should().Be(TokenType.StringLiteral);
@@ -28,7 +28,7 @@ public class StringLexerTest
     [Fact]
     public void Should_Throw_If_String_Is_Unterminated()
     {
-        var lexer = new GSharp.Lexer.Lexer("\"unterminated string");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("\"unterminated string");
 
         var act = () => lexer.ReadString();
 
@@ -40,7 +40,7 @@ public class StringLexerTest
     [Fact]
     public void Should_Parse_String_With_Spaces()
     {
-        var lexer = new GSharp.Lexer.Lexer("\"hello greg\"");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("\"hello greg\"");
         var token = lexer.ReadString();
 
         token.Type.Should().Be(TokenType.StringLiteral);
@@ -50,7 +50,7 @@ public class StringLexerTest
     [Fact]
     public void Should_Parse_String_With_Special_Characters()
     {
-        var lexer = new GSharp.Lexer.Lexer("\"g$#@!&*()_+=<>[]{}\"");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("\"g$#@!&*()_+=<>[]{}\"");
         var token = lexer.ReadString();
 
         token.Type.Should().Be(TokenType.StringLiteral);
@@ -60,7 +60,7 @@ public class StringLexerTest
     [Fact]
     public void Should_Parse_String_With_Newlines_And_Tabs()
     {
-        var lexer = new GSharp.Lexer.Lexer("\"line1\\nline2\\tend\"");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("\"line1\\nline2\\tend\"");
         var token = lexer.ReadString();
 
         token.Type.Should().Be(TokenType.StringLiteral);

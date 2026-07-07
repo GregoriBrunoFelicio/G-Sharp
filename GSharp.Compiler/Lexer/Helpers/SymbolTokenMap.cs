@@ -1,4 +1,4 @@
-namespace GSharp.Lexer.Helpers;
+namespace GSharp.Compiler.Lexer.Helpers;
 
 public static class SymbolTokenMap
 {
@@ -28,6 +28,6 @@ public static class SymbolTokenMap
         { '/', TokenType.Divide },
 
         // Module access
-        { '.', TokenType.Dot },
+        { '.', TokenType.Dot }
     };
 }

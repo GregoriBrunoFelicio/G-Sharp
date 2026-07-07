@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace GSharp.Stdlib;
+namespace GSharp.Compiler.Stdlib;
 
 public static class ArrayBuiltins
 {
@@ -49,9 +49,15 @@ public static class ArrayBuiltins
         return arr[^1];
     }
 
-    public static object Len(object arg) => ((object[])arg).Length;
+    public static object Len(object arg)
+    {
+        return ((object[])arg).Length;
+    }
 
-    public static object Empty(object arg) => ((object[])arg).Length == 0;
+    public static object Empty(object arg)
+    {
+        return ((object[])arg).Length == 0;
+    }
 
     public static object Reverse(object arg)
     {

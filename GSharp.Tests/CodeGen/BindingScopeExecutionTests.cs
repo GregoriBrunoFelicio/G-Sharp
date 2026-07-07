@@ -1,5 +1,5 @@
 using FluentAssertions;
-using GSharp.TypeChecker;
+using GSharp.Compiler.TypeChecker;
 
 namespace G.Sharp.Compiler.Tests.CodeGen;
 
@@ -9,16 +9,16 @@ public class BindingScopeExecutionTests
 {
     private static string Run(string source)
     {
-        var tokens      = new GSharp.Lexer.Lexer(source).Tokenize();
-        var expressions = new GSharp.Parser.Parser(tokens).Parse();
-        var typeMap     = new TypeInferrer().Infer(expressions);
+        var tokens = new GSharp.Compiler.Lexer.Lexer(source).Tokenize();
+        var expressions = new GSharp.Compiler.Parser.Parser(tokens).Parse();
+        var typeMap = new TypeInferrer().Infer(expressions);
 
         var originalOut = Console.Out;
-        var captured    = new StringWriter();
+        var captured = new StringWriter();
         Console.SetOut(captured);
         try
         {
-            new GSharp.CodeGen.Compiler().CompileAndRun(expressions, typeMap: typeMap);
+            new GSharp.Compiler.CodeGen.Compiler().CompileAndRun(expressions, typeMap: typeMap);
         }
         finally
         {

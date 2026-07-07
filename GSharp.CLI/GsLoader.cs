@@ -1,6 +1,6 @@
-using GSharp.AST;
-using GSharp.Lexer;
-using GSharp.Parser;
+using GSharp.Compiler.AST;
+using GSharp.Compiler.Lexer;
+using GSharp.Compiler.Parser;
 
 namespace G.Sharp.Compiler;
 

@@ -1,14 +1,15 @@
 using FluentAssertions;
-using GSharp.TypeChecker;
+using GSharp.Compiler.AST;
+using GSharp.Compiler.TypeChecker;
 
 namespace G.Sharp.Compiler.Tests.TypeChecker;
 
 public class TypeInferrerTests
 {
-    private static Dictionary<GSharp.AST.Expression, GsType> Infer(string source)
+    private static Dictionary<Expression, GsType> Infer(string source)
     {
-        var tokens = new GSharp.Lexer.Lexer(source).Tokenize();
-        var expressions = new GSharp.Parser.Parser(tokens).Parse();
+        var tokens = new GSharp.Compiler.Lexer.Lexer(source).Tokenize();
+        var expressions = new GSharp.Compiler.Parser.Parser(tokens).Parse();
         return new TypeInferrer().Infer(expressions);
     }
 
@@ -97,10 +98,10 @@ public class TypeInferrerTests
     public void Should_Infer_Recursive_Function()
     {
         var source = """
-            factorial n
-                if n <= 1 then 1 else n * factorial(n - 1)
-            result -> factorial 5
-            """;
+                     factorial n
+                         if n <= 1 then 1 else n * factorial(n - 1)
+                     result -> factorial 5
+                     """;
 
         var act = () => Infer(source);
         act.Should().NotThrow();

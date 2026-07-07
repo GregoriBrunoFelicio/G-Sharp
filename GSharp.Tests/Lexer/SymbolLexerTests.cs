@@ -1,5 +1,5 @@
 using FluentAssertions;
-using GSharp.Lexer;
+using GSharp.Compiler.Lexer;
 
 namespace G.Sharp.Compiler.Tests.Lexer;
 
@@ -13,7 +13,7 @@ public class SymbolLexerTests
     [InlineData("!=", TokenType.NotEqual)]
     public void Should_Recognize_Composite_Symbols(string code, TokenType expected)
     {
-        var lexer = new GSharp.Lexer.Lexer(code);
+        var lexer = new GSharp.Compiler.Lexer.Lexer(code);
         var token = lexer.ReadSymbol();
 
         token.Type.Should().Be(expected);
@@ -29,7 +29,7 @@ public class SymbolLexerTests
     [InlineData("/", TokenType.Divide)]
     public void Should_Recognize_Single_Symbols(string code, TokenType expected)
     {
-        var lexer = new GSharp.Lexer.Lexer(code);
+        var lexer = new GSharp.Compiler.Lexer.Lexer(code);
         var token = lexer.ReadSymbol();
 
         token.Type.Should().Be(expected);
@@ -39,7 +39,7 @@ public class SymbolLexerTests
     [Fact]
     public void Should_Throw_When_Symbol_Is_Invalid()
     {
-        var lexer = new GSharp.Lexer.Lexer("@");
+        var lexer = new GSharp.Compiler.Lexer.Lexer("@");
 
         var act = () => lexer.ReadSymbol();
 

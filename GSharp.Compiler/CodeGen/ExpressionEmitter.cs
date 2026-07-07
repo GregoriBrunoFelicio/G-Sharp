@@ -1,11 +1,11 @@
 using System.Reflection;
 using System.Reflection.Emit;
-using GSharp.AST;
-using GSharp.CodeGen.Helpers;
-using GSharp.Lexer;
-using GSharp.TypeChecker;
+using GSharp.Compiler.AST;
+using GSharp.Compiler.CodeGen.Helpers;
+using GSharp.Compiler.Lexer;
+using GSharp.Compiler.TypeChecker;
 
-namespace GSharp.CodeGen;
+namespace GSharp.Compiler.CodeGen;
 
 public static class ExpressionEmitter
 {
@@ -15,20 +15,38 @@ public static class ExpressionEmitter
 
     private static readonly MethodInfo GsFunctionCallMethod =
         typeof(GSharpFunction).GetMethod(nameof(GSharpFunction.Call))!;
+
     private static readonly MethodInfo GsFunctionCall1Method =
         typeof(GSharpFunction).GetMethod(nameof(GSharpFunction.Call1))!;
 
-    private static readonly MethodInfo GreaterThanMethod        = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThan))!;
-    private static readonly MethodInfo LessThanMethod           = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThan))!;
-    private static readonly MethodInfo GreaterThanOrEqualMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThanOrEqual))!;
-    private static readonly MethodInfo LessThanOrEqualMethod    = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThanOrEqual))!;
-    private static readonly MethodInfo EqualEqualMethod         = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.EqualEqual))!;
-    private static readonly MethodInfo NotEqualMethod           = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.NotEqual))!;
-    private static readonly MethodInfo AddMethod                = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Add))!;
-    private static readonly MethodInfo SubtractMethod           = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Subtract))!;
-    private static readonly MethodInfo MultiplyMethod           = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Multiply))!;
-    private static readonly MethodInfo DivideMethod             = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Divide))!;
-    private static readonly MethodInfo IsTrueMethod             = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsTrue))!;
+    private static readonly MethodInfo GreaterThanMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThan))!;
+
+    private static readonly MethodInfo LessThanMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThan))!;
+
+    private static readonly MethodInfo GreaterThanOrEqualMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.GreaterThanOrEqual))!;
+
+    private static readonly MethodInfo LessThanOrEqualMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.LessThanOrEqual))!;
+
+    private static readonly MethodInfo EqualEqualMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.EqualEqual))!;
+
+    private static readonly MethodInfo NotEqualMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.NotEqual))!;
+
+    private static readonly MethodInfo AddMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Add))!;
+
+    private static readonly MethodInfo SubtractMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Subtract))!;
+
+    private static readonly MethodInfo MultiplyMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Multiply))!;
+
+    private static readonly MethodInfo DivideMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Divide))!;
+    private static readonly MethodInfo IsTrueMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsTrue))!;
 
     private static readonly ConstructorInfo DecimalCtor = typeof(decimal).GetConstructor([
         typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)
@@ -77,6 +95,7 @@ public static class ExpressionEmitter
                         return returnClrType;
                     }
                 }
+
                 return typeof(object);
 
             case ModuleCallExpression moduleCall:
@@ -90,6 +109,7 @@ public static class ExpressionEmitter
                         return mcClrType;
                     }
                 }
+
                 return typeof(object);
 
             case BinaryExpression binary:
@@ -165,11 +185,11 @@ public static class ExpressionEmitter
 
     private static void EmitDecimalLiteral(ILGenerator il, decimal value)
     {
-        var bits  = decimal.GetBits(value);
-        var lo    = bits[0];
-        var mid   = bits[1];
-        var hi    = bits[2];
-        var sign  = (bits[3] & 0x80000000) != 0;
+        var bits = decimal.GetBits(value);
+        var lo = bits[0];
+        var mid = bits[1];
+        var hi = bits[2];
+        var sign = (bits[3] & 0x80000000) != 0;
         var scale = (byte)((bits[3] >> 16) & 0x7F);
 
         il.Emit(OpCodes.Ldc_I4, lo);
@@ -240,15 +260,15 @@ public static class ExpressionEmitter
         var nativeType = TryGetNativeArithmeticType(binary, context);
         if (nativeType is not null)
         {
-            Emit(il, binary.Left,  context);
+            Emit(il, binary.Left, context);
             Emit(il, binary.Right, context);
 
             var opcode = binary.Operator switch
             {
-                TokenType.Plus     => OpCodes.Add,
-                TokenType.Minus    => OpCodes.Sub,
+                TokenType.Plus => OpCodes.Add,
+                TokenType.Minus => OpCodes.Sub,
                 TokenType.Multiply => OpCodes.Mul,
-                TokenType.Divide   => OpCodes.Div,
+                TokenType.Divide => OpCodes.Div,
                 _ => throw new InvalidOperationException(
                     $"internal error: '{binary.Operator}' is not a native arithmetic operator")
             };
@@ -257,21 +277,21 @@ public static class ExpressionEmitter
             return nativeType;
         }
 
-        EmitToStack(il, binary.Left,  context);
+        EmitToStack(il, binary.Left, context);
         EmitToStack(il, binary.Right, context);
 
         var method = binary.Operator switch
         {
-            TokenType.GreaterThan        => GreaterThanMethod,
-            TokenType.LessThan           => LessThanMethod,
+            TokenType.GreaterThan => GreaterThanMethod,
+            TokenType.LessThan => LessThanMethod,
             TokenType.GreaterThanOrEqual => GreaterThanOrEqualMethod,
-            TokenType.LessThanOrEqual    => LessThanOrEqualMethod,
-            TokenType.EqualEqual         => EqualEqualMethod,
-            TokenType.NotEqual           => NotEqualMethod,
-            TokenType.Plus               => AddMethod,
-            TokenType.Minus              => SubtractMethod,
-            TokenType.Multiply           => MultiplyMethod,
-            TokenType.Divide             => DivideMethod,
+            TokenType.LessThanOrEqual => LessThanOrEqualMethod,
+            TokenType.EqualEqual => EqualEqualMethod,
+            TokenType.NotEqual => NotEqualMethod,
+            TokenType.Plus => AddMethod,
+            TokenType.Minus => SubtractMethod,
+            TokenType.Multiply => MultiplyMethod,
+            TokenType.Divide => DivideMethod,
             _ => throw new NotSupportedException(
                 $"internal error: no emitter for binary operator '{binary.Operator}'")
         };
@@ -285,7 +305,7 @@ public static class ExpressionEmitter
         if (binary.Operator is not (TokenType.Plus or TokenType.Minus or TokenType.Multiply or TokenType.Divide))
             return null;
 
-        if (!context.TypeMap.TryGetValue(binary.Left,  out var leftGsType) ||
+        if (!context.TypeMap.TryGetValue(binary.Left, out var leftGsType) ||
             !context.TypeMap.TryGetValue(binary.Right, out var rightGsType))
             return null;
 
@@ -294,25 +314,30 @@ public static class ExpressionEmitter
 
         return (leftGsType, rightGsType) switch
         {
-            (IntType,    IntType)    => typeof(int),
-            (FloatType,  FloatType)  => typeof(float),
+            (IntType, IntType) => typeof(int),
+            (FloatType, FloatType) => typeof(float),
             (DoubleType, DoubleType) => typeof(double),
             _ => null
         };
     }
 
-    private static bool WillEmitNativeValue(Expression expression, EmitContext context) => expression switch
+    private static bool WillEmitNativeValue(Expression expression, EmitContext context)
     {
-        LiteralExpression literal    => literal.Value is int or float or double or bool or decimal,
-        IdentifierExpression id      => (context.Locals.TryGetValue(id.Name, out var local) && local.LocalType.IsValueType)
-                                     || (context.Parameters.TryGetValue(id.Name, out var param) && param.ClrType.IsValueType),
-        BinaryExpression nested      => TryGetNativeArithmeticType(nested, context) is not null,
-        CallExpression call          => context.TypeMap.TryGetValue(call, out var t)
-                                     && GsTypeToClr(t) != typeof(object),
-        ModuleCallExpression mc      => context.TypeMap.TryGetValue(mc, out var t)
-                                     && GsTypeToClr(t) != typeof(object),
-        _ => false
-    };
+        return expression switch
+        {
+            LiteralExpression literal => literal.Value is int or float or double or bool or decimal,
+            IdentifierExpression id => (context.Locals.TryGetValue(id.Name, out var local) &&
+                                        local.LocalType.IsValueType)
+                                       || (context.Parameters.TryGetValue(id.Name, out var param) &&
+                                           param.ClrType.IsValueType),
+            BinaryExpression nested => TryGetNativeArithmeticType(nested, context) is not null,
+            CallExpression call => context.TypeMap.TryGetValue(call, out var t)
+                                   && GsTypeToClr(t) != typeof(object),
+            ModuleCallExpression mc => context.TypeMap.TryGetValue(mc, out var t)
+                                       && GsTypeToClr(t) != typeof(object),
+            _ => false
+        };
+    }
 
     // -------------------------------------------------------------------------
     // Call emission
@@ -334,6 +359,7 @@ public static class ExpressionEmitter
                 var expected = paramTypes is not null && i < paramTypes.Length ? paramTypes[i] : typeof(object);
                 EmitArgAs(il, call.Arguments[i], expected, context);
             }
+
             il.Emit(OpCodes.Call, method);
         }
         else
@@ -359,7 +385,9 @@ public static class ExpressionEmitter
             il.Emit(OpCodes.Call, moduleMethod);
         }
         else
+        {
             throw new Exception($"Undefined function: '{key}'");
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -372,7 +400,7 @@ public static class ExpressionEmitter
         var result = il.DeclareLocal(typeof(bool));
 
         var shortCircuit = il.DefineLabel();
-        var end          = il.DefineLabel();
+        var end = il.DefineLabel();
 
         var leftType = Emit(il, binary.Left, context);
         if (leftType != typeof(bool))
@@ -399,8 +427,8 @@ public static class ExpressionEmitter
 
     private static void EmitFunctionValue(ILGenerator il, MethodBuilder adapter)
     {
-        var funcType   = typeof(Func<object[], object>);
-        var funcCtor   = funcType.GetConstructors()[0];
+        var funcType = typeof(Func<object[], object>);
+        var funcCtor = funcType.GetConstructors()[0];
         var gsFuncCtor = typeof(GSharpFunction).GetConstructor([funcType])!;
 
         il.Emit(OpCodes.Ldnull);
@@ -491,11 +519,13 @@ public static class ExpressionEmitter
     private static void EmitIf(ILGenerator il, IfExpression ifExpression, EmitContext context)
     {
         var elseLabel = il.DefineLabel();
-        var endLabel  = il.DefineLabel();
+        var endLabel = il.DefineLabel();
 
         var condType = Emit(il, ifExpression.Condition, context);
         if (condType == typeof(bool))
+        {
             il.Emit(OpCodes.Brfalse, elseLabel);
+        }
         else
         {
             il.Emit(OpCodes.Call, IsTrueMethod);
@@ -517,7 +547,11 @@ public static class ExpressionEmitter
 
     private static void EmitIfBody(ILGenerator il, List<Expression> body, EmitContext context)
     {
-        if (body.Count == 0) { il.Emit(OpCodes.Ldnull); return; }
+        if (body.Count == 0)
+        {
+            il.Emit(OpCodes.Ldnull);
+            return;
+        }
 
         foreach (var expr in body.SkipLast(1))
         {
@@ -551,7 +585,7 @@ public static class ExpressionEmitter
         il.Emit(OpCodes.Stloc, indexLocal);
 
         var loopStart = il.DefineLabel();
-        var loopEnd   = il.DefineLabel();
+        var loopEnd = il.DefineLabel();
 
         il.MarkLabel(loopStart);
 
@@ -663,11 +697,13 @@ public static class ExpressionEmitter
     private static void EmitTailIf(ILGenerator il, IfExpression ifExpression, EmitContext context)
     {
         var elseLabel = il.DefineLabel();
-        var endLabel  = il.DefineLabel();
+        var endLabel = il.DefineLabel();
 
         var condType = Emit(il, ifExpression.Condition, context);
         if (condType == typeof(bool))
+        {
             il.Emit(OpCodes.Brfalse, elseLabel);
+        }
         else
         {
             il.Emit(OpCodes.Call, IsTrueMethod);
@@ -856,16 +892,20 @@ public static class ExpressionEmitter
             clrTypes[i] = currentType is FunctionType ft ? GsTypeToClr(ft.ParameterType) : typeof(object);
             currentType = currentType is FunctionType ft2 ? ft2.ReturnType : currentType;
         }
+
         return clrTypes;
     }
 
-    internal static Type GsTypeToClr(GsType type) => type switch
+    internal static Type GsTypeToClr(GsType type)
     {
-        IntType     => typeof(int),
-        FloatType   => typeof(float),
-        DoubleType  => typeof(double),
-        DecimalType => typeof(decimal),
-        BoolType    => typeof(bool),
-        _           => typeof(object)
-    };
+        return type switch
+        {
+            IntType => typeof(int),
+            FloatType => typeof(float),
+            DoubleType => typeof(double),
+            DecimalType => typeof(decimal),
+            BoolType => typeof(bool),
+            _ => typeof(object)
+        };
+    }
 }

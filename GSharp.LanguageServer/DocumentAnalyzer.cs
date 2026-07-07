@@ -1,16 +1,17 @@
 using System.Text.RegularExpressions;
-using GSharp.TypeChecker;
+using GSharp.Compiler.Lexer;
+using GSharp.Compiler.Parser;
+using GSharp.Compiler.TypeChecker;
 
 namespace GSharp.LanguageServer;
 
 /// <summary>
-/// Runs the G# pipeline (Lexer → Parser → TypeInferrer) over an in-memory document
-/// and turns any failure into diagnostics. LSP-agnostic on purpose, so it can be
-/// unit-tested without spinning up a language server.
-///
-/// Phase 1 limitation: the pipeline aborts on the first error, so at most one
-/// diagnostic is produced per analysis. Collecting multiple errors (and precise
-/// columns) requires source spans on the AST — that is the hover/phase-2 foundation.
+///     Runs the G# pipeline (Lexer → Parser → TypeInferrer) over an in-memory document
+///     and turns any failure into diagnostics. LSP-agnostic on purpose, so it can be
+///     unit-tested without spinning up a language server.
+///     Phase 1 limitation: the pipeline aborts on the first error, so at most one
+///     diagnostic is produced per analysis. Collecting multiple errors (and precise
+///     columns) requires source spans on the AST — that is the hover/phase-2 foundation.
 /// </summary>
 public static class DocumentAnalyzer
 {
@@ -18,12 +19,14 @@ public static class DocumentAnalyzer
     private static readonly Regex LinePrefix = new(@"^(\d+):\s*", RegexOptions.Compiled);
 
     /// <summary>Diagnostics only — kept for callers that don't need the typed AST.</summary>
-    public static IReadOnlyList<AnalyzerDiagnostic> Analyze(string source) =>
-        AnalyzeDocument(source).Diagnostics;
+    public static IReadOnlyList<AnalyzerDiagnostic> Analyze(string source)
+    {
+        return AnalyzeDocument(source).Diagnostics;
+    }
 
     /// <summary>
-    /// Runs the full pipeline and returns diagnostics together with the parsed expressions
-    /// and their inferred types, so the language server can answer hover requests.
+    ///     Runs the full pipeline and returns diagnostics together with the parsed expressions
+    ///     and their inferred types, so the language server can answer hover requests.
     /// </summary>
     public static AnalysisResult AnalyzeDocument(string source)
     {
@@ -35,9 +38,9 @@ public static class DocumentAnalyzer
 
         try
         {
-            var tokens      = new Lexer.Lexer(source).Tokenize();
-            var expressions = new Parser.Parser(tokens).Parse();
-            var types       = new TypeInferrer().Infer(expressions);
+            var tokens = new Lexer(source).Tokenize();
+            var expressions = new Parser(tokens).Parse();
+            var types = new TypeInferrer().Infer(expressions);
             return new AnalysisResult([], expressions, types);
         }
         catch (Exception exception)

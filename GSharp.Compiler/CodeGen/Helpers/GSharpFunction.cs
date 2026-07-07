@@ -1,4 +1,4 @@
-namespace GSharp.CodeGen.Helpers;
+namespace GSharp.Compiler.CodeGen.Helpers;
 
 // Runtime representation of a G# function used as a first-class value.
 //
@@ -17,18 +17,32 @@ namespace GSharp.CodeGen.Helpers;
 // Higher-order calls (apply(f 5)) go through GSharpFunction.Call / Call1.
 public sealed class GSharpFunction
 {
+    private readonly Func<object, object>? _invoke1;
     private readonly Func<object[], object>? _invokeN;
-    private readonly Func<object, object>?  _invoke1;
 
-    public GSharpFunction(Func<object[], object> invokeN) => _invokeN = invokeN;
-    public GSharpFunction(Func<object, object>  invoke1) => _invoke1 = invoke1;
+    public GSharpFunction(Func<object[], object> invokeN)
+    {
+        _invokeN = invokeN;
+    }
 
-    public object Call(object[] args) =>
-        _invoke1 is not null ? _invoke1(args[0]) : _invokeN!(args);
+    public GSharpFunction(Func<object, object> invoke1)
+    {
+        _invoke1 = invoke1;
+    }
+
+    public object Call(object[] args)
+    {
+        return _invoke1 is not null ? _invoke1(args[0]) : _invokeN!(args);
+    }
 
     // Single-argument fast path — avoids heap-allocating object[] for each call.
-    public object Call1(object arg) =>
-        _invoke1 is not null ? _invoke1(arg) : _invokeN!([arg]);
+    public object Call1(object arg)
+    {
+        return _invoke1 is not null ? _invoke1(arg) : _invokeN!([arg]);
+    }
 
-    public override string ToString() => "<function>";
+    public override string ToString()
+    {
+        return "<function>";
+    }
 }

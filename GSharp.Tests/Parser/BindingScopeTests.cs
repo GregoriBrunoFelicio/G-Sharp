@@ -7,11 +7,14 @@ namespace G.Sharp.Compiler.Tests.Parser;
 // stays an error (bindings are immutable — no reassignment, no same-scope shadowing).
 public class BindingScopeTests
 {
-    private static Action Parsing(string source) => () =>
+    private static Action Parsing(string source)
     {
-        var tokens = new GSharp.Lexer.Lexer(source).Tokenize();
-        _ = new GSharp.Parser.Parser(tokens).Parse();
-    };
+        return () =>
+        {
+            var tokens = new GSharp.Compiler.Lexer.Lexer(source).Tokenize();
+            _ = new GSharp.Compiler.Parser.Parser(tokens).Parse();
+        };
+    }
 
     [Fact]
     public void Same_Name_Inside_Function_And_At_Top_Level_Is_Allowed()

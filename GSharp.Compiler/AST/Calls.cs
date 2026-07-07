@@ -1,4 +1,4 @@
-namespace GSharp.AST;
+namespace GSharp.Compiler.AST;
 
 public record CallExpression(string Callee, List<Expression> Arguments) : Expression;
 

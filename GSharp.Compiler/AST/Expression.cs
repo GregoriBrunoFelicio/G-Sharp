@@ -1,6 +1,6 @@
-using GSharp.Lexer;
+using GSharp.Compiler.Lexer;
 
-namespace GSharp.AST;
+namespace GSharp.Compiler.AST;
 
 public abstract record Expression
 {
@@ -18,7 +18,7 @@ public record BindingExpression(string BindingName, Expression Value) : Expressi
 
 public record PrintExpression(Expression Value) : Expression;
 
-public record IfExpression(Expression Condition, List<Expression> ThenBody, List<Expression>? ElseBody = null) : Expression;
+public record IfExpression(Expression Condition, List<Expression> ThenBody, List<Expression>? ElseBody = null)
+    : Expression;
 
 public record ForExpression(string BindingName, Expression Iterable, List<Expression> Body) : Expression;
-

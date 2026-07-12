@@ -1,59 +1,27 @@
 using GSharp.Compiler.Lexer.Helpers;
+using static GSharp.Compiler.Lexer.Helpers.Constants;
 using static GSharp.Compiler.Lexer.Helpers.SymbolTokenMap;
 
 namespace GSharp.Compiler.Lexer;
 
 public class Lexer
 {
-    private static readonly Dictionary<string, TokenType> KeywordTokenMap = new()
-    {
-        // Booleans
-        ["true"] = TokenType.BooleanTrueLiteral,
-        ["false"] = TokenType.BooleanFalseLiteral,
-
-        // Conditionals
-        ["if"] = TokenType.If,
-        ["else"] = TokenType.Else,
-
-        // Loops
-        ["for"] = TokenType.For,
-        ["in"] = TokenType.In,
-        ["do"] = TokenType.Do,
-        ["then"] = TokenType.Then,
-
-        // IO
-        ["println"] = TokenType.Println,
-
-        // Logical operators
-        ["and"] = TokenType.And,
-        ["or"] = TokenType.Or,
-        ["not"] = TokenType.Not,
-
-        // Functions
-        ["function"] = TokenType.Function,
-
-        // Imports
-        ["import"] = TokenType.Import,
-        ["as"] = TokenType.As
-    };
-
-    private static readonly HashSet<char> NumberSuffixes = ['f', 'F', 'd', 'D', 'm', 'M'];
     private readonly Stack<int> _blockLevelStack = new([0]);
-
     private readonly List<Token> _tokens = [];
-    public readonly string Code;
+    private readonly string _code;
     private bool _atStartOfLine = true;
+    private int _lineStart;
     public int Position;
 
     public Lexer(string code)
     {
         if (string.IsNullOrWhiteSpace(code)) throw new NullReferenceException("Code cannot be null or empty.");
-        Code = code;
+        _code = code;
     }
 
-    public int Line { get; private set; } = 1;
-    public int Column { get; private set; } = 1;
-    public char Current => !IsAtEnd() ? Code[Position] : '\0';
+    private int Line { get; set; } = 1;
+    private int Column => Position - _lineStart + 1;
+    public char Current => !IsAtEnd() ? _code[Position] : '\0';
 
     public List<Token> Tokenize()
     {
@@ -107,11 +75,9 @@ public class Lexer
             spaces++;
             Advance();
         }
-
-        // blank, whitespace-only, or comment-only line — skip, don't change block level
+        
         if (IsAtEnd() || IsNewLine() || IsLineComment())
             return;
-
         var currentLevel = _blockLevelStack.Peek();
 
         if (spaces > currentLevel)
@@ -129,19 +95,14 @@ public class Lexer
         }
     }
 
-    private bool IsNewLine()
-    {
-        return Current == '\n' || Current == '\r';
-    }
+    private bool IsNewLine() => Current == '\n' || Current == '\r';
 
-    private bool IsLineComment()
-    {
-        return Current == '/' && Next() == '/';
-    }
+    private bool IsLineComment() => Current == '/' && Next() == '/';
 
     private void SkipLineComment()
     {
-        AdvanceWhile(c => c != '\n' && c != '\r');
+        while (!IsAtEnd() && Current != '\n' && Current != '\r')
+            Advance();
     }
 
     private void ConsumeNewLine()
@@ -150,15 +111,14 @@ public class Lexer
             Advance();
 
         Advance();
+        Line++;
+        _lineStart = Position;
 
         if (!LastTokenIsNewline())
             _tokens.Add(new Token(TokenType.Newline, "\n"));
     }
 
-    private bool LastTokenIsNewline()
-    {
-        return _tokens.Count > 0 && _tokens[^1].Type == TokenType.Newline;
-    }
+    private bool LastTokenIsNewline() => _tokens.Count > 0 && _tokens[^1].Type == TokenType.Newline;
 
     private Token ReadNextToken()
     {
@@ -177,15 +137,16 @@ public class Lexer
         throw new Exception($"{Line}: unexpected '{Current}'");
     }
 
-    public Token ReadIdentifier()
+    private Token ReadIdentifier()
     {
         var line = Line;
         var col = Column;
         var start = Position;
 
-        AdvanceWhile(char.IsLetterOrDigit);
+        while (!IsAtEnd() && char.IsLetterOrDigit(Current))
+            Advance();
 
-        var value = Code[start..Position];
+        var value = _code[start..Position];
         var tokenType = KeywordTokenMap.GetValueOrDefault(value, TokenType.Identifier);
 
         return new Token(tokenType, value, line, col);
@@ -197,10 +158,11 @@ public class Lexer
         var col = Column;
         var start = Position;
 
-        AdvanceWhile(char.IsDigit);
+        while (!IsAtEnd() && char.IsDigit(Current))
+            Advance();
         ReadDecimalIfExists();
 
-        var number = Code[start..Position];
+        var number = _code[start..Position];
         return new Token(TokenType.NumberLiteral, number, line, col);
     }
 
@@ -208,7 +170,8 @@ public class Lexer
     {
         if (IsAtEnd() || Current != '.') return;
         Advance();
-        AdvanceWhile(char.IsDigit);
+        while (!IsAtEnd() && char.IsDigit(Current))
+            Advance();
 
         ReadNumberSuffix();
     }
@@ -224,16 +187,17 @@ public class Lexer
         var line = Line;
         var col = Column;
 
-        Advance(); // skip opening "
+        Advance(); 
 
         var start = Position;
-        AdvanceWhile(c => c != '"');
+        while (!IsAtEnd() && Current != '"')
+            Advance();
 
         if (IsAtEnd())
             throw new Exception($"{line}: unterminated string literal");
 
-        var word = Code[start..Position];
-        Advance(); // skip closing "
+        var word = _code[start..Position];
+        Advance(); 
 
         return new Token(TokenType.StringLiteral, word, line, col);
     }
@@ -282,25 +246,12 @@ public class Lexer
         throw new Exception($"{line}: unexpected '{current}'");
     }
 
-    public void Advance()
-    {
-        if (!IsAtEnd() && Code[Position] == '\n')
-        {
-            Line++;
-            Column = 1;
-        }
-        else
-        {
-            Column++;
-        }
-
-        Position++;
-    }
+    public void Advance() => Position++;
 
     public char Next()
     {
         var next = Position + 1;
-        return next < Code.Length ? Code[next] : '\0';
+        return next < _code.Length ? _code[next] : '\0';
     }
 
     public void AdvanceWhile(Func<char, bool> condition)
@@ -309,8 +260,5 @@ public class Lexer
             Advance();
     }
 
-    public bool IsAtEnd()
-    {
-        return Position >= Code.Length;
-    }
+    public bool IsAtEnd() => Position >= _code.Length;
 }

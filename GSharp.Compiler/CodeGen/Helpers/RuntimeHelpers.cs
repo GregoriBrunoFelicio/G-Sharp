@@ -127,6 +127,22 @@ public static class RuntimeHelpers
         };
     }
 
+    /// <summary>
+    ///     Negates a numeric value. Mirrors <see cref="Add" />/<see cref="Subtract" />'s numeric
+    ///     coverage (int, float, double, decimal).
+    /// </summary>
+    public static object Negate(object value)
+    {
+        return value switch
+        {
+            int i => -i,
+            float f => -f,
+            double d => -d,
+            decimal m => -m,
+            _ => throw new Exception($"Invalid operation '-' on {value?.GetType().Name}")
+        };
+    }
+
     public static object GreaterThan(object a, object b)
     {
         return Compare(a, b, ">") > 0;

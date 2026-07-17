@@ -48,6 +48,8 @@ public static class ExpressionEmitter
     private static readonly MethodInfo DivideMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Divide))!;
     private static readonly MethodInfo IsTrueMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsTrue))!;
 
+    private static readonly MethodInfo NegateMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Negate))!;
+
     private static readonly ConstructorInfo DecimalCtor = typeof(decimal).GetConstructor([
         typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)
     ]) ?? throw new Exception("Decimal constructor not found");
@@ -114,6 +116,9 @@ public static class ExpressionEmitter
 
             case BinaryExpression binary:
                 return EmitBinary(il, binary, context);
+
+            case UnaryExpression unary:
+                return EmitUnary(il, unary, context);
 
             case BindingExpression binding:
                 EmitBindingDeclaration(il, binding, context);
@@ -331,11 +336,61 @@ public static class ExpressionEmitter
                                        || (context.Parameters.TryGetValue(id.Name, out var param) &&
                                            param.ClrType.IsValueType),
             BinaryExpression nested => TryGetNativeArithmeticType(nested, context) is not null,
+            UnaryExpression unary => TryGetNativeUnaryType(unary, context) is not null,
             CallExpression call => context.TypeMap.TryGetValue(call, out var t)
                                    && GsTypeToClr(t) != typeof(object),
             ModuleCallExpression mc => context.TypeMap.TryGetValue(mc, out var t)
                                        && GsTypeToClr(t) != typeof(object),
             _ => false
+        };
+    }
+
+    // -------------------------------------------------------------------------
+    // Unary emission
+    // -------------------------------------------------------------------------
+
+    private static Type EmitUnary(ILGenerator il, UnaryExpression unary, EmitContext context)
+    {
+        if (unary.Operator == TokenType.Not)
+        {
+            var operandType = Emit(il, unary.Operand, context);
+            if (operandType != typeof(bool))
+                il.Emit(OpCodes.Unbox_Any, typeof(bool));
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Ceq);
+            return typeof(bool);
+        }
+
+        var nativeType = TryGetNativeUnaryType(unary, context);
+        if (nativeType is not null)
+        {
+            Emit(il, unary.Operand, context);
+            il.Emit(OpCodes.Neg);
+            return nativeType;
+        }
+
+        EmitToStack(il, unary.Operand, context);
+        il.Emit(OpCodes.Call, NegateMethod);
+        return typeof(object);
+    }
+
+    private static Type? TryGetNativeUnaryType(UnaryExpression unary, EmitContext context)
+    {
+        if (unary.Operator != TokenType.Minus)
+            return null;
+
+        if (!context.TypeMap.TryGetValue(unary.Operand, out var operandType))
+            return null;
+
+        if (!WillEmitNativeValue(unary.Operand, context))
+            return null;
+
+        return operandType switch
+        {
+            IntType => typeof(int),
+            FloatType => typeof(float),
+            DoubleType => typeof(double),
+            _ => null
         };
     }
 
@@ -656,7 +711,7 @@ public static class ExpressionEmitter
     // Tail call emission
     // -------------------------------------------------------------------------
 
-    internal static void EmitTail(ILGenerator il, Expression expression, EmitContext context)
+    private static void EmitTail(ILGenerator il, Expression expression, EmitContext context)
     {
         if (context.TailCall is { } tco)
         {
@@ -896,7 +951,7 @@ public static class ExpressionEmitter
         return clrTypes;
     }
 
-    internal static Type GsTypeToClr(GsType type)
+    private static Type GsTypeToClr(GsType type)
     {
         return type switch
         {

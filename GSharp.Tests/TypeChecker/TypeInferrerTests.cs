@@ -84,6 +84,32 @@ public class TypeInferrerTests
     }
 
     // -------------------------------------------------------------------------
+    // Unary inference
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Should_Infer_Not_As_Bool()
+    {
+        var types = Infer("x -> not true");
+
+        types.Values.Should().ContainItemsAssignableTo<BoolType>();
+    }
+
+    [Fact]
+    public void Should_Throw_When_Not_Is_Applied_To_A_Non_Bool()
+    {
+        ShouldThrowTypeMismatch("x -> not 1", "type mismatch");
+    }
+
+    [Fact]
+    public void Should_Infer_Unary_Minus_As_The_Operand_Type()
+    {
+        var types = Infer("x -> -3.14d");
+
+        types.Values.Should().ContainItemsAssignableTo<DoubleType>();
+    }
+
+    // -------------------------------------------------------------------------
     // Function inference
     // -------------------------------------------------------------------------
 

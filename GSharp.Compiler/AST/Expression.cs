@@ -14,6 +14,8 @@ public record IdentifierExpression(string Name) : Expression;
 
 public record BinaryExpression(Expression Left, TokenType Operator, Expression Right) : Expression;
 
+public record UnaryExpression(TokenType Operator, Expression Operand) : Expression;
+
 public record BindingExpression(string BindingName, Expression Value) : Expression;
 
 public record PrintExpression(Expression Value) : Expression;

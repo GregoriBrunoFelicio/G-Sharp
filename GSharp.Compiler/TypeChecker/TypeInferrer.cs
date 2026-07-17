@@ -42,6 +42,7 @@ public partial class TypeInferrer
             LiteralExpression literal => InferLiteral(literal),
             IdentifierExpression binding => InferBinding(binding, environment),
             BinaryExpression binary => InferBinary(binary, environment),
+            UnaryExpression unary => InferUnary(unary, environment),
             BindingExpression binding => InferBinding(binding, environment),
             PrintExpression print => InferPrint(print, environment),
             IfExpression ifExpression => InferIf(ifExpression, environment),

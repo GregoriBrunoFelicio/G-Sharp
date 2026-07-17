@@ -1,17 +1,20 @@
 using G.Sharp.Compiler;
 using GSharp.Compiler.CodeGen;
+using GSharp.Compiler.Optimizer;
 using GSharp.Compiler.TypeChecker;
 
 try
 {
     var path = EntryResolver.ResolvePath(args);
-    var expressions = GsLoader.ParseFile(path);
-    var modules = GsLoader.LoadModules(path, expressions);
+    var parsedExpressions = GsLoader.ParseFile(path);
+    var foldedExpressions = ConstantFolder.FoldAll(parsedExpressions);
+    var modules = GsLoader.LoadModules(path, foldedExpressions)
+        .ToDictionary(module => module.Key, module => ConstantFolder.FoldAll(module.Value));
 
-    var typeMap = new TypeInferrer().Infer(expressions);
+    var typeMap = new TypeInferrer().Infer(foldedExpressions);
 
     var compiler = new Compiler();
-    compiler.CompileAndRun(expressions, modules, typeMap);
+    compiler.CompileAndRun(foldedExpressions, modules, typeMap);
 }
 catch (Exception ex)
 {

@@ -256,6 +256,12 @@ public class Parser(List<Token> tokens)
 
     private Expression GetExpression(bool allowAtomArgs)
     {
+        if (Current().Type is TokenType.Minus or TokenType.Not)
+        {
+            var opToken = Advance();
+            var operand = GetExpression(allowAtomArgs);
+            return new UnaryExpression(opToken.Type, operand) { Line = opToken.Line, Column = opToken.Column };
+        }
         if (IsLiteralToken(Current().Type))
         {
             var token = Advance();

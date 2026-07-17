@@ -77,6 +77,21 @@ public partial class TypeInferrer
         return resultType;
     }
 
+    private GsType InferUnary(UnaryExpression unary, TypeEnvironment environment)
+    {
+        var operandType = InferExpression(unary.Operand, environment);
+
+        if (unary.Operator == TokenType.Not)
+        {
+            _constraints.Add(new TypeConstraint(operandType, new BoolType(), unary.Line, unary.Column));
+            return new BoolType();
+        }
+
+        var resultType = FreshTypeVar();
+        _constraints.Add(new TypeConstraint(resultType, operandType));
+        return resultType;
+    }
+
     private GsType InferBinding(BindingExpression binding, TypeEnvironment environment)
     {
         var valueType = InferExpression(binding.Value, environment);

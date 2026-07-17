@@ -104,6 +104,24 @@ if a and age >= 18 then
     println "adult and confirmed"
 ```
 
+### Unary operators
+
+`not` (or `!`) negates a boolean; `-` negates a number. Both bind tighter than any binary
+operator and looser than function application.
+
+```gs
+done -> false
+println not done      // true
+println !done         // true, same as `not`
+
+x -> 10
+println -x            // -10
+println -x + 3        // -7, unary binds before +
+```
+
+`f -x` still means `f - x` (binary subtraction) — juxtaposing a call with a unary operand
+requires parens: `f (-x)`.
+
 ### For — functional map
 
 `for` transforms a collection and returns a new array.
@@ -294,6 +312,8 @@ add a b => a + b  →  (int → (int → int))
 | Strings | ✅ |
 | Booleans (`true`, `false`) | ✅ |
 | Logical operators (`and`, `or`, short-circuit) | ✅ |
+| Unary operators (`not`/`!`, `-`) | ✅ |
+| Constant folding (literal arithmetic evaluated at compile time) | ✅ |
 | Arrays | ✅ |
 | `if/else` as expression (inline and block) | ✅ |
 | `for` as functional map (returns array) | ✅ |
@@ -347,13 +367,9 @@ flowchart TD
 
     T["List&lt;Token&gt;"]
 
-    subgraph PARSER["PARSER"]
-        P1["BindingParser — immutable bindings (x -> value)"]
-        P2["IfParser — inline or block conditionals"]
-        P3["ForParser — functional map over arrays"]
-        P4["FunctionParser — named functions"]
-        P5["ImportParser — module declarations"]
-        P6["ExpressionParser — arithmetic, calls, HOF, logical"]
+    subgraph PARSER["PARSER (one Parser class, one method per construct)"]
+        P1["ParseBinding / ParsePrint / ParseIf / ParseFor / ParseFunction / ParseImport"]
+        P2["GetExpression / ParseExpression / ParseRightOperand — arithmetic, unary, calls, HOF, logical"]
     end
 
     AST["List&lt;Expression&gt; (AST)"]
@@ -363,6 +379,12 @@ flowchart TD
         CL2["GsLoader — parses files, loads modules via queue"]
     end
 
+    subgraph OPTIMIZER["OPTIMIZER"]
+        O1["ConstantFolder.FoldAll — evaluates literal-only expressions at compile time"]
+    end
+
+    FOLDED["List&lt;Expression&gt; (folded AST)"]
+
     subgraph TYPECHECKER["TYPE CHECKER"]
         TC1["TypeInferrer — walks AST, assigns TypeVars, generates constraints"]
         TC2["Unifier — solves constraints via Robinson unification"]
@@ -371,12 +393,12 @@ flowchart TD
 
     TMAP["Dictionary&lt;Expression, GsType&gt; (type map)"]
 
-    subgraph CODEGEN["CODE GEN"]
-        C1["ExpressionEmitter — typed IL (native int/double) or boxed object fallback"]
-        C2["IfEmitter / ForEmitter — control flow via IL labels"]
-        C3["BindingEmitter — typed local slots (int, double, etc.)"]
-        C4["FunctionEmitter — two-pass (Define + Emit) with adapter methods; typed params"]
-        C5["TailCallEmitter — self-tail-calls as Starg_S + Br (no new stack frame)"]
+    subgraph CODEGEN["CODE GEN (one ExpressionEmitter class, one method per construct)"]
+        C1["Emit / EmitBinary / EmitUnary — typed IL (native int/double) or boxed object fallback"]
+        C2["EmitIf / EmitFor — control flow via IL labels"]
+        C3["EmitBindingDeclaration — typed local slots (int, double, etc.)"]
+        C4["DefineFunction + EmitFunction — two-pass, with adapter methods; typed params"]
+        C5["EmitTail / TryEmitTailCall — self-tail-calls as Starg_S + Br (no new stack frame)"]
         C6["EmitContext — locals, params, functions, adapters, type map, param types"]
         C7["GSharpFunction — first-class function wrapper"]
         C8["RuntimeHelpers — numeric type promotion (fallback)"]
@@ -400,7 +422,7 @@ flowchart TD
     OUT["Output"]
     EDITOR["Editor (LSP client)"]
 
-    SRC --> CLI --> LEXER --> T --> PARSER --> AST --> TYPECHECKER --> TMAP --> CODEGEN --> IL --> RT --> OUT
+    SRC --> CLI --> LEXER --> T --> PARSER --> AST --> OPTIMIZER --> FOLDED --> TYPECHECKER --> TMAP --> CODEGEN --> IL --> RT --> OUT
     STDLIB --> TYPECHECKER
     STDLIB --> CODEGEN
     EDITOR --> LSP --> TYPECHECKER
@@ -408,39 +430,58 @@ flowchart TD
 
 ### Project structure
 
+The compiler is one project, `GSharp.Compiler`, with a folder (and matching namespace) per
+layer — there's no per-layer project split, and no per-construct class split either (the
+parser is a single `Parser` class with one method per construct, codegen is a single
+`ExpressionEmitter` class the same way):
+
 ```
-GSharp.Lexer/         — tokenizer (Lexer, sub-lexers, TokenType)
-GSharp.AST/           — immutable record types for all AST nodes
-  Expression.cs       — base + Literal, Identifier, Binary, Binding
-  Declarations.cs     — FunctionDeclaration, ImportDeclaration
-  Calls.cs            — CallExpression, ModuleCallExpression
-  Statements.cs       — Print, If, For
-GSharp.Stdlib/        — standard library (no compiler dependency)
-  GSharpFunction.cs   — first-class function runtime wrapper
-  ArrayBuiltins.cs    — array.head, array.tail, array.sort, array.map, ...
-  StringBuiltins.cs   — string.from, ...
-GSharp.Parser/        — recursive-descent parser (one class per construct)
-GSharp.TypeChecker/   — Hindley-Milner type inference (partial classes)
-  GsType.cs           — type hierarchy (IntType, FunctionType, TypeVar, ...)
-  TypeInferrer.cs     — walks AST, assigns TypeVars, collects constraints
-  BuiltinTypeRules.cs — arities and signatures for all stdlib builtins
-  Unifier.cs          — Robinson unification algorithm
-  Substitution.cs     — TypeVar → GsType mapping produced by the Unifier
-  TypeEnvironment.cs  — scoped variable → type bindings
-  TypeConstraint.cs   — equality constraint (A must equal B)
-GSharp.CodeGen/       — IL emitters (one class per construct) + Compiler + TCO
-GSharp.LanguageServer/ — LSP server (hover, diagnostics)
-  DocumentAnalyzer.cs — runs the pipeline over in-memory source, returns diagnostics
-  HoverProvider.cs    — maps cursor position to the inferred type of the node under it
-  HoverHandler.cs     — LSP hover request handler
+GSharp.Compiler/
+  Lexer/                — tokenizer
+    Lexer.cs            — Lexer class, indentation → BlockOpen/BlockClose
+    Token.cs            — TokenType enum
+    Helpers/             — SymbolTokenMap, keyword map, constants
+  AST/                  — immutable record types for all AST nodes
+    Expression.cs       — base + Literal, Identifier, Binary, Unary, Binding, Print, If, For
+    Declarations.cs     — FunctionDeclaration, ImportDeclaration
+    Calls.cs            — CallExpression, ModuleCallExpression
+  Parser/               — recursive-descent parser
+    Parser.cs           — one class, one private method per construct (ParseIf, ParseFor, ...)
+    Validations.cs      — OperatorPrecedence table, literal-token helpers, number parsing
+  Optimizer/            — compile-time-only passes, run before the type checker
+    ConstantFolder.cs   — evaluates literal-only expressions (arithmetic, unary, short-circuit)
+  TypeChecker/          — Hindley-Milner type inference (partial classes)
+    GsType.cs           — type hierarchy (IntType, FunctionType, TypeVar, ...)
+    TypeInferrer.cs     — walks AST, assigns TypeVars, collects constraints
+    TypeInferrer.Expressions.cs — per-node inference (binary, unary, if, for, ...)
+    TypeInferrer.Functions.cs   — function signature registration and calls
+    TypeInferrer.Builtins.cs    — BuiltinTypeRules: arities and signatures for stdlib builtins
+    Unifier.cs          — Robinson unification algorithm
+    Substitution.cs     — TypeVar → GsType mapping produced by the Unifier
+    TypeEnvironment.cs  — scoped variable → type bindings
+    TypeConstraint.cs   — equality constraint (A must equal B)
+  Stdlib/               — standard library implementations
+    ArrayBuiltins.cs    — array.head, array.tail, array.sort, array.map, ...
+    StringBuiltins.cs   — string.from, ...
+  CodeGen/              — IL emission
+    ExpressionEmitter.cs — one class, one private method per construct (EmitIf, EmitFor, ...)
+    Compiler.cs         — builds the dynamic assembly, drives DefineFunction/EmitFunction, runs it
+    EmitContext.cs      — locals, params, functions, adapters, type map, param types
+    Helpers/
+      RuntimeHelpers.cs — boxed numeric fallback (Add, Subtract, Negate, promotion, ...)
+      GSharpFunction.cs — first-class function runtime wrapper
+GSharp.LanguageServer/  — LSP server (hover, diagnostics) — separate project
+  DocumentAnalyzer.cs   — runs Lexer → Parser → TypeInferrer over in-memory source (no ConstantFolder)
+  HoverProvider.cs      — maps cursor position to the inferred type of the node under it
+  HoverHandler.cs       — LSP hover request handler
   TextDocumentHandler.cs — LSP text document sync handler
-  DocumentStore.cs    — per-document analysis cache
-  TypeDisplay.cs      — formats GsType values for display in hover tooltips
-GSharp.CLI/           — entry point resolver, file loader, program runner
-  EntryResolver.cs    — detects which file to run
-  GsLoader.cs         — parses files and resolves module imports
-  Program.cs          — main entry point
-GSharp.Tests/         — xUnit tests (FluentAssertions)
+  DocumentStore.cs      — per-document analysis cache
+  TypeDisplay.cs        — formats GsType values for display in hover tooltips
+GSharp.CLI/             — entry point resolver, file loader, program runner — separate project
+  EntryResolver.cs      — detects which file to run
+  GsLoader.cs           — parses files and resolves module imports
+  Program.cs            — main entry point; runs Lexer → Parser → ConstantFolder → TypeInferrer → Compiler
+GSharp.Tests/           — xUnit tests (FluentAssertions) — separate project, folders mirror GSharp.Compiler's
 ```
 
 ---

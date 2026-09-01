@@ -65,7 +65,7 @@ public static class ExpressionEmitter
             il.Emit(OpCodes.Box, clrType);
     }
 
-    internal static void EmitArgAs(ILGenerator il, Expression arg, Type expected, EmitContext context)
+    private static void EmitArgAs(ILGenerator il, Expression arg, Type expected, EmitContext context)
     {
         var actual = Emit(il, arg, context);
         if (actual == expected) return;
@@ -76,7 +76,7 @@ public static class ExpressionEmitter
             il.Emit(OpCodes.Box, actual);
     }
 
-    internal static Type Emit(ILGenerator il, Expression expression, EmitContext context)
+    private static Type Emit(ILGenerator il, Expression expression, EmitContext context)
     {
         switch (expression)
         {
@@ -88,31 +88,19 @@ public static class ExpressionEmitter
 
             case CallExpression call:
                 EmitCall(il, call, context);
-                if (context.TypeMap.TryGetValue(call, out var callGsType))
-                {
-                    var returnClrType = GsTypeToClr(callGsType);
-                    if (returnClrType != typeof(object))
-                    {
-                        il.Emit(OpCodes.Unbox_Any, returnClrType);
-                        return returnClrType;
-                    }
-                }
-
-                return typeof(object);
+                if (!context.TypeMap.TryGetValue(call, out var callGsType)) return typeof(object);
+                var returnClrType = GsTypeToClr(callGsType);
+                if (returnClrType == typeof(object)) return typeof(object);
+                il.Emit(OpCodes.Unbox_Any, returnClrType);
+                return returnClrType;
 
             case ModuleCallExpression moduleCall:
                 EmitModuleCall(il, moduleCall, context);
-                if (context.TypeMap.TryGetValue(moduleCall, out var mcGsType))
-                {
-                    var mcClrType = GsTypeToClr(mcGsType);
-                    if (mcClrType != typeof(object))
-                    {
-                        il.Emit(OpCodes.Unbox_Any, mcClrType);
-                        return mcClrType;
-                    }
-                }
-
-                return typeof(object);
+                if (!context.TypeMap.TryGetValue(moduleCall, out var mcGsType)) return typeof(object);
+                var mcClrType = GsTypeToClr(mcGsType);
+                if (mcClrType == typeof(object)) return typeof(object);
+                il.Emit(OpCodes.Unbox_Any, mcClrType);
+                return mcClrType;
 
             case BinaryExpression binary:
                 return EmitBinary(il, binary, context);

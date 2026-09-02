@@ -10,17 +10,6 @@ Everything is an expression, all bindings are immutable, and there is no reassig
 
 Early-stage but under active development. Not yet production-ready.
 
-```gs
-square x => x * x
-
-nums    -> [1 2 3 4 5]
-squared -> for n in nums do
-    square n
-
-for x in squared do
-    println x    // 1 4 9 16 25
-```
-
 ---
 
 ## Contents
@@ -29,6 +18,7 @@ for x in squared do
 - [Syntax](#syntax)
 - [Standard library](#standard-library)
 - [Functions](#functions)
+- [Lambda expressions](#lambda-expressions)
 - [Entry point](#entry-point)
 - [Modules and imports](#modules-and-imports)
 - [Language Server](#language-server)
@@ -169,34 +159,6 @@ for x in doubled do
     println x    // 2 4 6 8 10
 ```
 
-### Lambda expressions
-
-`=>` always marks where a function body starts, whether the function is named or anonymous — the
-**only** difference is whether a name comes before the parameter list.
-
-```gs
-// named function — a name, then parameters, then =>
-square x => x * x
-
-// lambda (anonymous function) — no name, just parameters then =>
-squareLambda -> x => x * x
-```
-
-`square` above can be called directly (`square 5`). A lambda has no name of its own — it only
-becomes usable once you bind it (`squareLambda -> x => x * x`) or pass it straight into a call.
-As a call argument it must be parenthesized:
-
-```gs
-apply x f => f x
-println (apply 5 (n => n * 2))           // 10
-
-nums  -> [1 2 3 4 5]
-evens -> array.filter nums (n => n > 2)  // [3 4 5]
-```
-
-Lambdas are non-capturing — a lambda body can only see its own parameters, not bindings from
-an enclosing function or lambda.
-
 ### Comments
 
 ```gs
@@ -299,6 +261,36 @@ println applyTwice double 3   // 12
 fn -> double
 println fn(10)                // 20
 ```
+
+---
+
+## Lambda expressions
+
+`=>` always marks where a function body starts, whether the function is named or anonymous — the
+**only** difference is whether a name comes before the parameter list.
+
+```gs
+// named function — a name, then parameters, then =>
+square x => x * x
+
+// lambda (anonymous function) — no name, just parameters then =>
+squareLambda -> x => x * x
+```
+
+`square` above can be called directly (`square 5`). A lambda has no name of its own — it only
+becomes usable once you bind it (`squareLambda -> x => x * x`) or pass it straight into a call.
+As a call argument it must be parenthesized:
+
+```gs
+apply x f => f x
+println (apply 5 (n => n * 2))           // 10
+
+nums  -> [1 2 3 4 5]
+evens -> array.filter nums (n => n > 2)  // [3 4 5]
+```
+
+Lambdas are non-capturing — a lambda body can only see its own parameters, not bindings from
+an enclosing function or lambda.
 
 ---
 

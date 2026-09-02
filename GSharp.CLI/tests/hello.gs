@@ -151,3 +151,21 @@ println add x y
 
 // --- call syntax: parens required for expression args ---
 println add(x + 1 y)
+
+// --- lambda expressions (non-capturing) ---
+lambdaDouble -> n => n * 2
+println lambdaDouble(5)
+
+applyLambda x f => f x
+println applyLambda(5 (n => n * 2))
+
+// --- map / filter / fold ---
+lambdaDoubled -> array.map nums (n => n * 2)
+for x in lambdaDoubled do
+    println x
+
+evens -> array.filter nums (n => n > 2)
+println array.len evens
+
+total -> array.fold nums 0 (acc n => acc + n)
+println total

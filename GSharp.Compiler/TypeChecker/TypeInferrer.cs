@@ -48,6 +48,7 @@ public partial class TypeInferrer
             IfExpression ifExpression => InferIf(ifExpression, environment),
             ForExpression forExpression => InferFor(forExpression, environment),
             FunctionDeclaration fn => InferFunctionBody(fn, environment),
+            LambdaExpression lambda => InferLambda(lambda, environment),
             CallExpression call => InferCall(call, environment),
             ModuleCallExpression moduleCall => InferModuleCall(moduleCall, environment),
             ImportDeclaration => new UnitType(),

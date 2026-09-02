@@ -186,6 +186,31 @@ public class Parser(List<Token> tokens)
         return new FunctionDeclaration(name, parameters, body) { Line = nameToken.Line, Column = nameToken.Column };
     }
 
+    private bool IsLambdaExpression()
+    {
+        var saved = _current;
+        try
+        {
+            while (Check(TokenType.Identifier))
+                Advance();
+            return Check(TokenType.Arrow);
+        }
+        finally
+        {
+            _current = saved;
+        }
+    }
+
+    private LambdaExpression ParseLambdaExpression()
+    {
+        var startToken = Current();
+        var parameters = new List<string>();
+        while (Check(TokenType.Identifier))
+            parameters.Add(Identifier().Value);
+        var body = ParseScopedFunctionBody(parameters);
+        return new LambdaExpression(parameters, body) { Line = startToken.Line, Column = startToken.Column };
+    }
+
     private List<Expression> ParseScopedFunctionBody(List<string> parameters)
     {
         EnterScope();
@@ -279,6 +304,8 @@ public class Parser(List<Token> tokens)
             Consume(TokenType.RightParen);
             return inner;
         }
+        if (Check(TokenType.Identifier) && IsLambdaExpression())
+            return ParseLambdaExpression();
         if (Check(TokenType.Identifier))
             return ParseIdentifierExpression(Advance(), allowAtomArgs);
         throw new Exception($"{Current().Line}: unexpected '{Current().Value}'");

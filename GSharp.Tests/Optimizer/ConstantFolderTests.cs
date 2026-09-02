@@ -135,6 +135,16 @@ public class ConstantFolderTests
     }
 
     [Fact]
+    public void Folds_A_Literal_Arithmetic_Expression_Inside_A_Lambda_Body()
+    {
+        var lambda = (LambdaExpression)BoundValue("f -> n => 1 + 1");
+
+        lambda.Body.Should().ContainSingle()
+            .Which.Should().BeOfType<LiteralExpression>()
+            .Which.Value.Should().Be(2);
+    }
+
+    [Fact]
     public void Folded_Program_Compiles_And_Runs_With_The_Same_Output_As_Before_Folding()
     {
         var source = "println 1 + 1\nprintln 2 * 3 == 6";

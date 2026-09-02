@@ -13,10 +13,14 @@ public class EmitContext(
     Dictionary<Expression, GsType>? typeMap = null,
     Dictionary<string, Type[]>? functionParamTypes = null,
     Dictionary<string, MethodBuilder>? functionAdapters1 = null,
-    Dictionary<string, FieldBuilder>? functionFields = null)
+    Dictionary<string, FieldBuilder>? functionFields = null,
+    Dictionary<Expression, string>? lambdaFunctionNames = null)
 {
     public readonly Dictionary<string, MethodInfo> Builtins = new();
     public readonly Dictionary<string, MethodBuilder> FunctionAdapters = functionAdapters;
+
+    public readonly Dictionary<Expression, string> LambdaFunctionNames =
+        lambdaFunctionNames ?? new Dictionary<Expression, string>(ReferenceEqualityComparer.Instance);
 
     public readonly Dictionary<string, MethodBuilder> FunctionAdapters1 =
         functionAdapters1 ?? new Dictionary<string, MethodBuilder>();

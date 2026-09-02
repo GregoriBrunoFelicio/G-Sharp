@@ -1,4 +1,5 @@
 using System.Reflection;
+using GSharp.Compiler.CodeGen.Helpers;
 
 namespace GSharp.Compiler.Stdlib;
 
@@ -15,6 +16,40 @@ public static class ArrayBuiltins
         builtins["array.concat"] = typeof(ArrayBuiltins).GetMethod(nameof(Concat))!;
         builtins["array.sort"] = typeof(ArrayBuiltins).GetMethod(nameof(Sort))!;
         builtins["array.take"] = typeof(ArrayBuiltins).GetMethod(nameof(Take))!;
+        builtins["array.map"] = typeof(ArrayBuiltins).GetMethod(nameof(Map))!;
+        builtins["array.filter"] = typeof(ArrayBuiltins).GetMethod(nameof(Filter))!;
+        builtins["array.fold"] = typeof(ArrayBuiltins).GetMethod(nameof(Fold))!;
+    }
+
+    public static object Map(object arg, object fn)
+    {
+        var arr = (object[])arg;
+        var f = (GSharpFunction)fn;
+        var result = new object[arr.Length];
+        for (var i = 0; i < arr.Length; i++)
+            result[i] = f.Call1(arr[i]);
+        return result;
+    }
+
+    public static object Filter(object arg, object fn)
+    {
+        var arr = (object[])arg;
+        var f = (GSharpFunction)fn;
+        var matches = new List<object>();
+        foreach (var element in arr)
+            if ((bool)f.Call1(element))
+                matches.Add(element);
+        return matches.ToArray();
+    }
+
+    public static object Fold(object arg, object seed, object fn)
+    {
+        var arr = (object[])arg;
+        var f = (GSharpFunction)fn;
+        var accumulator = seed;
+        foreach (var element in arr)
+            accumulator = f.Call([accumulator, element]);
+        return accumulator;
     }
 
     public static object Take(object arg, object quantity)

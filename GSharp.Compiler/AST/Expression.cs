@@ -24,3 +24,5 @@ public record IfExpression(Expression Condition, List<Expression> ThenBody, List
     : Expression;
 
 public record ForExpression(string BindingName, Expression Iterable, List<Expression> Body) : Expression;
+
+public record LambdaExpression(List<string> Parameters, List<Expression> Body) : Expression;

@@ -33,6 +33,21 @@ public partial class TypeInferrer
         return registeredFunctionType;
     }
 
+    private GsType InferLambda(LambdaExpression lambda, TypeEnvironment environment)
+    {
+        var parameterTypeVars = lambda.Parameters.Select(_ => FreshTypeVar()).ToList();
+        var returnTypeVar = FreshTypeVar();
+        var bodyEnvironment = environment.CreateChildScope();
+
+        for (var i = 0; i < lambda.Parameters.Count; i++)
+            bodyEnvironment.Register(lambda.Parameters[i], parameterTypeVars[i]);
+
+        var bodyResultType = InferBody(lambda.Body, bodyEnvironment);
+        _constraints.Add(new TypeConstraint(returnTypeVar, bodyResultType));
+
+        return BuildCurriedFunctionType(parameterTypeVars, returnTypeVar);
+    }
+
     private GsType InferCall(CallExpression call, TypeEnvironment environment)
     {
         if (!environment.TryLookup(call.Callee, out var calleeType))

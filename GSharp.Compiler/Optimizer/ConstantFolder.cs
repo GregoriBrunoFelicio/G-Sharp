@@ -41,6 +41,7 @@ public static class ConstantFolder
             {
                 Body = FoldBody(functionDeclaration.Body)
             },
+            LambdaExpression lambda => lambda with { Body = FoldBody(lambda.Body) },
             CallExpression call => call with { Arguments = FoldBody(call.Arguments) },
             ModuleCallExpression moduleCall => moduleCall with { Arguments = FoldBody(moduleCall.Arguments) },
             ImportDeclaration => expression,

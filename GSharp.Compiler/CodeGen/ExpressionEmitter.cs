@@ -128,6 +128,9 @@ public static class ExpressionEmitter
                 il.Emit(OpCodes.Ldnull);
                 return typeof(object);
 
+            case LambdaExpression lambda:
+                return EmitLambda(il, lambda, context);
+
             default:
                 throw new NotSupportedException(
                     $"internal error: no emitter for expression '{expression.GetType().Name}'");
@@ -226,6 +229,19 @@ public static class ExpressionEmitter
         }
 
         throw new Exception($"Undefined binding: '{binding.Name}'");
+    }
+
+    // Lambdas are lifted into synthetic top-level functions before codegen runs
+    // (LambdaLifter) — at the original occurrence site, we just load the lifted
+    // function's cached GSharpFunction field, exactly like a named function value.
+    private static Type EmitLambda(ILGenerator il, LambdaExpression lambda, EmitContext context)
+    {
+        if (!context.LambdaFunctionNames.TryGetValue(lambda, out var qualifiedName))
+            throw new Exception("internal error: lambda was not lifted before codegen");
+
+        var field = context.FunctionFields[qualifiedName];
+        il.Emit(OpCodes.Ldsfld, field);
+        return typeof(object);
     }
 
     private static void EmitBindingDeclaration(ILGenerator il, BindingExpression binding, EmitContext context)
@@ -859,7 +875,8 @@ public static class ExpressionEmitter
             context.TypeMap,
             context.FunctionParamTypes,
             context.FunctionAdapters1,
-            context.FunctionFields);
+            context.FunctionFields,
+            context.LambdaFunctionNames);
         foreach (var (builtinName, builtinMethod) in context.Builtins)
             functionContext.Builtins[builtinName] = builtinMethod;
 

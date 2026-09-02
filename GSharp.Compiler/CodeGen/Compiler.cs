@@ -86,13 +86,39 @@ public class Compiler
             var functionFields = new Dictionary<string, FieldBuilder>();
             var functionParamTypes = new Dictionary<string, Type[]>();
 
+            var lambdaFunctionNames = new Dictionary<Expression, string>(ReferenceEqualityComparer.Instance);
+            var topLevelLift = LambdaLifter.Lift(expressions);
+            foreach (var (lambda, name) in topLevelLift.LambdaNames)
+                lambdaFunctionNames[lambda] = name;
+
+            var moduleLifts = new Dictionary<string, LambdaLiftResult>();
             foreach (var (moduleName, moduleExprs) in modules ?? [])
-            foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
-                ExpressionEmitter.DefineFunction(typeBuilder, fn, functions, adapters, typeMap,
-                    moduleName + ".", functionParamTypes,
-                    adapters1, functionFields);
+            {
+                var lift = LambdaLifter.Lift(moduleExprs, moduleName + ".");
+                moduleLifts[moduleName] = lift;
+                foreach (var (lambda, name) in lift.LambdaNames)
+                    lambdaFunctionNames[lambda] = name;
+            }
+
+            foreach (var (moduleName, moduleExprs) in modules ?? [])
+            {
+                foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
+                    ExpressionEmitter.DefineFunction(typeBuilder, fn, functions, adapters, typeMap,
+                        moduleName + ".", functionParamTypes,
+                        adapters1, functionFields);
+
+                foreach (var fn in moduleLifts[moduleName].LiftedFunctions)
+                    ExpressionEmitter.DefineFunction(typeBuilder, fn, functions, adapters, typeMap,
+                        moduleName + ".", functionParamTypes,
+                        adapters1, functionFields);
+            }
 
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
+                ExpressionEmitter.DefineFunction(typeBuilder, fn, functions, adapters, typeMap,
+                    functionParamTypes: functionParamTypes,
+                    adapters1: adapters1, functionFields: functionFields);
+
+            foreach (var fn in topLevelLift.LiftedFunctions)
                 ExpressionEmitter.DefineFunction(typeBuilder, fn, functions, adapters, typeMap,
                     functionParamTypes: functionParamTypes,
                     adapters1: adapters1, functionFields: functionFields);
@@ -100,14 +126,22 @@ public class Compiler
             EmitStaticInitializer(typeBuilder, adapters, adapters1, functionFields);
 
             var context = new EmitContext(functions, adapters, typeMap, functionParamTypes,
-                adapters1, functionFields);
+                adapters1, functionFields, lambdaFunctionNames);
             RegisterBuiltins(context);
 
             foreach (var (moduleName, moduleExprs) in modules ?? [])
-            foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
-                ExpressionEmitter.EmitFunction(fn, context, moduleName + ".");
+            {
+                foreach (var fn in moduleExprs.OfType<FunctionDeclaration>())
+                    ExpressionEmitter.EmitFunction(fn, context, moduleName + ".");
+
+                foreach (var fn in moduleLifts[moduleName].LiftedFunctions)
+                    ExpressionEmitter.EmitFunction(fn, context, moduleName + ".");
+            }
 
             foreach (var fn in expressions.OfType<FunctionDeclaration>())
+                ExpressionEmitter.EmitFunction(fn, context);
+
+            foreach (var fn in topLevelLift.LiftedFunctions)
                 ExpressionEmitter.EmitFunction(fn, context);
 
             var il = methodBuilder.GetILGenerator();

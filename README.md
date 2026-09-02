@@ -169,6 +169,25 @@ for x in doubled do
     println x    // 2 4 6 8 10
 ```
 
+### Lambda expressions
+
+Anonymous functions reuse the same `=>` used by named inline functions — `param... => body`,
+single expression only. As a call argument they must be parenthesized.
+
+```gs
+double -> n => n * 2
+println (double 5)                       // 10
+
+apply x f => f x
+println (apply 5 (n => n * 2))           // 10
+
+nums  -> [1 2 3 4 5]
+evens -> array.filter nums (n => n > 2)  // [3 4 5]
+```
+
+Lambdas are non-capturing — a lambda body can only see its own parameters, not bindings from
+an enclosing function or lambda.
+
 ### Comments
 
 ```gs
@@ -197,6 +216,10 @@ reversed -> array.reverse nums         // [5 4 3 2 1]
 sorted   -> array.sort [3 1 2]         // [1 2 3]
 more     -> [6 7 8]
 all      -> array.concat nums more     // [1 2 3 4 5 6 7 8]
+
+doubled -> array.map nums (n => n * 2)             // [2 4 6 8 10]
+evens   -> array.filter nums (n => n > 2)          // [3 4 5]
+sum     -> array.fold nums 0 (acc n => acc + n)    // 15
 ```
 
 ### string
@@ -365,8 +388,8 @@ add a b => a + b  →  (int → (int → int))
 | Language server (hover, diagnostics) | ✅ |
 | Tail-call optimization (self-recursion) | ✅ |
 | Native typed function parameters | ✅ |
-| Lambda expressions | ⏳ |
-| `map` / `filter` / `fold` | ⏳ |
+| Lambda expressions (non-capturing) | ✅ |
+| `map` / `filter` / `fold` | ✅ |
 | Pattern matching | ⏳ |
 | Custom types (records, ADTs) | ⏳ |
 

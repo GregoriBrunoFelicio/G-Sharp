@@ -124,7 +124,7 @@ public class TypeInferrerTests
     public void Should_Infer_Recursive_Function()
     {
         var source = """
-                     factorial n
+                     factorial n =>
                          if n <= 1 then 1 else n * factorial(n - 1)
                      result -> factorial 5
                      """;

@@ -171,13 +171,22 @@ for x in doubled do
 
 ### Lambda expressions
 
-Anonymous functions reuse the same `=>` used by named inline functions — `param... => body`,
-single expression only. As a call argument they must be parenthesized.
+`=>` always marks where a function body starts, whether the function is named or anonymous — the
+**only** difference is whether a name comes before the parameter list.
 
 ```gs
-double -> n => n * 2
-println (double 5)                       // 10
+// named function — a name, then parameters, then =>
+square x => x * x
 
+// lambda (anonymous function) — no name, just parameters then =>
+squareLambda -> x => x * x
+```
+
+`square` above can be called directly (`square 5`). A lambda has no name of its own — it only
+becomes usable once you bind it (`squareLambda -> x => x * x`) or pass it straight into a call.
+As a call argument it must be parenthesized:
+
+```gs
 apply x f => f x
 println (apply 5 (n => n * 2))           // 10
 
@@ -233,8 +242,9 @@ println string.from 3.14d    // "3.14"
 
 ## Functions
 
-No parentheses in definitions. Two forms: inline (`=>`) and block (indented body).
-The last expression in a block is the implicit return value.
+No parentheses in definitions. `=>` always marks where the body starts — followed by either a
+single expression (inline) or an indented block. The last expression in a block is the implicit
+return value.
 
 ```gs
 // inline
@@ -243,7 +253,7 @@ add a b  => a + b
 greet    => println "Hello!"
 
 // block — last expression is returned
-max a b
+max a b =>
     if a >= b then a else b
 ```
 
@@ -259,7 +269,7 @@ println max 100 42      // 100
 
 // parentheses required for expression arguments
 // `factorial n - 1` would parse as `(factorial n) - 1` — wrong
-factorial n
+factorial n =>
     if n == 0 then 1 else n * factorial(n - 1)
 
 println factorial 10    // 3628800
@@ -268,7 +278,7 @@ println factorial 10    // 3628800
 ### Recursion
 
 ```gs
-fib n
+fib n =>
     if n <= 1 then n else fib(n - 1) + fib(n - 2)
 
 println fib 10    // 55

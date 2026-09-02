@@ -32,7 +32,7 @@ public class BindingScopeExecutionTests
     public void Function_Local_And_Top_Level_Same_Name_Keep_Separate_Values()
     {
         var source =
-            "identity n\n" +
+            "identity n =>\n" +
             "    h -> n\n" +
             "    h\n" +
             "h -> 7\n" +

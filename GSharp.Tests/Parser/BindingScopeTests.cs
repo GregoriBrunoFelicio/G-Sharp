@@ -20,7 +20,7 @@ public class BindingScopeTests
     public void Same_Name_Inside_Function_And_At_Top_Level_Is_Allowed()
     {
         var source =
-            "identity x\n" +
+            "identity x =>\n" +
             "    h -> x\n" +
             "    h\n" +
             "h -> 10";
@@ -32,10 +32,10 @@ public class BindingScopeTests
     public void Same_Name_In_Two_Different_Functions_Is_Allowed()
     {
         var source =
-            "first x\n" +
+            "first x =>\n" +
             "    h -> x\n" +
             "    h\n" +
-            "second y\n" +
+            "second y =>\n" +
             "    h -> y\n" +
             "    h";
 
@@ -54,7 +54,7 @@ public class BindingScopeTests
     public void Redeclaring_In_The_Same_Function_Throws()
     {
         var source =
-            "fn a\n" +
+            "fn a =>\n" +
             "    x -> a\n" +
             "    x -> a";
 
@@ -66,7 +66,7 @@ public class BindingScopeTests
     {
         // `if`/`for` don't open a new scope — both `x ->` land in the function scope.
         var source =
-            "fn a\n" +
+            "fn a =>\n" +
             "    if a > 0 then\n" +
             "        x -> a\n" +
             "        x\n" +
@@ -82,7 +82,7 @@ public class BindingScopeTests
     public void A_Binding_Shadowing_A_Parameter_Throws()
     {
         var source =
-            "fn x\n" +
+            "fn x =>\n" +
             "    x -> 1\n" +
             "    x";
 

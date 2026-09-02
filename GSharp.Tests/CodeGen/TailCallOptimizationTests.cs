@@ -30,7 +30,7 @@ public class TailCallOptimizationTests
     public void Tail_Recursive_Sum_Produces_Correct_Result()
     {
         var source =
-            "sum acc n\n" +
+            "sum acc n =>\n" +
             "    if n == 0 then\n" +
             "        acc\n" +
             "    else\n" +
@@ -48,7 +48,7 @@ public class TailCallOptimizationTests
     {
         // Without TCO this depth would cause a StackOverflowException
         var source =
-            "sum acc n\n" +
+            "sum acc n =>\n" +
             "    if n == 0 then\n" +
             "        acc\n" +
             "    else\n" +

@@ -118,17 +118,17 @@ println add(3 5)
 println square(4)
 
 // --- functions: block ---
-max p q
+max p q =>
     if p >= q then p else q
 
 println max(10 7)
 println max(3 99)
 
 // --- recursion ---
-factorial n
+factorial n =>
     if n == 0 then 1 else n * factorial(n - 1)
 
-fib n
+fib n =>
     if n <= 1 then n else fib(n - 1) + fib(n - 2)
 
 println factorial 5

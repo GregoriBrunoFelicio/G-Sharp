@@ -90,7 +90,7 @@ public class Parser(List<Token> tokens)
                 Advance();
             while (Check(TokenType.Newline))
                 Advance();
-            return Check(TokenType.Arrow) || Check(TokenType.BlockOpen);
+            return Check(TokenType.Arrow);
         }
         finally
         {
@@ -218,7 +218,8 @@ public class Parser(List<Token> tokens)
         {
             foreach (var parameter in parameters)
                 DeclareBinding(parameter);
-            return Match(TokenType.Arrow) ? [ParseNext()] : ParseBlock();
+            Consume(TokenType.Arrow);
+            return Check(TokenType.Newline) ? ParseBlock() : [ParseNext()];
         }
         finally
         {

@@ -318,7 +318,12 @@ public class Parser(List<Token> tokens)
         if (Match(TokenType.Dot))
             return ParseModuleCall(name, line, column);
         if (Match(TokenType.LeftParen))
-            return new CallExpression(name, ParseParenArgs()) { Line = line, Column = column };
+        {
+            var parenArgs = ParseParenArgs();
+            if (allowAtomArgs)
+                parenArgs.AddRange(ParseAtomArgs());
+            return new CallExpression(name, parenArgs) { Line = line, Column = column };
+        }
         if (allowAtomArgs)
         {
             var atomArgs = ParseAtomArgs();
@@ -332,7 +337,11 @@ public class Parser(List<Token> tokens)
     {
         var functionName = Consume(TokenType.Identifier).Value;
         if (Match(TokenType.LeftParen))
-            return new ModuleCallExpression(name, functionName, ParseParenArgs()) { Line = line, Column = column };
+        {
+            var parenArgs = ParseParenArgs();
+            parenArgs.AddRange(ParseAtomArgs());
+            return new ModuleCallExpression(name, functionName, parenArgs) { Line = line, Column = column };
+        }
         return new ModuleCallExpression(name, functionName, ParseAtomArgs()) { Line = line, Column = column };
     }
 

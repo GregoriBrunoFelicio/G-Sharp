@@ -224,7 +224,8 @@ public static class ExpressionEmitter
         // Fallback: allocate function wrapper on the spot (e.g. module functions).
         if (context.FunctionAdapters.TryGetValue(binding.Name, out var adapter))
         {
-            EmitFunctionValue(il, adapter);
+            var arity = context.FunctionParamTypes.TryGetValue(binding.Name, out var types) ? types.Length : 1;
+            EmitFunctionValue(il, adapter, arity);
             return typeof(object);
         }
 
@@ -413,6 +414,12 @@ public static class ExpressionEmitter
         else if (context.Functions.TryGetValue(call.Callee, out var method))
         {
             var paramTypes = context.FunctionParamTypes.GetValueOrDefault(call.Callee);
+            if (paramTypes is not null && call.Arguments.Count < paramTypes.Length)
+            {
+                EmitPartialApplication(il, call.Callee, call.Arguments, context);
+                return;
+            }
+
             for (var i = 0; i < call.Arguments.Count; i++)
             {
                 var expected = paramTypes is not null && i < paramTypes.Length ? paramTypes[i] : typeof(object);
@@ -439,6 +446,13 @@ public static class ExpressionEmitter
         }
         else if (context.Functions.TryGetValue(key, out var moduleMethod))
         {
+            var paramTypes = context.FunctionParamTypes.GetValueOrDefault(key);
+            if (paramTypes is not null && moduleCall.Arguments.Count < paramTypes.Length)
+            {
+                EmitPartialApplication(il, key, moduleCall.Arguments, context);
+                return;
+            }
+
             foreach (var arg in moduleCall.Arguments)
                 EmitToStack(il, arg, context);
             il.Emit(OpCodes.Call, moduleMethod);
@@ -447,6 +461,17 @@ public static class ExpressionEmitter
         {
             throw new Exception($"Undefined function: '{key}'");
         }
+    }
+
+    // Fewer arguments than the callee's arity — curry: build the supplied
+    // arguments into an object[] and go through GSharpFunction.Call, which
+    // returns a new GSharpFunction capturing them (see GSharpFunction).
+    private static void EmitPartialApplication(
+        ILGenerator il, string qualifiedName, List<Expression> arguments, EmitContext context)
+    {
+        il.Emit(OpCodes.Ldsfld, context.FunctionFields[qualifiedName]);
+        EmitObjectArray(il, arguments, context);
+        il.Emit(OpCodes.Callvirt, GsFunctionCallMethod);
     }
 
     // -------------------------------------------------------------------------
@@ -484,15 +509,16 @@ public static class ExpressionEmitter
     // Higher-order function helpers
     // -------------------------------------------------------------------------
 
-    private static void EmitFunctionValue(ILGenerator il, MethodBuilder adapter)
+    private static void EmitFunctionValue(ILGenerator il, MethodBuilder adapter, int arity)
     {
         var funcType = typeof(Func<object[], object>);
         var funcCtor = funcType.GetConstructors()[0];
-        var gsFuncCtor = typeof(GSharpFunction).GetConstructor([funcType])!;
+        var gsFuncCtor = typeof(GSharpFunction).GetConstructor([funcType, typeof(int)])!;
 
         il.Emit(OpCodes.Ldnull);
         il.Emit(OpCodes.Ldftn, adapter);
         il.Emit(OpCodes.Newobj, funcCtor);
+        il.Emit(OpCodes.Ldc_I4, arity);
         il.Emit(OpCodes.Newobj, gsFuncCtor);
     }
 
@@ -514,18 +540,22 @@ public static class ExpressionEmitter
         }
         else
         {
-            il.Emit(OpCodes.Ldc_I4, call.Arguments.Count);
-            il.Emit(OpCodes.Newarr, typeof(object));
-
-            for (var i = 0; i < call.Arguments.Count; i++)
-            {
-                il.Emit(OpCodes.Dup);
-                il.Emit(OpCodes.Ldc_I4, i);
-                EmitToStack(il, call.Arguments[i], context);
-                il.Emit(OpCodes.Stelem_Ref);
-            }
-
+            EmitObjectArray(il, call.Arguments, context);
             il.Emit(OpCodes.Callvirt, GsFunctionCallMethod);
+        }
+    }
+
+    private static void EmitObjectArray(ILGenerator il, List<Expression> arguments, EmitContext context)
+    {
+        il.Emit(OpCodes.Ldc_I4, arguments.Count);
+        il.Emit(OpCodes.Newarr, typeof(object));
+
+        for (var i = 0; i < arguments.Count; i++)
+        {
+            il.Emit(OpCodes.Dup);
+            il.Emit(OpCodes.Ldc_I4, i);
+            EmitToStack(il, arguments[i], context);
+            il.Emit(OpCodes.Stelem_Ref);
         }
     }
 

@@ -17,7 +17,7 @@ public class Compiler
         typeof(Func<object, object>).GetConstructors()[0];
 
     private static readonly ConstructorInfo GsFunctionArityNCtor =
-        typeof(GSharpFunction).GetConstructor([typeof(Func<object[], object>)])!;
+        typeof(GSharpFunction).GetConstructor([typeof(Func<object[], object>), typeof(int)])!;
 
     private static readonly ConstructorInfo GsFunctionArity1Ctor =
         typeof(GSharpFunction).GetConstructor([typeof(Func<object, object>)])!;
@@ -51,7 +51,8 @@ public class Compiler
         TypeBuilder typeBuilder,
         Dictionary<string, MethodBuilder> adapters,
         Dictionary<string, MethodBuilder> adapters1,
-        Dictionary<string, FieldBuilder> functionFields)
+        Dictionary<string, FieldBuilder> functionFields,
+        Dictionary<string, Type[]> functionParamTypes)
     {
         if (functionFields.Count == 0) return;
 
@@ -64,7 +65,15 @@ public class Compiler
             cctorIl.Emit(OpCodes.Ldnull);
             cctorIl.Emit(OpCodes.Ldftn, isArity1 ? adapters1[name] : adapters[name]);
             cctorIl.Emit(OpCodes.Newobj, isArity1 ? FuncObjectObjectCtor : FuncObjectArrayObjectCtor);
-            cctorIl.Emit(OpCodes.Newobj, isArity1 ? GsFunctionArity1Ctor : GsFunctionArityNCtor);
+            if (isArity1)
+            {
+                cctorIl.Emit(OpCodes.Newobj, GsFunctionArity1Ctor);
+            }
+            else
+            {
+                cctorIl.Emit(OpCodes.Ldc_I4, functionParamTypes[name].Length);
+                cctorIl.Emit(OpCodes.Newobj, GsFunctionArityNCtor);
+            }
             cctorIl.Emit(OpCodes.Stsfld, field);
         }
 
@@ -123,7 +132,7 @@ public class Compiler
                     functionParamTypes: functionParamTypes,
                     adapters1: adapters1, functionFields: functionFields);
 
-            EmitStaticInitializer(typeBuilder, adapters, adapters1, functionFields);
+            EmitStaticInitializer(typeBuilder, adapters, adapters1, functionFields, functionParamTypes);
 
             var context = new EmitContext(functions, adapters, typeMap, functionParamTypes,
                 adapters1, functionFields, lambdaFunctionNames);

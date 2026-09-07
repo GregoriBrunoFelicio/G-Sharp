@@ -73,10 +73,57 @@ sorted -> array.sort unsorted
 for s in sorted do
     println s
 
+println array.contains nums 3
+println array.contains nums 9
+println array.indexOf nums 4
+println array.indexOf nums 9
+
+sliced -> array.slice nums 1 3
+println array.len sliced
+println array.head sliced
+
+ranged -> array.range 0 5
+for r in ranged do
+    println r
+
+println array.any nums (n => n > 4)
+println array.all nums (n => n > 0)
+
 // --- string functions ---
 println string.from 42
 println string.from 3.14d
 println string.from true
+
+greeting -> "  Hello, G#!  "
+
+println string.len greeting
+println string.upper greeting
+println string.lower greeting
+println string.trim greeting
+println string.contains greeting "G#"
+println string.startsWith (string.trim greeting) "Hello"
+println string.endsWith (string.trim greeting) "!"
+println string.replace greeting "Hello" "Hi"
+
+words -> string.split "a,b,c" ","
+for w in words do
+    println w
+
+println string.slice "Hello, G#!" 0 5
+println string.toInt "42"
+println string.toFloat "3.14"
+
+// --- math functions ---
+println math.abs (0 - 5)
+println math.floor 3.7d
+println math.ceil 3.2d
+println math.round 3.5d
+println math.sqrt 16
+println math.pow 2 10
+println math.min 3 7
+println math.max 3 7
+println math.pi
+println math.e
 
 // --- conditionals ---
 a -> 10

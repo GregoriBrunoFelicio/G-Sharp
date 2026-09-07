@@ -26,6 +26,7 @@ public class Compiler
     {
         ArrayBuiltins.Register(context.Builtins);
         StringBuiltins.Register(context.Builtins);
+        MathBuiltins.Register(context.Builtins);
     }
 
     private static (MethodBuilder, TypeBuilder) CreateBuilders()

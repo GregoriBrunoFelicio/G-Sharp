@@ -70,6 +70,18 @@ pi   -> 3.14d
 println name
 ```
 
+### Printing
+
+`println` isn't limited to bindings — it takes any expression, evaluates it, and prints the result.
+Like everything else in G#, `println` itself is an expression (it produces `unit`).
+
+```gs
+println 1 + 1              // 2
+println (1 + 1) * 2        // 4
+println "Hello, " + "G#!"  // "Hello, G#!"
+println 10 / 3             // 3
+```
+
 ### Numeric types
 
 ```gs
@@ -177,10 +189,10 @@ G# ships a built-in standard library. No import needed — all functions are alw
 ```gs
 nums -> [1 2 3 4 5]
 
-println array.head nums        // 1
-println array.last nums        // 5
-println array.len nums         // 5
-println array.empty nums       // False
+firstItem -> array.head nums     // 1
+lastItem  -> array.last nums     // 5
+count     -> array.len nums      // 5
+isEmpty   -> array.empty nums    // False
 
 rest     -> array.tail nums            // [2 3 4 5]
 reversed -> array.reverse nums         // [5 4 3 2 1]
@@ -191,14 +203,56 @@ all      -> array.concat nums more     // [1 2 3 4 5 6 7 8]
 doubled -> array.map nums (n => n * 2)             // [2 4 6 8 10]
 evens   -> array.filter nums (n => n > 2)          // [3 4 5]
 sum     -> array.fold nums 0 (acc n => acc + n)    // 15
+
+hasThree    -> array.contains nums 3           // True
+indexOfFour -> array.indexOf nums 4            // 3
+sliced      -> array.slice nums 1 3            // [2 3]
+ranged      -> array.range 0 5                 // [0 1 2 3 4]
+anyOver4    -> array.any nums (n => n > 4)     // True
+allOver0    -> array.all nums (n => n > 0)     // True
 ```
 
 ### string
 
 ```gs
-println string.from 42       // "42"
-println string.from 3.14d    // "3.14"
+from1 -> string.from 42        // "42"
+from2 -> string.from 3.14d     // "3.14"
+
+greeting -> "  Hello, G#!  "
+
+length   -> string.len greeting                      // 14
+upper    -> string.upper greeting                     // "  HELLO, G#!  "
+lower    -> string.lower greeting                     // "  hello, g#!  "
+trimmed  -> string.trim greeting                      // "Hello, G#!"
+hasG     -> string.contains greeting "G#"             // True
+startsHe -> string.startsWith "Hello" "He"            // True
+endsLo   -> string.endsWith "Hello" "lo"              // True
+replaced -> string.replace greeting "Hello" "Hi"      // "  Hi, G#!  "
+sliced   -> string.slice "Hello, G#!" 0 5             // "Hello"
+
+parts -> string.split "a,b,c" ","                     // ["a" "b" "c"]
+
+asInt   -> string.toInt "42"        // 42
+asFloat -> string.toFloat "3.14"    // 3.14
 ```
+
+### math
+
+```gs
+absValue   -> math.abs (0 - 5)     // 5
+floorValue -> math.floor 3.7d      // 3
+ceilValue  -> math.ceil 3.2d       // 4
+roundValue -> math.round 3.5d      // 4
+sqrtValue  -> math.sqrt 16         // 4
+powValue   -> math.pow 2 10        // 1024
+minValue   -> math.min 3 7         // 3
+maxValue   -> math.max 3 7         // 7
+pi         -> math.pi              // 3.141592653589793
+e          -> math.e               // 2.718281828459045
+```
+
+`math.abs`/`floor`/`ceil`/`round` preserve the operand's numeric type (`int`/`float`/`double`/`decimal`);
+`math.sqrt`/`pow` always return `double`.
 
 ---
 
@@ -382,7 +436,7 @@ add a b => a + b  →  (int → (int → int))
 | Line comments (`//`) | ✅ |
 | `main` as entry point | ✅ |
 | `gs run` CLI with auto-detection | ✅ |
-| Standard library (`array.*`, `string.*`) | ✅ |
+| Standard library (`array.*`, `string.*`, `math.*`) | ✅ |
 | Module import system (`import`, dot notation) | ✅ |
 | Multi-file projects with recursive module loading | ✅ |
 | Circular import detection | ✅ |

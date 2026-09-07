@@ -19,6 +19,12 @@ public static class ArrayBuiltins
         builtins["array.map"] = typeof(ArrayBuiltins).GetMethod(nameof(Map))!;
         builtins["array.filter"] = typeof(ArrayBuiltins).GetMethod(nameof(Filter))!;
         builtins["array.fold"] = typeof(ArrayBuiltins).GetMethod(nameof(Fold))!;
+        builtins["array.contains"] = typeof(ArrayBuiltins).GetMethod(nameof(Contains))!;
+        builtins["array.indexOf"] = typeof(ArrayBuiltins).GetMethod(nameof(IndexOf))!;
+        builtins["array.slice"] = typeof(ArrayBuiltins).GetMethod(nameof(Slice))!;
+        builtins["array.any"] = typeof(ArrayBuiltins).GetMethod(nameof(Any))!;
+        builtins["array.all"] = typeof(ArrayBuiltins).GetMethod(nameof(All))!;
+        builtins["array.range"] = typeof(ArrayBuiltins).GetMethod(nameof(Range))!;
     }
 
     public static object Map(object arg, object fn)
@@ -119,6 +125,64 @@ public static class ArrayBuiltins
         var result = new object[arr.Length];
         Array.Copy(arr, result, arr.Length);
         Array.Sort(result);
+        return result;
+    }
+
+    public static object Contains(object arg, object value)
+    {
+        var arr = (object[])arg;
+        foreach (var element in arr)
+            if (Equals(element, value))
+                return true;
+        return false;
+    }
+
+    public static object IndexOf(object arg, object value)
+    {
+        var arr = (object[])arg;
+        for (var i = 0; i < arr.Length; i++)
+            if (Equals(arr[i], value))
+                return i;
+        return -1;
+    }
+
+    public static object Slice(object arg, object start, object end)
+    {
+        var arr = (object[])arg;
+        var startIndex = (int)start;
+        var endIndex = (int)end;
+        var result = new object[endIndex - startIndex];
+        Array.Copy(arr, startIndex, result, 0, result.Length);
+        return result;
+    }
+
+    public static object Any(object arg, object fn)
+    {
+        var arr = (object[])arg;
+        var f = (GSharpFunction)fn;
+        foreach (var element in arr)
+            if ((bool)f.Call1(element))
+                return true;
+        return false;
+    }
+
+    public static object All(object arg, object fn)
+    {
+        var arr = (object[])arg;
+        var f = (GSharpFunction)fn;
+        foreach (var element in arr)
+            if (!(bool)f.Call1(element))
+                return false;
+        return true;
+    }
+
+    public static object Range(object start, object end)
+    {
+        var startValue = (int)start;
+        var endValue = (int)end;
+        var result = new object[endValue - startValue];
+        for (var i = 0; i < result.Length; i++)
+            result[i] = startValue + i;
         return result;
     }
 }

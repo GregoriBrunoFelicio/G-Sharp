@@ -37,6 +37,13 @@ Early-stage but under active development. Not yet production-ready.
 dotnet tool install -g --add-source ./nupkg GSharp.CLI
 ```
 
+`dotnet tool install -g` installs `gs` into `~/.dotnet/tools`. If that directory isn't on your
+`PATH`, the shell won't find `gs` afterward — add it (e.g. in `~/.bashrc`/`~/.zshrc`):
+
+```bash
+export PATH="$PATH:$HOME/.dotnet/tools"
+```
+
 ### Run a file
 
 ```bash

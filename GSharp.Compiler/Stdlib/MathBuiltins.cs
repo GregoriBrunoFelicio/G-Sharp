@@ -14,6 +14,7 @@ public static class MathBuiltins
         builtins["math.pow"] = typeof(MathBuiltins).GetMethod(nameof(Pow))!;
         builtins["math.min"] = typeof(MathBuiltins).GetMethod(nameof(Min))!;
         builtins["math.max"] = typeof(MathBuiltins).GetMethod(nameof(Max))!;
+        builtins["math.mod"] = typeof(MathBuiltins).GetMethod(nameof(Mod))!;
         builtins["math.pi"] = typeof(MathBuiltins).GetMethod(nameof(Pi))!;
         builtins["math.e"] = typeof(MathBuiltins).GetMethod(nameof(E))!;
     }
@@ -89,6 +90,18 @@ public static class MathBuiltins
     public static object Max(object a, object b)
     {
         return ((IComparable)a).CompareTo(b) >= 0 ? a : b;
+    }
+
+    public static object Mod(object a, object b)
+    {
+        return a switch
+        {
+            int i => i % (int)b,
+            float f => f % (float)b,
+            double d => d % (double)b,
+            decimal m => m % (decimal)b,
+            _ => throw new Exception($"math.mod: unsupported type {a.GetType()}")
+        };
     }
 
     public static object Pi()

@@ -25,6 +25,8 @@ public static class ArrayBuiltins
         builtins["array.any"] = typeof(ArrayBuiltins).GetMethod(nameof(Any))!;
         builtins["array.all"] = typeof(ArrayBuiltins).GetMethod(nameof(All))!;
         builtins["array.range"] = typeof(ArrayBuiltins).GetMethod(nameof(Range))!;
+        builtins["array.max"] = typeof(ArrayBuiltins).GetMethod(nameof(Max))!;
+        builtins["array.min"] = typeof(ArrayBuiltins).GetMethod(nameof(Min))!;
     }
 
     public static object Map(object arg, object fn)
@@ -184,5 +186,27 @@ public static class ArrayBuiltins
         for (var i = 0; i < result.Length; i++)
             result[i] = startValue + i;
         return result;
+    }
+
+    public static object Max(object arg)
+    {
+        var arr = (object[])arg;
+        if (arr.Length == 0) throw new Exception("array.max: empty array");
+        var max = arr[0];
+        for (var i = 1; i < arr.Length; i++)
+            if (((IComparable)arr[i]).CompareTo(max) > 0)
+                max = arr[i];
+        return max;
+    }
+
+    public static object Min(object arg)
+    {
+        var arr = (object[])arg;
+        if (arr.Length == 0) throw new Exception("array.min: empty array");
+        var min = arr[0];
+        for (var i = 1; i < arr.Length; i++)
+            if (((IComparable)arr[i]).CompareTo(min) < 0)
+                min = arr[i];
+        return min;
     }
 }

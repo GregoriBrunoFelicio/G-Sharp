@@ -16,6 +16,7 @@ public static class StringBuiltins
         builtins["string.startsWith"] = typeof(StringBuiltins).GetMethod(nameof(StartsWith))!;
         builtins["string.endsWith"] = typeof(StringBuiltins).GetMethod(nameof(EndsWith))!;
         builtins["string.split"] = typeof(StringBuiltins).GetMethod(nameof(Split))!;
+        builtins["string.join"] = typeof(StringBuiltins).GetMethod(nameof(Join))!;
         builtins["string.replace"] = typeof(StringBuiltins).GetMethod(nameof(Replace))!;
         builtins["string.slice"] = typeof(StringBuiltins).GetMethod(nameof(Slice))!;
         builtins["string.toInt"] = typeof(StringBuiltins).GetMethod(nameof(ToInt))!;
@@ -69,6 +70,15 @@ public static class StringBuiltins
         for (var i = 0; i < parts.Length; i++)
             result[i] = parts[i];
         return result;
+    }
+
+    public static object Join(object arg, object separator)
+    {
+        var arr = (object[])arg;
+        var parts = new string[arr.Length];
+        for (var i = 0; i < arr.Length; i++)
+            parts[i] = (string)arr[i];
+        return string.Join((string)separator, parts);
     }
 
     public static object Replace(object arg, object oldValue, object newValue)

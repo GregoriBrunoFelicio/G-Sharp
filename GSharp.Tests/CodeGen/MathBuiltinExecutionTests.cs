@@ -82,6 +82,12 @@ public class MathBuiltinExecutionTests
     }
 
     [Fact]
+    public void Mod_Returns_The_Remainder()
+    {
+        Run("println (math.mod 10 3)").Should().Be("1");
+    }
+
+    [Fact]
     public void Pi_Is_A_Zero_Argument_Call()
     {
         Run("println math.pi").Should().Be("3.141592653589793");

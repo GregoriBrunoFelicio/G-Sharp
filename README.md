@@ -23,6 +23,7 @@ Early-stage but under active development. Not yet production-ready.
 - [Modules and imports](#modules-and-imports)
 - [Language Server](#language-server)
 - [Current Features](#current-features)
+- [Roadmap](docs/ROADMAP.md)
 - [Architecture](#architecture)
 - [Contact](#contact)
 - [License](#license)

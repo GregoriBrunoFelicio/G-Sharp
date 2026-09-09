@@ -45,3 +45,6 @@ nupkg/
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Local-only planning docs (not for the repo)
+docs/BACKLOG.md

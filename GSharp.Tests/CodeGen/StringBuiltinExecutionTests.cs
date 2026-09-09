@@ -103,4 +103,14 @@ public class StringBuiltinExecutionTests
 
         Run(source).Should().Be("3\na");
     }
+
+    [Fact]
+    public void Join_Rejoins_A_Split_String()
+    {
+        var source =
+            "parts -> string.split \"a,b,c\" \",\"\n" +
+            "println (string.join parts \",\")";
+
+        Run(source).Should().Be("a,b,c");
+    }
 }

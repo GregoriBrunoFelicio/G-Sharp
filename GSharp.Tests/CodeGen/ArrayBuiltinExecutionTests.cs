@@ -96,4 +96,27 @@ public class ArrayBuiltinExecutionTests
     {
         Run("println (array.all [1 2 3 4 5] (n => n > 2))").Should().Be("False");
     }
+
+    [Fact]
+    public void Max_Returns_The_Largest_Element()
+    {
+        Run("println (array.max [3 7 1 9 4])").Should().Be("9");
+    }
+
+    [Fact]
+    public void Min_Returns_The_Smallest_Element()
+    {
+        Run("println (array.min [3 7 1 9 4])").Should().Be("1");
+    }
+
+    [Fact]
+    public void Max_Throws_On_An_Empty_Array()
+    {
+        // main.Invoke wraps runtime exceptions in TargetInvocationException (see Compiler.cs) —
+        // assert on the inner exception, which carries the actual builtin error message.
+        var action = () => Run("println (array.max (array.take [1] 0))");
+        action.Should().Throw<Exception>()
+            .WithInnerException<Exception>()
+            .WithMessage("array.max: empty array");
+    }
 }

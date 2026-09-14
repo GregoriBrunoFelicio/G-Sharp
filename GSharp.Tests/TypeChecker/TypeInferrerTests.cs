@@ -145,6 +145,14 @@ public class TypeInferrerTests
         types.Values.Should().Contain(t => t is UnitType);
     }
 
+    [Fact]
+    public void Should_Record_Print_As_Unit_In_Type_Map()
+    {
+        var types = Infer("print \"hello\"");
+
+        types.Values.Should().Contain(t => t is UnitType);
+    }
+
     // -------------------------------------------------------------------------
     // Type errors
     // -------------------------------------------------------------------------

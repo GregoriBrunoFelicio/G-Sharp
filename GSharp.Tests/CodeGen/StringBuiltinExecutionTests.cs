@@ -34,6 +34,12 @@ public class StringBuiltinExecutionTests
     }
 
     [Fact]
+    public void From_On_An_Array_Still_Uses_Raw_ToString_Not_Pretty_Printing()
+    {
+        Run("println string.from [1 2 3]").Should().Be("System.Object[]");
+    }
+
+    [Fact]
     public void Upper_Uppercases_The_String()
     {
         Run("println string.upper \"hello\"").Should().Be("HELLO");

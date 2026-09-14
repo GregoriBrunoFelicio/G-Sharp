@@ -68,6 +68,7 @@ public class LexerTests
         yield return ["age -> 33"];
         yield return ["isTrue -> true"];
         yield return ["println name"];
+        yield return ["print name"];
         yield return ["d -> 10.13d"];
         yield return ["m -> 10.24m"];
         yield return ["f -> 10.87f"];

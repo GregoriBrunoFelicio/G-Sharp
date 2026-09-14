@@ -20,6 +20,7 @@ public static class Constants
 
         // IO
         ["println"] = TokenType.Println,
+        ["print"] = TokenType.Print,
 
         // Logical operators
         ["and"] = TokenType.And,

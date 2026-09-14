@@ -50,6 +50,9 @@ public static class ExpressionEmitter
 
     private static readonly MethodInfo NegateMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Negate))!;
 
+    private static readonly MethodInfo FormatForDisplayMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.FormatForDisplay))!;
+
     private static readonly ConstructorInfo DecimalCtor = typeof(decimal).GetConstructor([
         typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)
     ]) ?? throw new Exception("Decimal constructor not found");
@@ -735,9 +738,12 @@ public static class ExpressionEmitter
     private static void EmitPrint(ILGenerator il, PrintExpression printExpression, EmitContext context)
     {
         EmitToStack(il, printExpression.Value, context);
-        var method = typeof(Console)
-            .GetMethod("WriteLine", [typeof(object)])!;
-        il.Emit(OpCodes.Call, method);
+        il.Emit(OpCodes.Call, FormatForDisplayMethod);
+
+        var writeMethod = printExpression.Keyword == TokenType.Print
+            ? typeof(Console).GetMethod("Write", [typeof(string)])!
+            : typeof(Console).GetMethod("WriteLine", [typeof(string)])!;
+        il.Emit(OpCodes.Call, writeMethod);
         il.Emit(OpCodes.Ldnull);
     }
 

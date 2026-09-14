@@ -8,6 +8,7 @@ public enum TokenType
     Equals, // bare '=' — invalid in G#; kept so the lexer can gate '==' and '=>'
     Newline,
     Println,
+    Print,
     EndOfFile,
 
     // Condition

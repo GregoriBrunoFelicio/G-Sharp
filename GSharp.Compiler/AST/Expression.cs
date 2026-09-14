@@ -18,7 +18,7 @@ public record UnaryExpression(TokenType Operator, Expression Operand) : Expressi
 
 public record BindingExpression(string BindingName, Expression Value) : Expression;
 
-public record PrintExpression(Expression Value) : Expression;
+public record PrintExpression(Expression Value, TokenType Keyword) : Expression;
 
 public record IfExpression(Expression Condition, List<Expression> ThenBody, List<Expression>? ElseBody = null)
     : Expression;

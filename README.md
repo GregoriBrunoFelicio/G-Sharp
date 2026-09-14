@@ -90,6 +90,21 @@ println "Hello, " + "G#!"  // "Hello, G#!"
 println 10 / 3             // 3
 ```
 
+`print` works the same way but doesn't add a trailing newline:
+
+```gs
+print "no "
+print "newline"
+println ""          // -> "no newline"
+```
+
+Arrays print as a bracketed, comma-separated list instead of the raw CLR representation:
+
+```gs
+println [1 2 3]  // [1, 2, 3]
+println []         // []
+```
+
 ### Numeric types
 
 ```gs

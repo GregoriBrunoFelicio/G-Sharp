@@ -109,6 +109,15 @@ words -> string.split "a,b,c" ","
 for w in words do
     println w
 
+// --- print (no trailing newline) vs println ---
+print "no-newline-"
+println "then-a-newline"
+
+// --- array pretty-printing ---
+println nums
+println names
+println []
+
 println string.slice "Hello, G#!" 0 5
 println string.toInt "42"
 println string.toFloat "3.14"

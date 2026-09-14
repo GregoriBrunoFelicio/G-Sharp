@@ -40,7 +40,7 @@ public class Parser(List<Token> tokens)
         if (Check(TokenType.Import))
             return ParseImport();
 
-        if (Check(TokenType.Println))
+        if (Check(TokenType.Println) || Check(TokenType.Print))
             return ParsePrint();
 
         if (Check(TokenType.For))
@@ -122,9 +122,15 @@ public class Parser(List<Token> tokens)
 
     private PrintExpression ParsePrint()
     {
-        Consume(TokenType.Println);
+        var keywordToken = Advance(); // ParseNext only calls ParsePrint when the current token
+                                       // is Println or Print — same invariant the unary branch
+                                       // in GetExpression relies on for Minus/Not.
         var value = ParseExpression();
-        return new PrintExpression(value);
+        return new PrintExpression(value, keywordToken.Type)
+        {
+            Line = keywordToken.Line,
+            Column = keywordToken.Column
+        };
     }
 
     private ForExpression ParseFor()

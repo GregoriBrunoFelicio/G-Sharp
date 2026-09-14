@@ -21,6 +21,28 @@ public static class RuntimeHelpers
     }
 
     /// <summary>
+    ///     Renders a G# runtime value the way print/println display it. Scalars use their
+    ///     plain <see cref="object.ToString" /> (identical to Console.WriteLine(object)'s own
+    ///     behavior, including its null-to-empty-string handling) — this must stay byte-for-byte
+    ///     unchanged. <c>object[]</c> values (G#'s sole array representation) render recursively
+    ///     as "[e1, e2, ...]", so nested arrays bracket-and-join at every level; an empty array
+    ///     renders as "[]". Used only by print/println — <c>string.from</c> deliberately keeps
+    ///     its own plain <c>ToString()</c> and must not route through this.
+    /// </summary>
+    public static string FormatForDisplay(object? value)
+    {
+        if (value is object[] array)
+        {
+            var parts = new string[array.Length];
+            for (var i = 0; i < array.Length; i++)
+                parts[i] = FormatForDisplay(array[i]);
+            return "[" + string.Join(", ", parts) + "]";
+        }
+
+        return value?.ToString() ?? "";
+    }
+
+    /// <summary>
     ///     Promotes two numeric values to a common type before an operation.
     ///     Hierarchy: int &lt; float &lt; double &lt; decimal.
     /// </summary>

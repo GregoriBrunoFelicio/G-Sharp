@@ -119,6 +119,16 @@ public class ConstantFolderTests
     }
 
     [Fact]
+    public void Folds_The_Print_Argument_Directly_And_Preserves_The_Print_Keyword()
+    {
+        var printExpression = (PrintExpression)Fold("print 10 + 10")[0];
+
+        printExpression.Keyword.Should().Be(GSharp.Compiler.Lexer.TokenType.Print);
+        printExpression.Value.Should().BeOfType<LiteralExpression>()
+            .Which.Value.Should().Be(20);
+    }
+
+    [Fact]
     public void Folds_A_Chain_Of_Same_Precedence_Multiply_And_Divide_After_A_Parenthesized_Subtraction()
     {
         BoundValue("num -> (1 - 20) * 20 / 1").Should().BeOfType<LiteralExpression>()

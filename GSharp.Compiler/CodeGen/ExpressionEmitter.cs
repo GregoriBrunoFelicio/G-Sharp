@@ -127,6 +127,10 @@ public static class ExpressionEmitter
                 EmitIf(il, ifExpression, context);
                 return typeof(object);
 
+            case MatchExpression matchExpression:
+                EmitMatch(il, matchExpression, context);
+                return typeof(object);
+
             case FunctionDeclaration:
                 il.Emit(OpCodes.Ldnull);
                 return typeof(object);
@@ -655,6 +659,120 @@ public static class ExpressionEmitter
     }
 
     // -------------------------------------------------------------------------
+    // Match emission
+    // -------------------------------------------------------------------------
+
+    private static void EmitMatch(ILGenerator il, MatchExpression match, EmitContext context)
+    {
+        var scrutineeType = Emit(il, match.Scrutinee, context);
+        var scrutineeLocal = il.DeclareLocal(scrutineeType);
+        il.Emit(OpCodes.Stloc, scrutineeLocal);
+
+        var endLabel = il.DefineLabel();
+
+        for (var i = 0; i < match.Arms.Count; i++)
+        {
+            var arm = match.Arms[i];
+            var isLastArm = i == match.Arms.Count - 1;
+
+            if (arm.Pattern is LiteralExpression literalPattern)
+            {
+                var nextArmLabel = il.DefineLabel();
+
+                il.Emit(OpCodes.Ldloc, scrutineeLocal);
+                if (scrutineeType.IsValueType)
+                    il.Emit(OpCodes.Box, scrutineeType);
+
+                EmitToStack(il, literalPattern, context);
+
+                il.Emit(OpCodes.Call, EqualEqualMethod);
+                il.Emit(OpCodes.Call, IsTrueMethod);
+                il.Emit(OpCodes.Brfalse, nextArmLabel);
+
+                EmitIfBody(il, arm.Body, context);
+                if (!isLastArm)
+                    il.Emit(OpCodes.Br, endLabel);
+
+                il.MarkLabel(nextArmLabel);
+            }
+            else
+            {
+                var identifierPattern = (IdentifierExpression)arm.Pattern;
+                var hadPrevious = context.Locals.TryGetValue(identifierPattern.Name, out var previousLocal);
+
+                var armLocal = il.DeclareLocal(scrutineeType);
+                il.Emit(OpCodes.Ldloc, scrutineeLocal);
+                il.Emit(OpCodes.Stloc, armLocal);
+                context.Locals[identifierPattern.Name] = armLocal;
+
+                EmitIfBody(il, arm.Body, context);
+
+                if (hadPrevious)
+                    context.Locals[identifierPattern.Name] = previousLocal!;
+                else
+                    context.Locals.Remove(identifierPattern.Name);
+            }
+        }
+
+        il.MarkLabel(endLabel);
+    }
+
+    private static void EmitTailMatch(ILGenerator il, MatchExpression match, EmitContext context)
+    {
+        var scrutineeType = Emit(il, match.Scrutinee, context);
+        var scrutineeLocal = il.DeclareLocal(scrutineeType);
+        il.Emit(OpCodes.Stloc, scrutineeLocal);
+
+        var endLabel = il.DefineLabel();
+
+        for (var i = 0; i < match.Arms.Count; i++)
+        {
+            var arm = match.Arms[i];
+            var isLastArm = i == match.Arms.Count - 1;
+
+            if (arm.Pattern is LiteralExpression literalPattern)
+            {
+                var nextArmLabel = il.DefineLabel();
+
+                il.Emit(OpCodes.Ldloc, scrutineeLocal);
+                if (scrutineeType.IsValueType)
+                    il.Emit(OpCodes.Box, scrutineeType);
+
+                EmitToStack(il, literalPattern, context);
+
+                il.Emit(OpCodes.Call, EqualEqualMethod);
+                il.Emit(OpCodes.Call, IsTrueMethod);
+                il.Emit(OpCodes.Brfalse, nextArmLabel);
+
+                EmitTailBody(il, arm.Body, context);
+                if (!isLastArm)
+                    il.Emit(OpCodes.Br, endLabel);
+
+                il.MarkLabel(nextArmLabel);
+            }
+            else
+            {
+                var identifierPattern = (IdentifierExpression)arm.Pattern;
+                var hadPrevious = context.Locals.TryGetValue(identifierPattern.Name, out var previousLocal);
+
+                var armLocal = il.DeclareLocal(scrutineeType);
+                il.Emit(OpCodes.Ldloc, scrutineeLocal);
+                il.Emit(OpCodes.Stloc, armLocal);
+                context.Locals[identifierPattern.Name] = armLocal;
+
+                EmitTailBody(il, arm.Body, context);
+
+                if (hadPrevious)
+                    context.Locals[identifierPattern.Name] = previousLocal!;
+                else
+                    context.Locals.Remove(identifierPattern.Name);
+            }
+        }
+
+        il.MarkLabel(endLabel);
+    }
+
+    // -------------------------------------------------------------------------
     // For loop emission
     // -------------------------------------------------------------------------
 
@@ -761,6 +879,12 @@ public static class ExpressionEmitter
             if (expression is IfExpression ifExpression)
             {
                 EmitTailIf(il, ifExpression, context);
+                return;
+            }
+
+            if (expression is MatchExpression matchExpression)
+            {
+                EmitTailMatch(il, matchExpression, context);
                 return;
             }
         }

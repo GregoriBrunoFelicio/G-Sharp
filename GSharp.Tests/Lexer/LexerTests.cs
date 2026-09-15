@@ -18,6 +18,19 @@ public class LexerTests
     }
 
     [Theory]
+    [InlineData("_", "_")]
+    [InlineData("my_var", "my_var")]
+    [InlineData("_leading", "_leading")]
+    [InlineData("trailing_", "trailing_")]
+    public void Identifiers_Allow_Underscore_Anywhere(string code, string expectedValue)
+    {
+        var tokens = new GSharp.Compiler.Lexer.Lexer(code).Tokenize();
+
+        tokens[0].Type.Should().Be(TokenType.Identifier);
+        tokens[0].Value.Should().Be(expectedValue);
+    }
+
+    [Theory]
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("\n\t\r")]
@@ -69,6 +82,9 @@ public class LexerTests
         yield return ["isTrue -> true"];
         yield return ["println name"];
         yield return ["print name"];
+        yield return ["match name"];
+        yield return ["my_var -> 10"];
+        yield return ["_ -> 10"];
         yield return ["d -> 10.13d"];
         yield return ["m -> 10.24m"];
         yield return ["f -> 10.87f"];

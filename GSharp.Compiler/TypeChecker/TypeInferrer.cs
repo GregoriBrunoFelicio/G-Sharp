@@ -47,6 +47,7 @@ public partial class TypeInferrer
             PrintExpression print => InferPrint(print, environment),
             IfExpression ifExpression => InferIf(ifExpression, environment),
             ForExpression forExpression => InferFor(forExpression, environment),
+            MatchExpression matchExpression => InferMatch(matchExpression, environment),
             FunctionDeclaration fn => InferFunctionBody(fn, environment),
             LambdaExpression lambda => InferLambda(lambda, environment),
             CallExpression call => InferCall(call, environment),

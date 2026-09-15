@@ -74,6 +74,30 @@ public class HoverProviderTests
     }
 
     [Fact]
+    public void Hovering_A_Match_Literal_Pattern_Shows_Its_Type()
+    {
+        var source = "x -> match 1\n    1 => \"one\"\n    n => \"other\"";
+
+        // Line 2 ("    1 => \"one\""): the pattern literal "1" is at column 5 (after 4 spaces).
+        var hover = HoverAt(source, 2, 5);
+
+        hover.Should().NotBeNull();
+        hover!.Markdown.Should().Contain("int");
+    }
+
+    [Fact]
+    public void Hovering_A_Match_Catch_All_Pattern_Shows_Its_Bound_Type()
+    {
+        var source = "x -> match 1\n    1 => 100\n    n => n + 1";
+
+        // Line 3 ("    n => n + 1"): the catch-all pattern name "n" is at column 5 (after 4 spaces).
+        var hover = HoverAt(source, 3, 5);
+
+        hover.Should().NotBeNull();
+        hover!.Markdown.Should().Contain("n : int");
+    }
+
+    [Fact]
     public void Hovering_Empty_Space_Returns_Null()
     {
         var source = "x -> 42";

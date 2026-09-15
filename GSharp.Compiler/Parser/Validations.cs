@@ -11,7 +11,7 @@ public static partial class Validations
         "if", "else", "for", "return",
         "true", "false", "null",
         "function", "print", "printf", "println",
-        "in", "main", "import"
+        "in", "main", "import", "match"
     ];
 
     public static readonly Dictionary<TokenType, int> OperatorPrecedence = new()

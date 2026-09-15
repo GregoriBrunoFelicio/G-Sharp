@@ -149,6 +149,15 @@ public static class HoverProvider
                 foreach (var child in WalkAll(forExpression.Body)) yield return child;
                 break;
 
+            case MatchExpression matchExpression:
+                foreach (var child in Walk(matchExpression.Scrutinee)) yield return child;
+                foreach (var arm in matchExpression.Arms)
+                {
+                    foreach (var child in Walk(arm.Pattern)) yield return child;
+                    foreach (var child in WalkAll(arm.Body)) yield return child;
+                }
+                break;
+
             case FunctionDeclaration fn:
                 foreach (var child in WalkAll(fn.Body)) yield return child;
                 break;

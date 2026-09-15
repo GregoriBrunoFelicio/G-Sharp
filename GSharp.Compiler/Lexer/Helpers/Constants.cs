@@ -22,6 +22,9 @@ public static class Constants
         ["println"] = TokenType.Println,
         ["print"] = TokenType.Print,
 
+        // Pattern matching
+        ["match"] = TokenType.Match,
+
         // Logical operators
         ["and"] = TokenType.And,
         ["or"] = TokenType.Or,

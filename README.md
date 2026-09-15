@@ -194,6 +194,47 @@ for x in doubled do
     println x    // 2 4 6 8 10
 ```
 
+### Pattern matching
+
+`match` picks the first arm whose pattern equals the scrutinee. A pattern is either a literal
+(matched by equality) or a bare identifier — the last arm must be a bare identifier, acting as
+the mandatory catch-all, and binds the scrutinee's value for use in that arm's body.
+
+```gs
+describe n =>
+    match n
+        0 => "zero"
+        1 => "one"
+        n => "other: " + string.from n
+
+println (describe 0)   // "zero"
+println (describe 5)   // "other: 5"
+```
+
+`match` composes naturally with recursion — it's the idiomatic way to dispatch base and
+recursive cases:
+
+```gs
+factorial n =>
+    match n
+        0 => 1
+        n => n * factorial (n - 1)
+
+println (factorial 5)  // 120
+```
+
+A recursive call in tail position inside an arm is optimized the same way it already is inside
+`if`, so accumulator-style recursion via `match` doesn't grow the call stack:
+
+```gs
+sumTo n acc =>
+    match n
+        0 => acc
+        n => sumTo (n - 1) (acc + n)
+
+println (sumTo 100000 0)
+```
+
 ### Comments
 
 ```gs
@@ -469,7 +510,7 @@ add a b => a + b  →  (int → (int → int))
 | Native typed function parameters | ✅ |
 | Lambda expressions (non-capturing) | ✅ |
 | `map` / `filter` / `fold` | ✅ |
-| Pattern matching | ⏳ |
+| Pattern matching | ✅ |
 | Custom types (records, ADTs) | ⏳ |
 
 ---

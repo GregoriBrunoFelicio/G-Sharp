@@ -62,4 +62,34 @@ public class TailCallOptimizationTests
 
         act.Should().NotThrow();
     }
+
+    [Fact]
+    public void Tail_Recursive_Match_Sum_Produces_Correct_Result()
+    {
+        var source =
+            "sumTo n acc =>\n" +
+            "    match n\n" +
+            "        0 => acc\n" +
+            "        n => sumTo (n - 1) (acc + n)\n" +
+            "println (sumTo 10 0)";
+
+        Run(source).Should().Be("55");
+    }
+
+    [Fact]
+    public void Tail_Recursive_Match_Sum_Does_Not_Overflow_With_Large_Input()
+    {
+        // Without a MatchExpression case in EmitTail, this depth would cause a
+        // StackOverflowException — see EmitTailMatch.
+        var source =
+            "sumTo n acc =>\n" +
+            "    match n\n" +
+            "        0 => acc\n" +
+            "        n => sumTo (n - 1) (acc + n)\n" +
+            "println (sumTo 100000 0)";
+
+        var act = () => Run(source);
+
+        act.Should().NotThrow();
+    }
 }

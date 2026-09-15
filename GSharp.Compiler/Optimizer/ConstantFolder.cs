@@ -37,6 +37,11 @@ public static class ConstantFolder
                 Iterable = Fold(forExpression.Iterable),
                 Body = FoldBody(forExpression.Body)
             },
+            MatchExpression match => match with
+            {
+                Scrutinee = Fold(match.Scrutinee),
+                Arms = match.Arms.Select(arm => arm with { Body = FoldBody(arm.Body) }).ToList()
+            },
             FunctionDeclaration functionDeclaration => functionDeclaration with
             {
                 Body = FoldBody(functionDeclaration.Body)

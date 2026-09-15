@@ -122,7 +122,7 @@ public class Lexer
 
     private Token ReadNextToken()
     {
-        if (Current.IsLetter())
+        if (Current.IsIdentifierStart())
             return ReadIdentifier();
 
         if (Current.IsNumber())
@@ -143,7 +143,7 @@ public class Lexer
         var col = Column;
         var start = Position;
 
-        while (!IsAtEnd() && char.IsLetterOrDigit(Current))
+        while (!IsAtEnd() && Current.IsIdentifierPart())
             Advance();
 
         var value = _code[start..Position];

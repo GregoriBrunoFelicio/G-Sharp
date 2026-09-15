@@ -135,4 +135,46 @@ public partial class TypeInferrer
         var bodyResultType = InferBody(forExpression.Body, bodyEnvironment);
         return new ArrayType(bodyResultType);
     }
+
+    private GsType InferMatch(MatchExpression match, TypeEnvironment environment)
+    {
+        var scrutineeType = InferExpression(match.Scrutinee, environment);
+        GsType? resultType = null;
+
+        foreach (var arm in match.Arms)
+        {
+            var armEnvironment = environment;
+
+            if (arm.Pattern is IdentifierExpression identifierPattern)
+            {
+                armEnvironment = environment.CreateChildScope();
+                armEnvironment.Register(identifierPattern.Name, scrutineeType);
+                // Records the pattern node's type via the normal InferExpression path (which now
+                // finds the name just registered above) instead of writing _expressionTypes
+                // directly — keeps the single-writer convention every other node goes through,
+                // and gives the catch-all name hover for free.
+                InferExpression(identifierPattern, armEnvironment);
+            }
+            else
+            {
+                var patternType = InferExpression(arm.Pattern, environment);
+                _constraints.Add(new TypeConstraint(
+                    scrutineeType, patternType, arm.Pattern.Line, arm.Pattern.Column));
+            }
+
+            var armBodyType = InferBody(arm.Body, armEnvironment);
+
+            if (resultType is null)
+            {
+                resultType = armBodyType;
+            }
+            else
+            {
+                var (line, column) = BodySpan(arm.Body);
+                _constraints.Add(new TypeConstraint(resultType, armBodyType, line, column));
+            }
+        }
+
+        return resultType!;
+    }
 }

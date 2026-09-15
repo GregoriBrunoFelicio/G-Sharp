@@ -9,6 +9,7 @@ public enum TokenType
     Newline,
     Println,
     Print,
+    Match,
     EndOfFile,
 
     // Condition

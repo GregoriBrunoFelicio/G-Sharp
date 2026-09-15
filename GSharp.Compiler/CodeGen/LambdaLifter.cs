@@ -63,6 +63,12 @@ public static class LambdaLifter
                 WalkBody(forExpression.Body, prefix, lifted, names, ref counter);
                 break;
 
+            case MatchExpression match:
+                Walk(match.Scrutinee, prefix, lifted, names, ref counter);
+                foreach (var arm in match.Arms)
+                    WalkBody(arm.Body, prefix, lifted, names, ref counter);
+                break;
+
             case FunctionDeclaration functionDeclaration:
                 WalkBody(functionDeclaration.Body, prefix, lifted, names, ref counter);
                 break;

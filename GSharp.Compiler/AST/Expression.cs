@@ -25,4 +25,8 @@ public record IfExpression(Expression Condition, List<Expression> ThenBody, List
 
 public record ForExpression(string BindingName, Expression Iterable, List<Expression> Body) : Expression;
 
+public record MatchExpression(Expression Scrutinee, List<MatchArm> Arms) : Expression;
+
+public record MatchArm(Expression Pattern, List<Expression> Body);
+
 public record LambdaExpression(List<string> Parameters, List<Expression> Body) : Expression;

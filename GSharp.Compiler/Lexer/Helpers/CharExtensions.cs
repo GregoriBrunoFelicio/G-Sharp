@@ -9,9 +9,14 @@ public static class CharExtensions
             return c == '"';
         }
 
-        public bool IsLetter()
+        public bool IsIdentifierStart()
         {
-            return char.IsLetter(c);
+            return char.IsLetter(c) || c == '_';
+        }
+
+        public bool IsIdentifierPart()
+        {
+            return char.IsLetterOrDigit(c) || c == '_';
         }
 
         public bool IsNumber()

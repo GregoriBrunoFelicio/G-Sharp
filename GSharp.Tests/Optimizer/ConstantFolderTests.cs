@@ -129,6 +129,22 @@ public class ConstantFolderTests
     }
 
     [Fact]
+    public void Folds_The_Match_Scrutinee()
+    {
+        var match = (MatchExpression)BoundValue("y -> match (1 + 1)\n    2 => \"two\"\n    n => \"other\"");
+
+        match.Scrutinee.Should().BeOfType<LiteralExpression>().Which.Value.Should().Be(2);
+    }
+
+    [Fact]
+    public void Folds_Arithmetic_Inside_A_Match_Arm_Body()
+    {
+        var match = (MatchExpression)BoundValue("y -> match 1\n    1 => 2 + 2\n    n => n");
+
+        match.Arms[0].Body[0].Should().BeOfType<LiteralExpression>().Which.Value.Should().Be(4);
+    }
+
+    [Fact]
     public void Folds_A_Chain_Of_Same_Precedence_Multiply_And_Divide_After_A_Parenthesized_Subtraction()
     {
         BoundValue("num -> (1 - 20) * 20 / 1").Should().BeOfType<LiteralExpression>()

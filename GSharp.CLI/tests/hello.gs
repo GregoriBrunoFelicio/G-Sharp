@@ -164,6 +164,29 @@ if b > a then
 label -> if a > 5 then "big" else "small"
 println label
 
+// --- pattern matching ---
+describe n =>
+    match n
+        0 => "zero"
+        1 => "one"
+        n => "other: " + string.from n
+
+println (describe 0)
+println (describe 1)
+println (describe 7)
+
+nameGreeting -> match "Bob"
+    "Alice" => "hi Alice"
+    n => "hi stranger"
+println nameGreeting
+
+factorialViaMatch n =>
+    match n
+        0 => 1
+        n => n * factorialViaMatch (n - 1)
+
+println (factorialViaMatch 5)
+
 // --- functions: inline ---
 add    p q => p + q
 square p   => p * p

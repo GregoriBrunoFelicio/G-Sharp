@@ -49,6 +49,9 @@ public class Parser(List<Token> tokens)
         if (Check(TokenType.If))
             return ParseIf();
 
+        if (Check(TokenType.Match))
+            return ParseMatch();
+
         if (Check(TokenType.Identifier))
         {
             if (IsLetBinding())
@@ -154,6 +157,73 @@ public class Parser(List<Token> tokens)
         if (Match(TokenType.Else))
             elseBody = Check(TokenType.Newline) ? ParseBlock() : [ParseNext()];
         return new IfExpression(condition, thenBody, elseBody);
+    }
+
+    private MatchExpression ParseMatch()
+    {
+        Consume(TokenType.Match);
+        var scrutinee = ParseExpression();
+
+        if (!Check(TokenType.Newline))
+            throw new Exception($"{Current().Line}: 'match' requires an indented block of arms");
+        Match(TokenType.Newline);
+        Consume(TokenType.BlockOpen);
+
+        var arms = new List<MatchArm>();
+        var seenCatchAll = false;
+        while (!Check(TokenType.BlockClose))
+        {
+            if (Match(TokenType.Newline))
+                continue;
+
+            if (seenCatchAll)
+                throw new Exception($"{Current().Line}: 'match' catch-all arm must be the last arm");
+
+            var arm = ParseMatchArm();
+            if (arm.Pattern is IdentifierExpression)
+                seenCatchAll = true;
+
+            arms.Add(arm);
+        }
+        Consume(TokenType.BlockClose);
+
+        if (!seenCatchAll)
+            throw new Exception(
+                $"{Current().Line}: 'match' requires a catch-all arm (a bare identifier pattern) as its last arm");
+
+        return new MatchExpression(scrutinee, arms);
+    }
+
+    private MatchArm ParseMatchArm()
+    {
+        var token = Current();
+        Expression pattern;
+
+        if (IsLiteralToken(token.Type))
+        {
+            var literalToken = Advance();
+            pattern = TokenToLiteral(literalToken) with { Line = literalToken.Line, Column = literalToken.Column };
+        }
+        else if (Check(TokenType.Identifier))
+        {
+            var identifierToken = Advance();
+            pattern = new IdentifierExpression(identifierToken.Value)
+            {
+                Line = identifierToken.Line,
+                Column = identifierToken.Column
+            };
+        }
+        else
+        {
+            throw new Exception(
+                $"{token.Line}: expected a literal or identifier pattern in 'match' arm, got '{token.Value}'");
+        }
+
+        var parameterNames = pattern is IdentifierExpression identifierPattern
+            ? new List<string> { identifierPattern.Name }
+            : [];
+
+        return new MatchArm(pattern, ParseScopedFunctionBody(parameterNames));
     }
 
     private BindingExpression ParseBinding()
@@ -305,6 +375,8 @@ public class Parser(List<Token> tokens)
             return ParseIf();
         if (Check(TokenType.For))
             return ParseFor();
+        if (Check(TokenType.Match))
+            return ParseMatch();
         if (Match(TokenType.LeftParen))
         {
             var inner = ParseExpression(true);

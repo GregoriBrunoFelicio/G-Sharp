@@ -54,7 +54,11 @@ gs hello.gs        # shorthand
 ```
 
 See [`GSharp.CLI/tests/hello.gs`](GSharp.CLI/tests/hello.gs) for a file that exercises the whole
-language end to end.
+language end to end. It reads from stdin near the end (`io.*`), so run it with input piped in:
+
+```bash
+printf 'Reader\n21\n2.5\n' | gs hello.gs
+```
 
 ### Rebuild and reinstall
 
@@ -318,6 +322,23 @@ e          -> math.e               // 2.718281828459045
 `math.abs`/`floor`/`ceil`/`round` preserve the operand's numeric type (`int`/`float`/`double`/`decimal`);
 `math.sqrt`/`pow` always return `double`.
 
+### io
+
+```gs
+name -> io.readLine     // reads a line from stdin, e.g. "Ada"
+println name             // "Ada"
+
+age -> io.readInt        // reads a line and parses it as an int
+println (age + 1)
+
+price -> io.readFloat    // reads a line and parses it as a float
+println price
+```
+
+`io.readLine`/`readInt`/`readFloat` block until a line is available on stdin.
+`readInt`/`readFloat` throw if the line isn't a valid number, the same way
+`string.toInt`/`toFloat` do. `readLine` returns `""` at EOF.
+
 ---
 
 ## Functions
@@ -500,7 +521,7 @@ add a b => a + b  →  (int → (int → int))
 | Line comments (`//`) | ✅ |
 | `main` as entry point | ✅ |
 | `gs run` CLI with auto-detection | ✅ |
-| Standard library (`array.*`, `string.*`, `math.*`) | ✅ |
+| Standard library (`array.*`, `string.*`, `math.*`, `io.*`) | ✅ |
 | Module import system (`import`, dot notation) | ✅ |
 | Multi-file projects with recursive module loading | ✅ |
 | Circular import detection | ✅ |

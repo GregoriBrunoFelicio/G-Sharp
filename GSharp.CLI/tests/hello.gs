@@ -1,6 +1,8 @@
 // ============================================================
 // hello.gs — smoke test for all G# language features
 // Run this file after any change to verify nothing is broken.
+// Reads from stdin near the end (io.*), so pipe input in:
+//   printf 'Reader\n21\n2.5\n' | gs hello.gs
 // ============================================================
 
 // --- bindings ---
@@ -248,3 +250,13 @@ println array.len evens
 
 total -> array.fold nums 0 (acc n => acc + n)
 println total
+
+// --- io: reads from stdin, so this needs input piped in to run non-interactively, e.g.:
+//   printf 'Reader\n21\n2.5\n' | gs hello.gs
+readName  -> io.readLine
+readAge   -> io.readInt
+readPrice -> io.readFloat
+
+println readName
+println (readAge + 1)
+println readPrice

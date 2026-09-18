@@ -112,7 +112,10 @@ public partial class TypeInferrer
         ["math.mod"] = new BuiltinTypeRule((_, resultTypeVar) => resultTypeVar,
             [(_, resultTypeVar) => resultTypeVar, (_, resultTypeVar) => resultTypeVar]),
         ["math.pi"] = new BuiltinTypeRule((_, _) => new DoubleType(), []),
-        ["math.e"] = new BuiltinTypeRule((_, _) => new DoubleType(), [])
+        ["math.e"] = new BuiltinTypeRule((_, _) => new DoubleType(), []),
+        ["io.readLine"] = new BuiltinTypeRule((_, _) => new StringType(), []),
+        ["io.readInt"] = new BuiltinTypeRule((_, _) => new IntType(), []),
+        ["io.readFloat"] = new BuiltinTypeRule((_, _) => new FloatType(), [])
     };
 
     // -------------------------------------------------------------------------

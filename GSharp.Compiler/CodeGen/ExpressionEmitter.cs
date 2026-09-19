@@ -46,6 +46,9 @@ public static class ExpressionEmitter
         typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Multiply))!;
 
     private static readonly MethodInfo DivideMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Divide))!;
+    private static readonly MethodInfo AsIterableMethod =
+        typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.AsIterable))!;
+
     private static readonly MethodInfo IsTrueMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.IsTrue))!;
 
     private static readonly MethodInfo NegateMethod = typeof(RuntimeHelpers).GetMethod(nameof(RuntimeHelpers.Negate))!;
@@ -843,6 +846,7 @@ public static class ExpressionEmitter
     private static void EmitFor(ILGenerator il, ForExpression forExpression, EmitContext context)
     {
         EmitToStack(il, forExpression.Iterable, context);
+        il.Emit(OpCodes.Call, AsIterableMethod);
         il.Emit(OpCodes.Castclass, typeof(object[]));
         var arrayLocal = il.DeclareLocal(typeof(object[]));
         il.Emit(OpCodes.Stloc, arrayLocal);

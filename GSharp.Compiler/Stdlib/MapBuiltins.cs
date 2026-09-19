@@ -1,4 +1,5 @@
 using System.Reflection;
+using GSharp.Compiler.CodeGen.Helpers;
 
 namespace GSharp.Compiler.Stdlib;
 
@@ -14,6 +15,8 @@ public static class MapBuiltins
         builtins["map.keys"] = typeof(MapBuiltins).GetMethod(nameof(Keys))!;
         builtins["map.values"] = typeof(MapBuiltins).GetMethod(nameof(Values))!;
         builtins["map.size"] = typeof(MapBuiltins).GetMethod(nameof(Size))!;
+        builtins["map.getOr"] = typeof(MapBuiltins).GetMethod(nameof(GetOr))!;
+        builtins["map.entries"] = typeof(MapBuiltins).GetMethod(nameof(Entries))!;
     }
 
     public static object Empty()
@@ -32,6 +35,18 @@ public static class MapBuiltins
     public static object Get(object map, object key)
     {
         return ((Dictionary<object, object>)map)[key];
+    }
+
+    // The value for `key`, or `fallback` when the key is absent — the non-throwing lookup.
+    public static object GetOr(object map, object key, object fallback)
+    {
+        return ((Dictionary<object, object>)map).TryGetValue(key, out var value) ? value : fallback;
+    }
+
+    // Same order as a `for` loop over the map (see RuntimeHelpers.AsIterable).
+    public static object Entries(object map)
+    {
+        return RuntimeHelpers.AsIterable(map);
     }
 
     public static object Has(object map, object key)

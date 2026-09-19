@@ -22,6 +22,19 @@ public static class RuntimeHelpers
     }
 
     /// <summary>
+    ///     What a `for` loop walks over: an array as-is, a map as an array of its entries.
+    /// </summary>
+    public static object[] AsIterable(object iterable)
+    {
+        return iterable switch
+        {
+            object[] array => array,
+            Dictionary<object, object> map => map.Select(pair => (object)new GsEntry(pair.Key, pair.Value)).ToArray(),
+            _ => throw new Exception($"Cannot iterate over {iterable?.GetType().Name}")
+        };
+    }
+
+    /// <summary>
     ///     Renders a G# runtime value the way print/println display it. Scalars use their
     ///     plain <see cref="object.ToString" /> (identical to Console.WriteLine(object)'s own
     ///     behavior, including its null-to-empty-string handling) — this must stay byte-for-byte
@@ -39,6 +52,9 @@ public static class RuntimeHelpers
                 parts[i] = FormatForDisplay(array[i]);
             return "[" + string.Join(", ", parts) + "]";
         }
+
+        if (value is GsEntry entry)
+            return $"{FormatForDisplay(entry.Key)}: {FormatForDisplay(entry.Value)}";
 
         if (value is Dictionary<object, object> map)
         {

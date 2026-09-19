@@ -64,6 +64,14 @@ public static class Unifier
                         constraint.Line, constraint.Column));
                     break;
 
+                // Both are entry types — constrain key types and value types independently
+                case (EntryType leftEntry, EntryType rightEntry):
+                    constraintQueue.Enqueue(new TypeConstraint(leftEntry.KeyType, rightEntry.KeyType,
+                        constraint.Line, constraint.Column));
+                    constraintQueue.Enqueue(new TypeConstraint(leftEntry.ValueType, rightEntry.ValueType,
+                        constraint.Line, constraint.Column));
+                    break;
+
                 // Two different concrete types — impossible to unify
                 default:
                     throw new Exception(
@@ -94,6 +102,7 @@ public static class Unifier
             FunctionType ft => OccursIn(typeVarId, ft.ParameterType) || OccursIn(typeVarId, ft.ReturnType),
             ArrayType at => OccursIn(typeVarId, at.ElementType),
             MapType mt => OccursIn(typeVarId, mt.KeyType) || OccursIn(typeVarId, mt.ValueType),
+            EntryType et => OccursIn(typeVarId, et.KeyType) || OccursIn(typeVarId, et.ValueType),
             _ => false
         };
     }

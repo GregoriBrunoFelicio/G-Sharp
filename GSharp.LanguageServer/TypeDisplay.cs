@@ -26,6 +26,8 @@ public static class TypeDisplay
         {
             FunctionType function => RenderFunction(function, generics),
             ArrayType array => $"[{Render(array.ElementType, generics)}]",
+            MapType map => $"{{{Render(map.KeyType, generics)}: {Render(map.ValueType, generics)}}}",
+            EntryType entry => $"entry<{Render(entry.KeyType, generics)}, {Render(entry.ValueType, generics)}>",
             TypeVar variable => RenderTypeVar(variable, generics),
             _ => type.ToString()
         };

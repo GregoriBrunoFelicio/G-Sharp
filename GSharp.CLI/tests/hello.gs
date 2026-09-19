@@ -107,6 +107,15 @@ println (map.values updatedScores)
 println (map.size updatedScores)
 println map.empty
 
+println (map.getOr scores "Zed" 0)
+
+// for over a map: each item is an entry with .key and .value
+for e in scores do
+    println e.key
+    println e.value
+
+println (array.fold (map.entries scores) 0 (acc e => acc + e.value))
+
 // map values can be arbitrary expressions, not just literals
 computed -> {"sum": 1 + 1 "nums": array.len nums}
 println computed

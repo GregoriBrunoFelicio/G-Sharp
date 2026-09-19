@@ -30,6 +30,7 @@ public class Compiler
         IOBuiltins.Register(context.Builtins);
         TimeBuiltins.Register(context.Builtins);
         MapBuiltins.Register(context.Builtins);
+        EntryBuiltins.Register(context.Builtins);
     }
 
     private static (MethodBuilder, TypeBuilder) CreateBuilders()

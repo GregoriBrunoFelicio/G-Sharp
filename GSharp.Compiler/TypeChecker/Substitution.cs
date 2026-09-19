@@ -32,6 +32,7 @@ public class Substitution
             FunctionType ft => new FunctionType(Apply(ft.ParameterType), Apply(ft.ReturnType)),
             ArrayType at => new ArrayType(Apply(at.ElementType)),
             MapType mt => new MapType(Apply(mt.KeyType), Apply(mt.ValueType)),
+            EntryType et => new EntryType(Apply(et.KeyType), Apply(et.ValueType)),
             _ => type
         };
     }

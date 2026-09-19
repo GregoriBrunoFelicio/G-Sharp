@@ -416,6 +416,34 @@ println (map.size updated)            // 3
 
 empty -> map.empty
 println empty                          // {}
+
+println (map.getOr scores "Zed" 0)    // 0 — the value, or the fallback when the key is absent
+```
+
+`map.get` throws when the key is missing; use `map.has` first or `map.getOr` to avoid that.
+
+#### Iterating a map
+
+`for` accepts a map directly. Each item is an `entry` with a `.key` and a `.value`:
+
+```gs
+for e in scores do
+    println e.key                      // Alice, then Bob
+    println e.value                    // 90, then 85
+
+println (for e in scores do e.value + 1)          // [91, 86]
+
+pairs -> map.entries scores                       // [entry<string, int>]
+println (array.map pairs (e => e.key))            // [Alice, Bob]
+println (array.fold pairs 0 (acc e => acc + e.value))   // 175
+```
+
+Printing an entry shows `key: value`. Counting with a fold and `map.getOr`:
+
+```gs
+words  -> ["a" "b" "a"]
+counts -> array.fold words (map.empty) (acc w => map.set acc w (map.getOr acc w 0 + 1))
+println counts                         // {a: 2, b: 1}
 ```
 
 Keys and values in a literal can be any expression, not just other literals — `{"total": 1 + 1}` or

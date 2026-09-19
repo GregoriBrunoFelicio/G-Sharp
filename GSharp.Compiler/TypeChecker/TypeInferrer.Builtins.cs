@@ -209,7 +209,17 @@ public partial class TypeInferrer
             [mapType => mapType, mapType => mapType.KeyType]),
         ["map.keys"] = new MapBuiltinTypeRule(mapType => new ArrayType(mapType.KeyType), [mapType => mapType]),
         ["map.values"] = new MapBuiltinTypeRule(mapType => new ArrayType(mapType.ValueType), [mapType => mapType]),
-        ["map.size"] = new MapBuiltinTypeRule(_ => new IntType(), [mapType => mapType])
+        ["map.size"] = new MapBuiltinTypeRule(_ => new IntType(), [mapType => mapType]),
+        ["map.getOr"] = new MapBuiltinTypeRule(mapType => mapType.ValueType,
+            [mapType => mapType, mapType => mapType.KeyType, mapType => mapType.ValueType]),
+        ["map.entries"] = new MapBuiltinTypeRule(
+            mapType => new ArrayType(new EntryType(mapType.KeyType, mapType.ValueType)), [mapType => mapType]),
+        // entry.* are typed with the same fresh MapType, used purely as a carrier for the entry's
+        // key and value types (an entry<K, V> is one pair of a map<K, V>).
+        ["entry.key"] = new MapBuiltinTypeRule(mapType => mapType.KeyType,
+            [mapType => new EntryType(mapType.KeyType, mapType.ValueType)]),
+        ["entry.value"] = new MapBuiltinTypeRule(mapType => mapType.ValueType,
+            [mapType => new EntryType(mapType.KeyType, mapType.ValueType)])
     };
 
     private GsType InferMapBuiltinCall(string name, List<Expression> expressions, TypeEnvironment environment,

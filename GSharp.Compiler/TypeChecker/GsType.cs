@@ -99,6 +99,15 @@ public record MapType(GsType KeyType, GsType ValueType) : GsType
     }
 }
 
+/// <summary>One key/value pair of a map, as produced by iterating a map with `for` or by map.entries.</summary>
+public record EntryType(GsType KeyType, GsType ValueType) : GsType
+{
+    public override string ToString()
+    {
+        return $"entry<{KeyType}, {ValueType}>";
+    }
+}
+
 /// <summary>
 ///     Single-argument function type.
 ///     G# functions are curried — add a b : int → int → int is represented as

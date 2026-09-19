@@ -18,6 +18,7 @@ public static class MemberResolver
             StringType => "string",
             ArrayType => "array",
             MapType => "map",
+            EntryType => "entry",
             IntType or FloatType or DoubleType or DecimalType => "math",
             _ => null
         };

@@ -125,12 +125,23 @@ public partial class TypeInferrer
     private GsType InferFor(ForExpression forExpression, TypeEnvironment environment)
     {
         var iterableType = InferExpression(forExpression.Iterable, environment);
-        var elementTypeVar = FreshTypeVar();
 
-        _constraints.Add(new TypeConstraint(iterableType, new ArrayType(elementTypeVar)));
+        // Iterating a map yields one entry (key + value) per item. An iterable whose type isn't
+        // known yet (e.g. an untyped function parameter) is assumed to be an array.
+        GsType elementType;
+        if (iterableType is MapType mapType)
+        {
+            elementType = new EntryType(mapType.KeyType, mapType.ValueType);
+        }
+        else
+        {
+            var elementTypeVar = FreshTypeVar();
+            _constraints.Add(new TypeConstraint(iterableType, new ArrayType(elementTypeVar)));
+            elementType = elementTypeVar;
+        }
 
         var bodyEnvironment = environment.CreateChildScope();
-        bodyEnvironment.Register(forExpression.BindingName, elementTypeVar);
+        bodyEnvironment.Register(forExpression.BindingName, elementType);
 
         var bodyResultType = InferBody(forExpression.Body, bodyEnvironment);
         return new ArrayType(bodyResultType);

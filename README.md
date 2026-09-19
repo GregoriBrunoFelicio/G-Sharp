@@ -63,6 +63,9 @@ printf 'Reader\n21\n2.5\n' | gs hello.gs
 ### Rebuild and reinstall
 
 ```bash
+./update.sh        # rebuilds and reinstalls everything (gs + gsharp-lsp)
+
+# or individually:
 ./update-tool.sh   # rebuilds GSharp.CLI and reinstalls gs
 ./update-lsp.sh     # rebuilds the language server and reinstalls gsharp-lsp
 ```
@@ -338,6 +341,58 @@ println price
 `io.readLine`/`readInt`/`readFloat` block until a line is available on stdin.
 `readInt`/`readFloat` throw if the line isn't a valid number, the same way
 `string.toInt`/`toFloat` do. `readLine` returns `""` at EOF.
+
+### time
+
+`date` is a built-in type: `time.now` returns the current date and time, and `println` shows it in the machine's regional format.
+
+```gs
+now -> time.now                    // current local date and time
+println now                        // e.g. 19/09/2026 14:32:07 (format follows the machine's culture)
+utc -> time.utcNow                 // current date and time in UTC
+
+launch -> time.make 2026 9 19      // midnight of that date
+parsed -> time.parse "2026-09-19"  // text -> date
+
+time.format launch "yyyy-MM-dd"    // "2026-09-19"
+time.year launch                   // 2026
+time.month launch                  // 9
+time.day launch                    // 19
+time.weekday launch                // 6 (0 = Sunday)
+
+later -> time.addDays launch 30
+time.format later "yyyy-MM-dd"     // "2026-10-19"
+
+launch < later                     // True — dates compare with < > <= >= == !=
+time.diffDays later launch         // 30
+```
+
+Also available: `time.hour`/`minute`/`second`, `time.addHours`/`addMinutes`/`addSeconds`, `time.diffSeconds`.
+`time.format` takes a pattern such as `"yyyy-MM-dd"` or `"dd/MM/yyyy HH:mm"`. `time.parse` throws on malformed text, like `string.toInt`.
+Dates compare with the ordinary operators but do not support `+`/`-` — use `addDays` etc. and `diffDays`/`diffSeconds`.
+
+#### Member syntax: `value.member`
+
+Any builtin whose first argument is the value can be called on the value itself. The builtin is picked
+from the value's type (`date` → `time`, `string` → `string`, arrays → `array`, maps → `map`, numbers → `math`):
+
+```gs
+println time.now.year              // same as: time.year (time.now)
+current -> time.now
+println current.month                // same as: time.month current
+println (current.addDays 30)         // same as: time.addDays current 30
+println ((time.make 2026 9 19).addDays 1).day
+
+nums -> [1 2 3]
+println nums.len                   // 3
+println "abc".upper                // ABC
+```
+
+Both spellings stay valid. A module always wins over a variable with the same name (`time.make …` is
+never read as a member of a variable called `time`). Inside a function whose parameter type isn't known
+yet, only members that exist in a single module resolve (`d.year` works, `x.len` doesn't —
+write `string.len x` or `array.len x`). Zero-argument builtins still need parentheses when they are an
+argument of another call: `time.year (time.now)`.
 
 ### map
 

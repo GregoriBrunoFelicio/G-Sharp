@@ -221,6 +221,9 @@ public static class RuntimeHelpers
     /// </summary>
     private static int Compare(object a, object b, string op)
     {
+        if (a is DateTime leftDate && b is DateTime rightDate)
+            return leftDate.CompareTo(rightDate);
+
         if (!IsNumeric(a) || !IsNumeric(b))
             throw Invalid(a, b, op);
 

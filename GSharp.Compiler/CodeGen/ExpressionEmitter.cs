@@ -103,6 +103,14 @@ public static class ExpressionEmitter
                 il.Emit(OpCodes.Unbox_Any, returnClrType);
                 return returnClrType;
 
+            case MemberCallExpression memberCall:
+                EmitMemberCall(il, memberCall.Receiver, memberCall.Member, memberCall.Arguments, context);
+                if (!context.TypeMap.TryGetValue(memberCall, out var memberGsType)) return typeof(object);
+                var memberClrType = GsTypeToClr(memberGsType);
+                if (memberClrType == typeof(object)) return typeof(object);
+                il.Emit(OpCodes.Unbox_Any, memberClrType);
+                return memberClrType;
+
             case ModuleCallExpression moduleCall:
                 EmitModuleCall(il, moduleCall, context);
                 if (!context.TypeMap.TryGetValue(moduleCall, out var mcGsType)) return typeof(object);
@@ -362,6 +370,8 @@ public static class ExpressionEmitter
                                    && GsTypeToClr(t) != typeof(object),
             ModuleCallExpression mc => context.TypeMap.TryGetValue(mc, out var t)
                                        && GsTypeToClr(t) != typeof(object),
+            MemberCallExpression member => context.TypeMap.TryGetValue(member, out var t)
+                                           && GsTypeToClr(t) != typeof(object),
             _ => false
         };
     }
@@ -454,6 +464,15 @@ public static class ExpressionEmitter
     {
         var key = $"{moduleCall.Module}.{moduleCall.Function}";
 
+        // `name.fn` where `name` is a variable, not a module: a member call on that variable.
+        if (moduleCall.Receiver is not null
+            && !context.Builtins.ContainsKey(key) && !context.Functions.ContainsKey(key)
+            && (context.Locals.ContainsKey(moduleCall.Module) || context.Parameters.ContainsKey(moduleCall.Module)))
+        {
+            EmitMemberCall(il, moduleCall.Receiver, moduleCall.Function, moduleCall.Arguments, context);
+            return;
+        }
+
         if (context.Builtins.TryGetValue(key, out var builtin))
         {
             foreach (var arg in moduleCall.Arguments)
@@ -477,6 +496,21 @@ public static class ExpressionEmitter
         {
             throw new Exception($"Undefined function: '{key}'");
         }
+    }
+
+    // `receiver.member args`: the builtin is picked from the receiver's final type, then called with
+    // the receiver as its first argument (same emission as a builtin module call).
+    private static void EmitMemberCall(
+        ILGenerator il, Expression receiver, string member, List<Expression> arguments, EmitContext context)
+    {
+        context.TypeMap.TryGetValue(receiver, out var receiverType);
+        var key = MemberResolver.Resolve(receiverType, member, context.Builtins.Keys, receiver.Line);
+        var builtin = context.Builtins[key];
+
+        EmitToStack(il, receiver, context);
+        foreach (var argument in arguments)
+            EmitToStack(il, argument, context);
+        il.Emit(OpCodes.Call, builtin);
     }
 
     // Fewer arguments than the callee's arity — curry: build the supplied

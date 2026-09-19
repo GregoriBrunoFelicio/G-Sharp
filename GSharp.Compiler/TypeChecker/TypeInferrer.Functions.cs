@@ -60,6 +60,15 @@ public partial class TypeInferrer
     {
         var qualifiedName = $"{moduleCall.Module}.{moduleCall.Function}";
 
+        // `name.fn` where `name` is a variable, not a module: a member call on that variable.
+        // A real module always wins over a same-named variable.
+        var isModuleFunction = BuiltinTypeRules.ContainsKey(qualifiedName)
+                               || MapBuiltinTypeRules.ContainsKey(qualifiedName)
+                               || environment.TryLookup(qualifiedName, out _);
+        if (!isModuleFunction && moduleCall.Receiver is not null && environment.TryLookup(moduleCall.Module, out _))
+            return InferMemberCall(moduleCall.Receiver, moduleCall.Function, moduleCall.Arguments,
+                moduleCall.Line, environment);
+
         if (BuiltinTypeRules.ContainsKey(qualifiedName))
             return InferBuiltinCall(qualifiedName, moduleCall.Arguments, environment);
 
@@ -70,6 +79,22 @@ public partial class TypeInferrer
             calleeType = FreshTypeVar();
 
         return ApplyArguments(calleeType, moduleCall.Arguments, environment);
+    }
+
+    // `receiver.member args` is sugar for `<module of receiver's type>.member receiver args`.
+    private GsType InferMemberCall(
+        Expression receiver, string member, List<Expression> arguments, int line, TypeEnvironment environment)
+    {
+        var receiverType = InferExpression(receiver, environment);
+        var builtinNames = BuiltinTypeRules.Keys.Concat(MapBuiltinTypeRules.Keys);
+        var qualifiedName = MemberResolver.Resolve(receiverType, member, builtinNames, line);
+
+        var allArguments = new List<Expression> { receiver };
+        allArguments.AddRange(arguments);
+
+        return BuiltinTypeRules.ContainsKey(qualifiedName)
+            ? InferBuiltinCall(qualifiedName, allArguments, environment, receiverType)
+            : InferMapBuiltinCall(qualifiedName, allArguments, environment, receiverType);
     }
 
     private GsType ApplyArguments(GsType calleeType, List<Expression> arguments, TypeEnvironment environment)

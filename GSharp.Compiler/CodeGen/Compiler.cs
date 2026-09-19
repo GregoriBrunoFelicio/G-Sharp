@@ -28,6 +28,7 @@ public class Compiler
         StringBuiltins.Register(context.Builtins);
         MathBuiltins.Register(context.Builtins);
         IOBuiltins.Register(context.Builtins);
+        TimeBuiltins.Register(context.Builtins);
         MapBuiltins.Register(context.Builtins);
     }
 

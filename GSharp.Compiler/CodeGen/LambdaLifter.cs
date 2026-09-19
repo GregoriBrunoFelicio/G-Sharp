@@ -81,6 +81,11 @@ public static class LambdaLifter
                 WalkBody(moduleCall.Arguments, prefix, lifted, names, ref counter);
                 break;
 
+            case MemberCallExpression memberCall:
+                Walk(memberCall.Receiver, prefix, lifted, names, ref counter);
+                WalkBody(memberCall.Arguments, prefix, lifted, names, ref counter);
+                break;
+
             case BinaryExpression binary:
                 Walk(binary.Left, prefix, lifted, names, ref counter);
                 Walk(binary.Right, prefix, lifted, names, ref counter);

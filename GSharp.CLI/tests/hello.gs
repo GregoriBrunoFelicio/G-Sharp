@@ -271,6 +271,18 @@ println array.len evens
 total -> array.fold nums 0 (acc n => acc + n)
 println total
 
+// --- time: dates are a built-in type; `value.member` is sugar for `time.member value`
+launch -> time.make 2026 9 19
+println launch
+println (time.format launch "yyyy-MM-dd")
+println launch.year
+println launch.weekday
+later -> launch.addDays 30
+println (time.format later "yyyy-MM-dd")
+println launch < later
+println (time.diffDays later launch)
+println time.now.year
+
 // --- io: reads from stdin, so this needs input piped in to run non-interactively, e.g.:
 //   printf 'Reader\n21\n2.5\n' | gs hello.gs
 readName  -> io.readLine

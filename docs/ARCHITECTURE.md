@@ -105,6 +105,7 @@ GSharp.Compiler/
     TypeInferrer.Expressions.cs — per-node inference (binary, unary, if, for, ...)
     TypeInferrer.Functions.cs   — function signature registration and calls
     TypeInferrer.Builtins.cs    — BuiltinTypeRules: arities and signatures for stdlib builtins
+    MemberResolver.cs           — value.member → builtin (e.g. date + year → time.year), shared with codegen
     Unifier.cs          — Robinson unification algorithm
     Substitution.cs     — TypeVar → GsType mapping produced by the Unifier
     TypeEnvironment.cs  — scoped variable → type bindings
@@ -112,6 +113,7 @@ GSharp.Compiler/
   Stdlib/               — standard library implementations
     ArrayBuiltins.cs    — array.head, array.tail, array.sort, array.map, ...
     StringBuiltins.cs   — string.from, ...
+    TimeBuiltins.cs     — time.now, time.make, time.parse, time.format, time.addDays, ...
   CodeGen/              — IL emission
     ExpressionEmitter.cs — one class, one private method per construct (EmitIf, EmitFor, ...)
     Compiler.cs         — builds the dynamic assembly, drives DefineFunction/EmitFunction, runs it

@@ -378,6 +378,30 @@ public class Parser(List<Token> tokens)
             var operand = GetExpression(allowAtomArgs);
             return new UnaryExpression(opToken.Type, operand) { Line = opToken.Line, Column = opToken.Column };
         }
+        return ParseMemberSuffixes(GetPrimaryExpression(allowAtomArgs));
+    }
+
+    // `receiver.member args`, repeatable: a Dot right after any primary expression (a module call,
+    // a parenthesized expression, a literal, ...) applies a member to it. `a.b` on a bare identifier
+    // is handled earlier by ParseIdentifierExpression, so this only sees dots that follow something else.
+    private Expression ParseMemberSuffixes(Expression receiver)
+    {
+        while (Check(TokenType.Dot))
+        {
+            var dot = Advance();
+            var member = Consume(TokenType.Identifier).Value;
+            var arguments = new List<Expression>();
+            if (Match(TokenType.LeftParen))
+                arguments.AddRange(ParseParenArgs());
+            arguments.AddRange(ParseAtomArgs());
+            receiver = new MemberCallExpression(receiver, member, arguments)
+                { Line = receiver.Line > 0 ? receiver.Line : dot.Line, Column = receiver.Column > 0 ? receiver.Column : dot.Column };
+        }
+        return receiver;
+    }
+
+    private Expression GetPrimaryExpression(bool allowAtomArgs)
+    {
         if (IsLiteralToken(Current().Type))
         {
             var token = Advance();
@@ -434,9 +458,11 @@ public class Parser(List<Token> tokens)
         {
             var parenArgs = ParseParenArgs();
             parenArgs.AddRange(ParseAtomArgs());
-            return new ModuleCallExpression(name, functionName, parenArgs) { Line = line, Column = column };
+            return new ModuleCallExpression(name, functionName, parenArgs)
+                { Line = line, Column = column, Receiver = new IdentifierExpression(name) { Line = line, Column = column } };
         }
-        return new ModuleCallExpression(name, functionName, ParseAtomArgs()) { Line = line, Column = column };
+        return new ModuleCallExpression(name, functionName, ParseAtomArgs())
+            { Line = line, Column = column, Receiver = new IdentifierExpression(name) { Line = line, Column = column } };
     }
 
     private List<Expression> ParseParenArgs()

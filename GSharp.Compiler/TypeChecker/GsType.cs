@@ -51,6 +51,15 @@ public record StringType : GsType
     }
 }
 
+/// <summary>Date and time (e.g. the result of time.now).</summary>
+public record DateType : GsType
+{
+    public override string ToString()
+    {
+        return "date";
+    }
+}
+
 /// <summary>Boolean (true or false).</summary>
 public record BoolType : GsType
 {

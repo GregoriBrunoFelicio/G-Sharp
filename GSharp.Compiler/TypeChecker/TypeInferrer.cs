@@ -52,6 +52,8 @@ public partial class TypeInferrer
             LambdaExpression lambda => InferLambda(lambda, environment),
             CallExpression call => InferCall(call, environment),
             ModuleCallExpression moduleCall => InferModuleCall(moduleCall, environment),
+            MemberCallExpression memberCall => InferMemberCall(
+                memberCall.Receiver, memberCall.Member, memberCall.Arguments, memberCall.Line, environment),
             MapExpression map => InferMapExpression(map, environment),
             ImportDeclaration => new UnitType(),
             _ => FreshTypeVar()

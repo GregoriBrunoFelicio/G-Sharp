@@ -115,14 +115,36 @@ public partial class TypeInferrer
         ["math.e"] = new BuiltinTypeRule((_, _) => new DoubleType(), []),
         ["io.readLine"] = new BuiltinTypeRule((_, _) => new StringType(), []),
         ["io.readInt"] = new BuiltinTypeRule((_, _) => new IntType(), []),
-        ["io.readFloat"] = new BuiltinTypeRule((_, _) => new FloatType(), [])
+        ["io.readFloat"] = new BuiltinTypeRule((_, _) => new FloatType(), []),
+        // time: dates have their own type (DateType) — see TimeBuiltins.
+        ["time.now"] = new BuiltinTypeRule((_, _) => new DateType(), []),
+        ["time.utcNow"] = new BuiltinTypeRule((_, _) => new DateType(), []),
+        ["time.make"] = new BuiltinTypeRule((_, _) => new DateType(), [(_, _) => new IntType(), (_, _) => new IntType(), (_, _) => new IntType()]),
+        ["time.parse"] = new BuiltinTypeRule((_, _) => new DateType(), [(_, _) => new StringType()]),
+        ["time.format"] = new BuiltinTypeRule((_, _) => new StringType(), [(_, _) => new DateType(), (_, _) => new StringType()]),
+        ["time.year"] = new BuiltinTypeRule((_, _) => new IntType(), [(_, _) => new DateType()]),
+        ["time.month"] = new BuiltinTypeRule((_, _) => new IntType(), [(_, _) => new DateType()]),
+        ["time.day"] = new BuiltinTypeRule((_, _) => new IntType(), [(_, _) => new DateType()]),
+        ["time.hour"] = new BuiltinTypeRule((_, _) => new IntType(), [(_, _) => new DateType()]),
+        ["time.minute"] = new BuiltinTypeRule((_, _) => new IntType(), [(_, _) => new DateType()]),
+        ["time.second"] = new BuiltinTypeRule((_, _) => new IntType(), [(_, _) => new DateType()]),
+        ["time.weekday"] = new BuiltinTypeRule((_, _) => new IntType(), [(_, _) => new DateType()]),
+        ["time.addDays"] = new BuiltinTypeRule((_, _) => new DateType(), [(_, _) => new DateType(), (_, _) => new IntType()]),
+        ["time.addHours"] = new BuiltinTypeRule((_, _) => new DateType(), [(_, _) => new DateType(), (_, _) => new IntType()]),
+        ["time.addMinutes"] = new BuiltinTypeRule((_, _) => new DateType(), [(_, _) => new DateType(), (_, _) => new IntType()]),
+        ["time.addSeconds"] = new BuiltinTypeRule((_, _) => new DateType(), [(_, _) => new DateType(), (_, _) => new IntType()]),
+        ["time.diffDays"] = new BuiltinTypeRule((_, _) => new IntType(), [(_, _) => new DateType(), (_, _) => new DateType()]),
+        ["time.diffSeconds"] = new BuiltinTypeRule((_, _) => new IntType(), [(_, _) => new DateType(), (_, _) => new DateType()])
     };
 
     // -------------------------------------------------------------------------
     // Builtin inference
     // -------------------------------------------------------------------------
 
-    private GsType InferBuiltinCall(string name, List<Expression> expressions, TypeEnvironment environment)
+    // firstArgumentType: for a member call the receiver (argument 0) was already inferred to pick the
+    // builtin, so its type is reused instead of inferring the same expression twice.
+    private GsType InferBuiltinCall(string name, List<Expression> expressions, TypeEnvironment environment,
+        GsType? firstArgumentType = null)
     {
         var rule = BuiltinTypeRules[name];
 
@@ -139,7 +161,9 @@ public partial class TypeInferrer
 
         for (var i = 0; i < expressions.Count; i++)
         {
-            var expressionType = InferExpression(expressions[i], environment);
+            var expressionType = i == 0 && firstArgumentType is not null
+                ? firstArgumentType
+                : InferExpression(expressions[i], environment);
             var expectedType = rule.ArgumentConstraints[i]?.Invoke(arrayType, resultTypeVar);
             if (expectedType is not null)
                 _constraints.Add(new TypeConstraint(expressionType, expectedType));
@@ -188,7 +212,8 @@ public partial class TypeInferrer
         ["map.size"] = new MapBuiltinTypeRule(_ => new IntType(), [mapType => mapType])
     };
 
-    private GsType InferMapBuiltinCall(string name, List<Expression> expressions, TypeEnvironment environment)
+    private GsType InferMapBuiltinCall(string name, List<Expression> expressions, TypeEnvironment environment,
+        GsType? firstArgumentType = null)
     {
         var rule = MapBuiltinTypeRules[name];
 
@@ -203,7 +228,9 @@ public partial class TypeInferrer
 
         for (var i = 0; i < expressions.Count; i++)
         {
-            var expressionType = InferExpression(expressions[i], environment);
+            var expressionType = i == 0 && firstArgumentType is not null
+                ? firstArgumentType
+                : InferExpression(expressions[i], environment);
             var expectedType = rule.ArgumentConstraints[i]?.Invoke(mapType);
             if (expectedType is not null)
                 _constraints.Add(new TypeConstraint(expressionType, expectedType));

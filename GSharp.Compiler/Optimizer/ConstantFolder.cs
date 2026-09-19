@@ -50,6 +50,8 @@ public static class ConstantFolder
             MapExpression map => map with { Keys = FoldBody(map.Keys), Values = FoldBody(map.Values) },
             CallExpression call => call with { Arguments = FoldBody(call.Arguments) },
             ModuleCallExpression moduleCall => moduleCall with { Arguments = FoldBody(moduleCall.Arguments) },
+            MemberCallExpression memberCall => memberCall with
+                { Receiver = Fold(memberCall.Receiver), Arguments = FoldBody(memberCall.Arguments) },
             ImportDeclaration => expression,
             _ => expression
         };

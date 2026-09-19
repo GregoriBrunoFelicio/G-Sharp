@@ -84,6 +84,9 @@ public static class HoverProvider
                 var qualifiedName = $"{moduleCall.Module}.{moduleCall.Function}";
                 return Named(qualifiedName, qualifiedType, node, qualifiedName.Length);
 
+            case MemberCallExpression memberCall when types.TryGetValue(memberCall, out var memberType):
+                return Named(memberCall.Member, memberType, node, memberCall.Member.Length);
+
             case IdentifierExpression binding when types.TryGetValue(binding, out var bindingType):
                 return Named(binding.Name, bindingType, node, binding.Name.Length);
 
@@ -168,6 +171,11 @@ public static class HoverProvider
 
             case ModuleCallExpression moduleCall:
                 foreach (var child in WalkAll(moduleCall.Arguments)) yield return child;
+                break;
+
+            case MemberCallExpression memberCall:
+                foreach (var child in Walk(memberCall.Receiver)) yield return child;
+                foreach (var child in WalkAll(memberCall.Arguments)) yield return child;
                 break;
         }
     }

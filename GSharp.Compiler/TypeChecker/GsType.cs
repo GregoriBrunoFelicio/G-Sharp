@@ -81,6 +81,15 @@ public record ArrayType(GsType ElementType) : GsType
     }
 }
 
+/// <summary>Associative map whose keys all share one type and whose values all share one type.</summary>
+public record MapType(GsType KeyType, GsType ValueType) : GsType
+{
+    public override string ToString()
+    {
+        return $"{{{KeyType}: {ValueType}}}";
+    }
+}
+
 /// <summary>
 ///     Single-argument function type.
 ///     G# functions are curried — add a b : int → int → int is represented as

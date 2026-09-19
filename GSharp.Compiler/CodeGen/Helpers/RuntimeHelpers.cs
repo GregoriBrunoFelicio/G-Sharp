@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq;
 
 namespace GSharp.Compiler.CodeGen.Helpers;
 
@@ -37,6 +38,12 @@ public static class RuntimeHelpers
             for (var i = 0; i < array.Length; i++)
                 parts[i] = FormatForDisplay(array[i]);
             return "[" + string.Join(", ", parts) + "]";
+        }
+
+        if (value is Dictionary<object, object> map)
+        {
+            var parts = map.Select(pair => $"{FormatForDisplay(pair.Key)}: {FormatForDisplay(pair.Value)}");
+            return "{" + string.Join(", ", parts) + "}";
         }
 
         return value?.ToString() ?? "";

@@ -322,6 +322,20 @@ public class Parser(List<Token> tokens)
         return new LiteralExpression(elements.ToArray());
     }
 
+    private MapExpression ParseMap()
+    {
+        var keys = new List<Expression>();
+        var values = new List<Expression>();
+        while (!Check(TokenType.RightBrace))
+        {
+            keys.Add(ParseExpression(false));
+            Consume(TokenType.Colon);
+            values.Add(ParseExpression(false));
+        }
+        Consume(TokenType.RightBrace);
+        return new MapExpression(keys, values);
+    }
+
     private Expression ParseExpression(bool allowAtomArgs = true)
     {
         var left = GetExpression(allowAtomArgs);
@@ -371,6 +385,8 @@ public class Parser(List<Token> tokens)
         }
         if (Match(TokenType.LeftBracket))
             return ParseArray();
+        if (Match(TokenType.LeftBrace))
+            return ParseMap();
         if (Check(TokenType.If))
             return ParseIf();
         if (Check(TokenType.For))
@@ -436,7 +452,8 @@ public class Parser(List<Token> tokens)
     [
         TokenType.Identifier,
         TokenType.LeftParen,
-        TokenType.LeftBracket
+        TokenType.LeftBracket,
+        TokenType.LeftBrace
     ];
 
     private static bool IsAtom(TokenType type) => 
@@ -468,6 +485,12 @@ public class Parser(List<Token> tokens)
             if (Match(TokenType.LeftBracket))
             {
                 args.Add(ParseArray());
+                continue;
+            }
+
+            if (Match(TokenType.LeftBrace))
+            {
+                args.Add(ParseMap());
                 continue;
             }
 

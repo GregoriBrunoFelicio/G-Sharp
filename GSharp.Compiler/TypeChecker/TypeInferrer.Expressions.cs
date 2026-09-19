@@ -177,4 +177,22 @@ public partial class TypeInferrer
 
         return resultType!;
     }
+
+    private GsType InferMapExpression(MapExpression map, TypeEnvironment environment)
+    {
+        var keyType = FreshTypeVar();
+        var valueType = FreshTypeVar();
+
+        for (var i = 0; i < map.Keys.Count; i++)
+        {
+            var key = map.Keys[i];
+            var value = map.Values[i];
+
+            _constraints.Add(new TypeConstraint(keyType, InferExpression(key, environment), key.Line, key.Column));
+            _constraints.Add(new TypeConstraint(valueType, InferExpression(value, environment), value.Line,
+                value.Column));
+        }
+
+        return new MapType(keyType, valueType);
+    }
 }

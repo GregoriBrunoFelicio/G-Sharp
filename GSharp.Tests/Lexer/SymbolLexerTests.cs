@@ -27,6 +27,9 @@ public class SymbolLexerTests
     [InlineData("-", TokenType.Minus)]
     [InlineData("*", TokenType.Multiply)]
     [InlineData("/", TokenType.Divide)]
+    [InlineData(":", TokenType.Colon)]
+    [InlineData("{", TokenType.LeftBrace)]
+    [InlineData("}", TokenType.RightBrace)]
     public void Should_Recognize_Single_Symbols(string code, TokenType expected)
     {
         var lexer = new GSharp.Compiler.Lexer.Lexer(code);

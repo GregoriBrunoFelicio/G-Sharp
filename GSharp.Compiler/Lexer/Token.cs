@@ -49,6 +49,7 @@ public enum TokenType
 
     LeftBrace, // {
     RightBrace, // }
+    Colon, // :
 
     Arrow, // =>
     ThinArrow, // ->

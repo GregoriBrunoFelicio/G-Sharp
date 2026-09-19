@@ -89,6 +89,11 @@ public static class LambdaLifter
             case UnaryExpression unary:
                 Walk(unary.Operand, prefix, lifted, names, ref counter);
                 break;
+
+            case MapExpression map:
+                WalkBody(map.Keys, prefix, lifted, names, ref counter);
+                WalkBody(map.Values, prefix, lifted, names, ref counter);
+                break;
         }
     }
 

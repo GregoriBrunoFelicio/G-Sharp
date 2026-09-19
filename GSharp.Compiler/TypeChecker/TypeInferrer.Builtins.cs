@@ -160,4 +160,60 @@ public partial class TypeInferrer
         Func<ArrayType, TypeVar, GsType> ReturnType,
         IReadOnlyList<Func<ArrayType, TypeVar, GsType>?> ArgumentConstraints
     );
+
+    // -------------------------------------------------------------------------
+    // map.* builtins — a parallel, additive mechanism rather than reusing
+    // BuiltinTypeRule/InferBuiltinCall above: that mechanism is hardcoded to a single
+    // fresh ArrayType (one generic slot, the element type), and map needs two independent
+    // slots (key type, value type). Reusing arrayType.ElementType to secretly mean "map key
+    // type" would work mechanically but would be an undocumented abuse of an unrelated type.
+    // This table/dispatcher mirrors BuiltinTypeRules/InferBuiltinCall exactly, just keyed off
+    // a fresh MapType instead of a fresh ArrayType — every existing array/string/math/io rule
+    // above is untouched.
+    // -------------------------------------------------------------------------
+
+    private static readonly Dictionary<string, MapBuiltinTypeRule> MapBuiltinTypeRules = new()
+    {
+        ["map.empty"] = new MapBuiltinTypeRule(mapType => mapType, []),
+        ["map.set"] = new MapBuiltinTypeRule(mapType => mapType,
+            [mapType => mapType, mapType => mapType.KeyType, mapType => mapType.ValueType]),
+        ["map.get"] = new MapBuiltinTypeRule(mapType => mapType.ValueType,
+            [mapType => mapType, mapType => mapType.KeyType]),
+        ["map.has"] = new MapBuiltinTypeRule(_ => new BoolType(),
+            [mapType => mapType, mapType => mapType.KeyType]),
+        ["map.remove"] = new MapBuiltinTypeRule(mapType => mapType,
+            [mapType => mapType, mapType => mapType.KeyType]),
+        ["map.keys"] = new MapBuiltinTypeRule(mapType => new ArrayType(mapType.KeyType), [mapType => mapType]),
+        ["map.values"] = new MapBuiltinTypeRule(mapType => new ArrayType(mapType.ValueType), [mapType => mapType]),
+        ["map.size"] = new MapBuiltinTypeRule(_ => new IntType(), [mapType => mapType])
+    };
+
+    private GsType InferMapBuiltinCall(string name, List<Expression> expressions, TypeEnvironment environment)
+    {
+        var rule = MapBuiltinTypeRules[name];
+
+        if (expressions.Count != rule.ArgumentConstraints.Count)
+        {
+            var argWord = rule.ArgumentConstraints.Count == 1 ? "argument" : "arguments";
+            throw new Exception(
+                $"'{name}' expects {rule.ArgumentConstraints.Count} {argWord} but got {expressions.Count}");
+        }
+
+        var mapType = new MapType(FreshTypeVar(), FreshTypeVar());
+
+        for (var i = 0; i < expressions.Count; i++)
+        {
+            var expressionType = InferExpression(expressions[i], environment);
+            var expectedType = rule.ArgumentConstraints[i]?.Invoke(mapType);
+            if (expectedType is not null)
+                _constraints.Add(new TypeConstraint(expressionType, expectedType));
+        }
+
+        return rule.ReturnType(mapType);
+    }
+
+    private record MapBuiltinTypeRule(
+        Func<MapType, GsType> ReturnType,
+        IReadOnlyList<Func<MapType, GsType>?> ArgumentConstraints
+    );
 }

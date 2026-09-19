@@ -52,6 +52,7 @@ public partial class TypeInferrer
             LambdaExpression lambda => InferLambda(lambda, environment),
             CallExpression call => InferCall(call, environment),
             ModuleCallExpression moduleCall => InferModuleCall(moduleCall, environment),
+            MapExpression map => InferMapExpression(map, environment),
             ImportDeclaration => new UnitType(),
             _ => FreshTypeVar()
         };
@@ -87,6 +88,9 @@ public partial class TypeInferrer
         var globalEnvironment = new TypeEnvironment();
 
         foreach (var name in BuiltinTypeRules.Keys)
+            globalEnvironment.Register(name, FreshTypeVar());
+
+        foreach (var name in MapBuiltinTypeRules.Keys)
             globalEnvironment.Register(name, FreshTypeVar());
 
         return globalEnvironment;

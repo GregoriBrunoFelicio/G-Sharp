@@ -63,6 +63,9 @@ public partial class TypeInferrer
         if (BuiltinTypeRules.ContainsKey(qualifiedName))
             return InferBuiltinCall(qualifiedName, moduleCall.Arguments, environment);
 
+        if (MapBuiltinTypeRules.ContainsKey(qualifiedName))
+            return InferMapBuiltinCall(qualifiedName, moduleCall.Arguments, environment);
+
         if (!environment.TryLookup(qualifiedName, out var calleeType))
             calleeType = FreshTypeVar();
 

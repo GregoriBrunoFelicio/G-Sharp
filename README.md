@@ -339,6 +339,35 @@ println price
 `readInt`/`readFloat` throw if the line isn't a valid number, the same way
 `string.toInt`/`toFloat` do. `readLine` returns `""` at EOF.
 
+### map
+
+An immutable key→value map. `map.set`/`remove` never mutate their argument — they return a new map.
+
+```gs
+scores -> {"Alice": 90 "Bob": 85}    // literal: {key: value ...}, space-separated, no commas
+println scores                        // {Alice: 90, Bob: 85}
+
+updated -> map.set scores "Carol" 78  // scores itself is untouched
+println scores                        // {Alice: 90, Bob: 85}
+println updated                       // {Alice: 90, Bob: 85, Carol: 78}
+
+println (map.get updated "Bob")       // 85
+println (map.has updated "Carol")     // True
+println (map.remove updated "Alice")  // {Bob: 85, Carol: 78}
+
+println (map.keys updated)            // [Alice, Bob, Carol]
+println (map.values updated)          // [90, 85, 78]
+println (map.size updated)            // 3
+
+empty -> map.empty
+println empty                          // {}
+```
+
+Keys and values in a literal can be any expression, not just other literals — `{"total": 1 + 1}` or
+`{"x": someBinding}` both work. All keys in one literal must share a type, and all values must share
+a (possibly different) type — `map.get`/`set`/etc. are checked against those types the same way
+`array.*` is checked against an array's element type.
+
 ---
 
 ## Functions
@@ -512,6 +541,7 @@ add a b => a + b  →  (int → (int → int))
 | Unary operators (`not`/`!`, `-`) | ✅ |
 | Constant folding (literal arithmetic evaluated at compile time) | ✅ |
 | Arrays | ✅ |
+| Maps (immutable, literal `{k: v ...}`) | ✅ |
 | `if/else` as expression (inline and block) | ✅ |
 | `for` as functional map (returns array) | ✅ |
 | Named functions (inline `=>` and block) | ✅ |
@@ -521,7 +551,7 @@ add a b => a + b  →  (int → (int → int))
 | Line comments (`//`) | ✅ |
 | `main` as entry point | ✅ |
 | `gs run` CLI with auto-detection | ✅ |
-| Standard library (`array.*`, `string.*`, `math.*`, `io.*`) | ✅ |
+| Standard library (`array.*`, `string.*`, `math.*`, `io.*`, `map.*`) | ✅ |
 | Module import system (`import`, dot notation) | ✅ |
 | Multi-file projects with recursive module loading | ✅ |
 | Circular import detection | ✅ |

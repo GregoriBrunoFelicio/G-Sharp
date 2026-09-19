@@ -57,6 +57,12 @@ public static class ExpressionEmitter
         typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)
     ]) ?? throw new Exception("Decimal constructor not found");
 
+    private static readonly ConstructorInfo DictionaryObjectObjectCtor =
+        typeof(Dictionary<object, object>).GetConstructor(Type.EmptyTypes)!;
+
+    private static readonly MethodInfo DictionarySetItemMethod =
+        typeof(Dictionary<object, object>).GetMethod("set_Item")!;
+
     // -------------------------------------------------------------------------
     // Public entry points
     // -------------------------------------------------------------------------
@@ -137,6 +143,9 @@ public static class ExpressionEmitter
 
             case LambdaExpression lambda:
                 return EmitLambda(il, lambda, context);
+
+            case MapExpression mapExpression:
+                return EmitMap(il, mapExpression, context);
 
             default:
                 throw new NotSupportedException(
@@ -606,6 +615,27 @@ public static class ExpressionEmitter
                 throw new NotSupportedException(
                     $"internal error: no emitter for array element type '{value?.GetType().Name ?? "null"}'");
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Map literal emission
+    // -------------------------------------------------------------------------
+
+    // Unlike array elements (always pre-known LiteralExpressions), map keys/values are arbitrary
+    // expressions, so each is emitted through the normal EmitToStack path rather than a
+    // literal-only helper. Uses the indexer (set_Item), not Add, so a repeated key overwrites
+    // instead of throwing — matches typical dict-literal "last value wins" semantics.
+    private static Type EmitMap(ILGenerator il, MapExpression mapExpression, EmitContext context)
+    {
+        il.Emit(OpCodes.Newobj, DictionaryObjectObjectCtor);
+        for (var i = 0; i < mapExpression.Keys.Count; i++)
+        {
+            il.Emit(OpCodes.Dup);
+            EmitToStack(il, mapExpression.Keys[i], context);
+            EmitToStack(il, mapExpression.Values[i], context);
+            il.Emit(OpCodes.Callvirt, DictionarySetItemMethod);
+        }
+        return typeof(Dictionary<object, object>);
     }
 
     // -------------------------------------------------------------------------

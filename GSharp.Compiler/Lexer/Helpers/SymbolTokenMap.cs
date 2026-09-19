@@ -15,6 +15,7 @@ public static class SymbolTokenMap
         { ']', TokenType.RightBracket },
         { '{', TokenType.LeftBrace },
         { '}', TokenType.RightBrace },
+        { ':', TokenType.Colon },
 
         // Comparison
         { '>', TokenType.GreaterThan },

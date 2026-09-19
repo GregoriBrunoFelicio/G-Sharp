@@ -30,3 +30,5 @@ public record MatchExpression(Expression Scrutinee, List<MatchArm> Arms) : Expre
 public record MatchArm(Expression Pattern, List<Expression> Body);
 
 public record LambdaExpression(List<string> Parameters, List<Expression> Body) : Expression;
+
+public record MapExpression(List<Expression> Keys, List<Expression> Values) : Expression;

@@ -91,6 +91,26 @@ for r in ranged do
 println array.any nums (n => n > 4)
 println array.all nums (n => n > 0)
 
+// --- map: immutable key-value map, literal {k: v ...} (space-separated, no commas) ---
+scores -> {"Alice": 90 "Bob": 85}
+println scores
+
+updatedScores -> map.set scores "Carol" 78
+println scores          // untouched
+println updatedScores
+
+println (map.get updatedScores "Bob")
+println (map.has updatedScores "Carol")
+println (map.remove updatedScores "Alice")
+println (map.keys updatedScores)
+println (map.values updatedScores)
+println (map.size updatedScores)
+println map.empty
+
+// map values can be arbitrary expressions, not just literals
+computed -> {"sum": 1 + 1 "nums": array.len nums}
+println computed
+
 // --- string functions ---
 println string.from 42
 println string.from 3.14d

@@ -31,6 +31,7 @@ public class Substitution
             TypeVar tv => tv,
             FunctionType ft => new FunctionType(Apply(ft.ParameterType), Apply(ft.ReturnType)),
             ArrayType at => new ArrayType(Apply(at.ElementType)),
+            MapType mt => new MapType(Apply(mt.KeyType), Apply(mt.ValueType)),
             _ => type
         };
     }

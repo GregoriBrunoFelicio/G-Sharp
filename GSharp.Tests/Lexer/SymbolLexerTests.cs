@@ -11,6 +11,8 @@ public class SymbolLexerTests
     [InlineData("<=", TokenType.LessThanOrEqual)]
     [InlineData("==", TokenType.EqualEqual)]
     [InlineData("!=", TokenType.NotEqual)]
+    [InlineData("&&", TokenType.And)]
+    [InlineData("||", TokenType.Or)]
     public void Should_Recognize_Composite_Symbols(string code, TokenType expected)
     {
         var lexer = new GSharp.Compiler.Lexer.Lexer(code);

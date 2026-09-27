@@ -73,6 +73,20 @@ public class ConstantFolderTests
     }
 
     [Fact]
+    public void Short_Circuits_False_Symbolic_And_Without_Needing_The_Right_Side_To_Be_Literal()
+    {
+        BoundValue("y -> false && x").Should().BeOfType<LiteralExpression>()
+            .Which.Value.Should().Be(false);
+    }
+
+    [Fact]
+    public void Short_Circuits_True_Symbolic_Or_Without_Needing_The_Right_Side_To_Be_Literal()
+    {
+        BoundValue("y -> true || x").Should().BeOfType<LiteralExpression>()
+            .Which.Value.Should().Be(true);
+    }
+
+    [Fact]
     public void Leaves_Non_Literal_Operands_Unfolded()
     {
         var value = BoundValue("y -> x + 1");

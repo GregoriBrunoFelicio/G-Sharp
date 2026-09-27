@@ -37,6 +37,17 @@ public class UnaryExpressionParsingTests
     }
 
     [Fact]
+    public void Symbolic_Not_Binds_Tighter_Than_Symbolic_And()
+    {
+        var value = BoundValue("y -> !a && b");
+
+        var binary = value.Should().BeOfType<BinaryExpression>().Subject;
+        binary.Operator.Should().Be(TokenType.And);
+        binary.Left.Should().BeOfType<UnaryExpression>()
+            .Which.Operator.Should().Be(TokenType.Not);
+    }
+
+    [Fact]
     public void Double_Unary_Minus_Chains()
     {
         var value = BoundValue("y -> - -x");

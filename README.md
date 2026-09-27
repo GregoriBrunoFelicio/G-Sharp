@@ -156,14 +156,19 @@ println label
 
 ### Logical operators
 
-`and` and `or` are binary operators with short-circuit evaluation.
+`and` and `or` are binary operators with short-circuit evaluation. `&&` and `||` are
+symbolic synonyms for `and`/`or`, same as `!` is for `not` — they compile to the exact
+same operator, so they can be mixed freely, even within one expression.
 
 ```gs
 a -> true
 b -> false
 
-both   -> a and b     // false
-either -> a or b      // true
+both    -> a and b                 // false
+either  -> a or b                  // true
+sameAnd -> a && b                  // false, identical to `a and b`
+sameOr  -> a || b                  // true, identical to `a or b`
+mixed   -> (a and b) || (not b)    // true — words and symbols in the same expression
 
 if a and age >= 18 then
     println "adult and confirmed"
@@ -620,7 +625,7 @@ add a b => a + b  →  (int → (int → int))
 | Numeric types (int, float, double, decimal) | ✅ |
 | Strings | ✅ |
 | Booleans (`true`, `false`) | ✅ |
-| Logical operators (`and`, `or`, short-circuit) | ✅ |
+| Logical operators (`and`/`&&`, `or`/`||`, short-circuit) | ✅ |
 | Unary operators (`not`/`!`, `-`) | ✅ |
 | Constant folding (literal arithmetic evaluated at compile time) | ✅ |
 | Arrays | ✅ |

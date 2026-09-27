@@ -63,8 +63,8 @@ public enum TokenType
     EqualEqual, // ==
 
     // Logical
-    And, // and
-    Or, // or
+    And, // and, && — see Lexer.ReadSymbol for the two-char '&&' form
+    Or, // or, || — see Lexer.ReadSymbol for the two-char '||' form
     Not, // not
 
     // Operators

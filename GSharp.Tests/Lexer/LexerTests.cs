@@ -31,6 +31,27 @@ public class LexerTests
     }
 
     [Theory]
+    [InlineData("true && false", TokenType.And)]
+    [InlineData("true || false", TokenType.Or)]
+    public void Tokenize_Recognizes_Logical_Symbol_Operators(string code, TokenType expected)
+    {
+        var tokens = new GSharp.Compiler.Lexer.Lexer(code).Tokenize();
+
+        tokens.Should().Contain(t => t.Type == expected);
+    }
+
+    [Theory]
+    [InlineData("&")]
+    [InlineData("|")]
+    public void Should_Throw_On_Lone_Ampersand_Or_Pipe(string code)
+    {
+        var act = () => new GSharp.Compiler.Lexer.Lexer(code).Tokenize();
+
+        act.Should().Throw<Exception>()
+            .WithMessage($"1: unexpected '{code}'");
+    }
+
+    [Theory]
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("\n\t\r")]

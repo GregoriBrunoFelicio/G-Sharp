@@ -131,7 +131,7 @@ public class Lexer
         if (Current.IsOnlyQuotes())
             return ReadString();
 
-        if (Symbols.ContainsKey(Current))
+        if (Symbols.ContainsKey(Current) || Current is '&' or '|')
             return ReadSymbol();
 
         throw new Exception($"{Line}: unexpected '{Current}'");
@@ -235,6 +235,14 @@ public class Lexer
                 Advance();
                 Advance();
                 return new Token(TokenType.NotEqual, "!=", line, col);
+            case '&' when next == '&':
+                Advance();
+                Advance();
+                return new Token(TokenType.And, "&&", line, col);
+            case '|' when next == '|':
+                Advance();
+                Advance();
+                return new Token(TokenType.Or, "||", line, col);
         }
 
         if (Symbols.TryGetValue(current, out var tokenType))

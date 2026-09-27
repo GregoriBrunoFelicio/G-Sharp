@@ -341,11 +341,16 @@ println (age + 1)
 
 price -> io.readFloat    // reads a line and parses it as a float
 println price
+
+io.clear                 // clears the terminal screen
 ```
 
 `io.readLine`/`readInt`/`readFloat` block until a line is available on stdin.
 `readInt`/`readFloat` throw if the line isn't a valid number, the same way
 `string.toInt`/`toFloat` do. `readLine` returns `""` at EOF.
+
+`io.clear` clears the terminal screen. It's a side-effecting call (returns
+`unit`), so use it as its own statement.
 
 ### time
 

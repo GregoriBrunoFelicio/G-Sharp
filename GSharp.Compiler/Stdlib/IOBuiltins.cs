@@ -10,6 +10,7 @@ public static class IOBuiltins
         builtins["io.readLine"] = typeof(IOBuiltins).GetMethod(nameof(ReadLine))!;
         builtins["io.readInt"] = typeof(IOBuiltins).GetMethod(nameof(ReadInt))!;
         builtins["io.readFloat"] = typeof(IOBuiltins).GetMethod(nameof(ReadFloat))!;
+        builtins["io.clear"] = typeof(IOBuiltins).GetMethod(nameof(Clear))!;
     }
 
     // Console.ReadLine() returns null at EOF; GsType.StringType has no notion of
@@ -29,5 +30,12 @@ public static class IOBuiltins
     public static object ReadFloat()
     {
         return float.Parse((string)ReadLine(), CultureInfo.InvariantCulture);
+    }
+
+    // Clears the terminal screen. Side-effecting, so it returns null (unit).
+    public static object Clear()
+    {
+        Console.Clear();
+        return null!;
     }
 }

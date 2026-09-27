@@ -116,6 +116,7 @@ public partial class TypeInferrer
         ["io.readLine"] = new BuiltinTypeRule((_, _) => new StringType(), []),
         ["io.readInt"] = new BuiltinTypeRule((_, _) => new IntType(), []),
         ["io.readFloat"] = new BuiltinTypeRule((_, _) => new FloatType(), []),
+        ["io.clear"] = new BuiltinTypeRule((_, _) => new UnitType(), []),
         // time: dates have their own type (DateType) — see TimeBuiltins.
         ["time.now"] = new BuiltinTypeRule((_, _) => new DateType(), []),
         ["time.utcNow"] = new BuiltinTypeRule((_, _) => new DateType(), []),

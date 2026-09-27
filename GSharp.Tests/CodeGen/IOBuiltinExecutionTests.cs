@@ -70,4 +70,10 @@ public class IOBuiltinExecutionTests
     {
         Run("println (io.readFloat + 0.5f)", "1.5\n").Should().Be("2");
     }
+
+    [Fact]
+    public void Clear_Does_Not_Throw_And_Program_Continues()
+    {
+        Run("println \"before\"\nio.clear\nprintln \"after\"").Should().Be("before\nafter");
+    }
 }

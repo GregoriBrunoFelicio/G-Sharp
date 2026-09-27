@@ -554,7 +554,7 @@ For multi-file programs, declare `main` as the entry point. Exactly one file mus
 ```gs
 add a b => a + b
 
-main
+main =>
     result -> add 10 20
     println result
 ```
@@ -576,7 +576,7 @@ square x => x * x
 // main.gs
 import mathutils
 
-main
+main =>
     println mathutils.add 3 5      // 8
     println mathutils.square 4     // 16
 ```

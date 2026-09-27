@@ -113,8 +113,8 @@ public static class ArrayBuiltins
 
     public static object Concat(object a, object b)
     {
-        var left = a as object[] ?? [a];
-        var right = b as object[] ?? [b];
+        var left = (object[])a;
+        var right = (object[])b;
         var merged = new object[left.Length + right.Length];
         Array.Copy(left, merged, left.Length);
         Array.Copy(right, 0, merged, left.Length, right.Length);

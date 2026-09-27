@@ -13,8 +13,8 @@ public partial class TypeInferrer
         ["array.sort"] = new BuiltinTypeRule((arrayType, _) => arrayType, [(arrayType, _) => arrayType]),
         ["array.len"] = new BuiltinTypeRule((_, _) => new IntType(), [(arrayType, _) => arrayType]),
         ["array.empty"] = new BuiltinTypeRule((_, _) => new BoolType(), [(arrayType, _) => arrayType]),
-        ["array.concat"] =
-            new BuiltinTypeRule((arrayType, _) => arrayType, [null, null]),
+        ["array.concat"] = new BuiltinTypeRule((arrayType, _) => arrayType,
+            [(arrayType, _) => arrayType, (arrayType, _) => arrayType]),
         ["array.take"] = new BuiltinTypeRule((arrayType, _) => arrayType,
             [(arrayType, _) => arrayType, (_, _) => new IntType()]),
         ["array.contains"] = new BuiltinTypeRule((_, _) => new BoolType(),

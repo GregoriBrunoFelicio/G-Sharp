@@ -110,6 +110,18 @@ public class ArrayBuiltinExecutionTests
     }
 
     [Fact]
+    public void Concat_Joins_Two_Arrays()
+    {
+        Run("println (array.concat [1 2 3] [4 5])").Should().Be("[1, 2, 3, 4, 5]");
+    }
+
+    [Fact]
+    public void Concat_Works_As_A_Member_Call()
+    {
+        Run("nums -> [1 2 3]\nprintln (nums.concat [4 5])").Should().Be("[1, 2, 3, 4, 5]");
+    }
+
+    [Fact]
     public void Max_Throws_On_An_Empty_Array()
     {
         // main.Invoke wraps runtime exceptions in TargetInvocationException (see Compiler.cs) —

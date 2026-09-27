@@ -178,6 +178,34 @@ public class TypeInferrerTests
     }
 
     // -------------------------------------------------------------------------
+    // array.concat — array+array only, same element type on both sides
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Should_Infer_Array_Concat_Of_Two_Arrays_As_The_Same_Element_Type()
+    {
+        var types = Infer("result -> array.concat [1 2 3] [4 5]");
+
+        types.Values.Should().Contain(t => t is ArrayType && ((ArrayType)t).ElementType is IntType);
+    }
+
+    [Fact]
+    public void Should_Throw_When_Concat_Arrays_Have_Different_Element_Types()
+    {
+        ShouldThrowTypeMismatch(
+            "nums -> [1 2 3]\nresult -> array.concat nums [\"oops\"]",
+            "type mismatch");
+    }
+
+    [Fact]
+    public void Should_Throw_When_Concat_Argument_Is_Not_An_Array()
+    {
+        ShouldThrowTypeMismatch(
+            "nums -> [1 2 3]\nresult -> array.concat nums 4",
+            "type mismatch");
+    }
+
+    // -------------------------------------------------------------------------
     // Type ToString display
     // -------------------------------------------------------------------------
 
